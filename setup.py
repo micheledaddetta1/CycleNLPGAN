@@ -6,16 +6,16 @@ with open("README.md", mode="r", encoding="utf-8") as readme_file:
 
 
 setup(
-    name="sentence-transformers",
-    version="0.2.6.1",
-    author="Nils Reimers, Gregor Geigle",
-    author_email="Rnils@web.de",
-    description="Sentence Embeddings using BERT / RoBERTa / XLNet",
+    name="CycleNLPGAN",
+    version="1.0",
+    author="Michele D'Addetta, Moreno La Quatra",
+    author_email="michele.daddetta@studenti.polito.it",
+    description="CycleNLPGAN",
     long_description=readme,
     long_description_content_type="text/markdown",
     license="Apache License 2.0",
-    url="https://github.com/UKPLab/sentence-transformers",
-    download_url="https://github.com/UKPLab/sentence-transformers/archive/v0.2.6.zip",
+    url="https://github.com/micheledaddetta1/CycleNLPGAN.git",
+    download_url="https://github.com/micheledaddetta1/CycleNLPGAN/archive/master.zip",
     packages=find_packages(),
     install_requires=[
         'transformers>=2.8.0',
