@@ -5,7 +5,7 @@ from torch import functional as F
 from typing import Union, Tuple, List, Iterable, Dict
 import os
 import json
-from ..util import fullname, import_from_string
+from sentence_transformers.util import fullname, import_from_string
 
 
 class Dense(nn.Module):

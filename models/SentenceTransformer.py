@@ -15,10 +15,10 @@ from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 from tqdm import tqdm, trange
 
-from . import __DOWNLOAD_SERVER__
-from .evaluation import SentenceEvaluator
-from .util import import_from_string, batch_to_device, http_get
-from . import __version__
+from sentence_transformers import __DOWNLOAD_SERVER__
+from sentence_transformers.evaluation import SentenceEvaluator
+from sentence_transformers.util import import_from_string, batch_to_device, http_get
+from sentence_transformers import __version__
 
 class SentenceTransformer(nn.Sequential):
     def __init__(self, model_name_or_path: str = None, modules: Iterable[nn.Module] = None, device: str = None):

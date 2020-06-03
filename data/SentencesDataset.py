@@ -3,11 +3,12 @@ from typing import List
 import torch
 import logging
 from tqdm import tqdm
-from .. import SentenceTransformer
-from ..readers.InputExample import InputExample
+from models import SentenceTransformer
+from data.InputExample import InputExample
+from . import BaseDataset
 
 
-class SentencesDataset(Dataset):
+class SentencesDataset(BaseDataset):
     """
     Dataset for smart batching, that is each batch is only padded to its longest sequence instead of padding all
     sequences to the max length.

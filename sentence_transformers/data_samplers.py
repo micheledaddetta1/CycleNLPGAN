@@ -3,11 +3,13 @@ This file contains sampler functions, that can be used to sample mini-batches wi
 """
 from torch.utils.data import Sampler
 import numpy as np
-from .datasets import SentenceLabelDataset
 
 
 class LabelSampler(Sampler):
-    """
+    def a(self):
+        return
+
+"""
     This sampler is used for some specific Triplet Losses like BATCH_HARD_TRIPLET_LOSS
     or MULTIPLE_NEGATIVES_RANKING_LOSS which require multiple or only one sample from one label per batch.
 
@@ -20,10 +22,10 @@ class LabelSampler(Sampler):
     by the samples drawn per label.
 
 
-    """
+    
     def __init__(self, data_source: SentenceLabelDataset, samples_per_label: int = 5,
                  with_replacement: bool = False):
-        """
+        
         Creates a LabelSampler for a SentenceLabelDataset.
 
         :param data_source:
@@ -34,7 +36,7 @@ class LabelSampler(Sampler):
             if this is True, then each sample is drawn at most once (depending on the total number of samples per label).
             if this is False, then one sample can be drawn in multiple draws, but still not multiple times in the same
             drawing.
-        """
+        
         super().__init__(data_source)
         self.data_source = data_source
         self.samples_per_label = samples_per_label
@@ -73,3 +75,4 @@ class LabelSampler(Sampler):
 
     def __len__(self):
         return len(self.data_source)
+"""

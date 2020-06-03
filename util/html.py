@@ -5,7 +5,6 @@ import os
 
 class HTML:
     """This HTML class allows us to save images and write texts into a single HTML file.
-
      It consists of functions such as <add_header> (add a text header to the HTML file),
      <add_images> (add a row of images to the HTML file), and <save> (save the HTML to the disk).
      It is based on Python library 'dominate', a Python library for creating and manipulating HTML documents using a DOM API.
@@ -13,7 +12,6 @@ class HTML:
 
     def __init__(self, web_dir, title, refresh=0):
         """Initialize the HTML classes
-
         Parameters:
             web_dir (str) -- a directory that stores the webpage. HTML file will be created at <web_dir>/index.html; images will be saved at <web_dir/images/
             title (str)   -- the webpage name
@@ -38,7 +36,6 @@ class HTML:
 
     def add_header(self, text):
         """Insert a header to the HTML file
-
         Parameters:
             text (str) -- the header text
         """
@@ -47,7 +44,6 @@ class HTML:
 
     def add_images(self, ims, txts, links, width=400):
         """add images to the HTML file
-
         Parameters:
             ims (str list)   -- a list of image paths
             txts (str list)  -- a list of image names shown on the website

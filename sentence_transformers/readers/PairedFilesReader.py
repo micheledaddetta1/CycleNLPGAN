@@ -1,4 +1,4 @@
-from . import InputExample
+from data import InputExample
 import csv
 import gzip
 import os

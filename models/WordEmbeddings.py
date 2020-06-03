@@ -7,7 +7,7 @@ from tqdm import tqdm
 import numpy as np
 import os
 import json
-from ..util import import_from_string, fullname, http_get
+from sentence_transformers.util import fullname, import_from_string
 from .tokenizer import WordTokenizer, WhitespaceTokenizer
 
 

@@ -1,7 +1,7 @@
 import torch
 from torch import nn, Tensor
-from typing import Union, Tuple, List, Iterable, Dict
-from ..SentenceTransformer import SentenceTransformer
+from typing import Iterable, Dict
+from models.SentenceTransformer import SentenceTransformer
 
 class CosineSimilarityLoss(nn.Module):
     def __init__(self, model: SentenceTransformer):

@@ -2,7 +2,7 @@ from .ALBERT import ALBERT
 from .Transformer import Transformer
 from .BERT import BERT
 from .BoW import BoW
-from .CNN import CNN
+#from .CNN import CNN
 from .CamemBERT import CamemBERT
 from .Dense import Dense
 from .DistilBERT import DistilBERT
@@ -16,6 +16,7 @@ from .WordEmbeddings import WordEmbeddings
 from .WordWeights import WordWeights
 from .XLMRoBERTa import XLMRoBERTa
 from .XLNet import XLNet
+from .SentenceTransformer import SentenceTransformer
 
 
 """This package contains modules related to objective functions, optimizations, and network architectures.

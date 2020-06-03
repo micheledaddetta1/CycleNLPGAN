@@ -4,7 +4,9 @@ import logging
 import gzip
 import os
 import random
-from .. import SentenceTransformer
+from . import BaseDataset
+import urllib.request
+
 
 
 class ParallelSentencesDataset(Dataset):
@@ -22,21 +24,42 @@ class ParallelSentencesDataset(Dataset):
 
     teacher_model can be any class that implement an encode function. The encode function gets a list of sentences and
     returns a list of sentence embeddings
-    """
+
 
     def __init__(self, student_model: SentenceTransformer, teacher_model):
-        """
         Parallel sentences dataset reader to train student model given a teacher model
         :param student_model: Student sentence embedding model that should be trained
         :param teacher_model: Teacher model, that provides the sentence embeddings for the first column in the dataset file
-        """
+
         self.student_model = student_model
         self.teacher_model = teacher_model
         self.datasets = []
         self.dataset_indices = []
         self.copy_dataset_indices = []
+    """
 
-    def load_data(self, filepath: str, weight: int = 100, max_sentences: int = None, max_sentence_length: int = 128):
+
+    def __init__(self,opt,model):
+        """
+        Parallel sentences dataset reader to train student model given a teacher model
+        :param opt: options used to create and read the dataset
+        """
+        BaseDataset.__init__(self, opt)
+        self.model = model
+        self.filepaths = ["TED2013-en-de.txt.gz", "STS2017.en-de.txt.gz", "xnli-en-de.txt.gz"]
+        self.datasets = []
+        self.dataset_indices = []
+        self.copy_dataset_indices = []
+        self.server = "https://public.ukp.informatik.tu-darmstadt.de/reimers/sentence-transformers/datasets/"
+
+        for dataset in self.filepaths:
+            print("Download", dataset)
+            url = self.server+dataset
+            dataset_path = os.path.join(self.root, dataset)
+            urllib.request.urlretrieve(url, dataset_path)
+
+
+    def load_data(self):
         """
         Reads in a tab-seperated .txt/.csv/.tsv or .gz file. The different columns contain the different translations of the sentence in the first column
 
@@ -46,6 +69,11 @@ class ParallelSentencesDataset(Dataset):
         :param max_sentence_length: Skip the example if one of the sentences is has more characters than max_sentence_length
         :return:
         """
+        filepath=self.filepaths[0]
+        weight=self.opt.para_weight
+        max_sentences=self.opt.max_sentences
+        max_sentence_length=self.opt.max_sentence_length
+
         sentences_map = {}
         with gzip.open(filepath, 'rt', encoding='utf8') if filepath.endswith('.gz') else open(filepath, encoding='utf8') as fIn:
             count = 0
@@ -68,7 +96,7 @@ class ParallelSentencesDataset(Dataset):
 
         eng_sentences = list(sentences_map.keys())
         logging.info("Create sentence embeddings for " + os.path.basename(filepath))
-        labels = torch.tensor(self.teacher_model.encode(eng_sentences, batch_size=32, show_progress_bar=True),
+        labels = torch.tensor(teacher_model.encode(eng_sentences, batch_size=32, show_progress_bar=True),
                               dtype=torch.float)
 
         data = []
@@ -76,7 +104,7 @@ class ParallelSentencesDataset(Dataset):
             eng_key = eng_sentences[idx]
             label = labels[idx]
             for sent in sentences_map[eng_key]:
-                data.append([[self.student_model.tokenize(sent)], label])
+                data.append([[student_model.tokenize(sent)], label])
 
         dataset_id = len(self.datasets)
         self.datasets.append(data)
