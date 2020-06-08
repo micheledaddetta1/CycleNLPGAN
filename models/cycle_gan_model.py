@@ -105,6 +105,8 @@ class CycleGANModel(BaseModel):
         AtoB = self.opt.direction == 'AtoB'
         self.real_A = input['A' if AtoB else 'B'].to(self.device)
         self.real_B = input['B' if AtoB else 'A'].to(self.device)
+        #self.real_A = torch.FloatTensor(input['A' if AtoB else 'B']).to(self.device)
+        #self.real_B = torch.Tensor(input['B' if AtoB else 'A'], type='float').to(self.device)
         self.sentence_paths = input['A_paths' if AtoB else 'B_paths']
 
     def forward(self):

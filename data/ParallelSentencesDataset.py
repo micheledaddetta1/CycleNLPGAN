@@ -110,7 +110,7 @@ class ParallelSentencesDataset(BaseDataset):
 
         logging.info("Create sentence embeddings for " + os.path.basename(filepath))
         #encodings= self.model.netG_A.module.tokenize(eng_sentences)
-        eng_encodings = torch.tensor(self.model.netG_A.module.encode(eng_sentences))#, batch_size=32, show_progress_bar=True), dtype=torch.float)
+        eng_encodings = self.model.netG_A.module.encode(eng_sentences)#, batch_size=32, show_progress_bar=True), dtype=torch.float)
         self.dir_AB = os.path.join(self.opt.dataroot, self.opt.phase)  # get the image directory
 
         data = []
@@ -118,7 +118,7 @@ class ParallelSentencesDataset(BaseDataset):
             eng_key = eng_sentences[idx]
             embedding = eng_encodings[idx]
             for sent in sentences_map[eng_key]:
-                data.append([torch.tensor(self.model.netG_B.module.encodeSentence(sent)), embedding])
+                data.append([self.model.netG_B.module.encodeSentence(sent), embedding])
 
         dataset_id = len(self.datasets)
         self.datasets.append(data)
@@ -135,9 +135,9 @@ class ParallelSentencesDataset(BaseDataset):
 
         dataset_idx = self.copy_dataset_indices.pop()
 
-        A = self.datasets[dataset_idx][idx % len(self.datasets[dataset_idx])]
+        A = self.datasets[dataset_idx][idx % len(self.datasets[dataset_idx])][0][0]
         print(A)
-        B = self.datasets[dataset_idx][idx % len(self.datasets[dataset_idx])]
+        B = self.datasets[dataset_idx][idx % len(self.datasets[dataset_idx])][1]
 
 
 

@@ -24,7 +24,7 @@ class Transformer(nn.Module):
 
     def forward(self, features):
         """Returns token_embeddings, cls_token"""
-        output_states = self.auto_model(**features)
+        output_states = self.auto_model(features)
         output_tokens = output_states[0]
 
         cls_tokens = output_tokens[:, 0, :]  # CLS token is first token
@@ -96,7 +96,7 @@ class Transformer(nn.Module):
     def encodeSentence(self,sentence):
         logging.info("Trainer - encoding training data")
         train_input_ids = []
-        input_ids = self.tokenizer .encode(
+        input_ids = self.tokenizer.encode(
                 sentence,
                 add_special_tokens=True,
                 max_length=self.max_seq_length,
