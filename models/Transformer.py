@@ -1,5 +1,7 @@
+import torch
 from torch import nn
-from transformers import AutoModel, AutoTokenizer, AutoConfig
+from tqdm import tqdm
+from transformers import AutoModel, AutoTokenizer, AutoConfig, AutoModelWithLMHead
 import json
 from typing import List, Dict, Optional
 import os
@@ -76,8 +78,31 @@ class Transformer(nn.Module):
             config = json.load(fIn)
         return Transformer(model_name_or_path=input_path, **config)
 
+    def encode(self,sentences):
+        logging.info("Trainer - encoding training data")
+        train_input_ids = []
+        for text in tqdm(sentences):
+            input_ids = self.tokenizer .encode(
+                text,
+                add_special_tokens=True,
+                max_length=self.max_seq_length,
+                pad_to_max_length=True,
+                return_tensors='pt'
+            )
+            train_input_ids.append(input_ids)
+        train_input_ids = torch.cat(train_input_ids, dim=0)
+        return train_input_ids
 
-
-
+    def encodeSentence(self,sentence):
+        logging.info("Trainer - encoding training data")
+        train_input_ids = []
+        input_ids = self.tokenizer .encode(
+                sentence,
+                add_special_tokens=True,
+                max_length=self.max_seq_length,
+                pad_to_max_length=True,
+                return_tensors='pt'
+            )
+        return input_ids
 
 

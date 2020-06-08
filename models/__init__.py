@@ -17,6 +17,10 @@ from .WordWeights import WordWeights
 from .XLMRoBERTa import XLMRoBERTa
 from .XLNet import XLNet
 from .SentenceTransformer import SentenceTransformer
+from .cycle_gan_model import CycleGANModel
+from .base_model import BaseModel
+from .multi_layer_perceptron import MultiLayerPerceptron
+from . import networks
 
 
 """This package contains modules related to objective functions, optimizations, and network architectures.
@@ -46,7 +50,7 @@ def find_model_using_name(model_name):
     be instantiated. It has to be a subclass of BaseModel,
     and it is case-insensitive.
     """
-    model_filename = "models." + model_name
+    model_filename = "models." + model_name + "_model"
     modellib = importlib.import_module(model_filename)
     model = None
     target_model_name = model_name.replace('_', '') + 'model'

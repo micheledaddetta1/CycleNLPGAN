@@ -4,12 +4,15 @@ import logging
 import gzip
 import os
 import random
+
+from tqdm import tqdm
+
 from . import BaseDataset
 import urllib.request
 
 
 
-class ParallelSentencesDataset(Dataset):
+class ParallelSentencesDataset(BaseDataset):
     """
     This dataset reader can be used to read-in parallel sentences, i.e., it reads in a file with tab-seperated sentences with the same
     sentence in different languages. For example, the file can look like this (EN\tDE\tES):
@@ -51,12 +54,16 @@ class ParallelSentencesDataset(Dataset):
         self.dataset_indices = []
         self.copy_dataset_indices = []
         self.server = "https://public.ukp.informatik.tu-darmstadt.de/reimers/sentence-transformers/datasets/"
+        self.model=model
 
         for dataset in self.filepaths:
             print("Download", dataset)
             url = self.server+dataset
             dataset_path = os.path.join(self.root, dataset)
             urllib.request.urlretrieve(url, dataset_path)
+
+        self.dir_AB = os.path.join(opt.dataroot, opt.phase)  # get the image directory
+
 
 
     def load_data(self):
@@ -69,10 +76,12 @@ class ParallelSentencesDataset(Dataset):
         :param max_sentence_length: Skip the example if one of the sentences is has more characters than max_sentence_length
         :return:
         """
-        filepath=self.filepaths[0]
-        weight=self.opt.para_weight
-        max_sentences=self.opt.max_sentences
-        max_sentence_length=self.opt.max_sentence_length
+        filepath = os.path.join(self.root, self.filepaths[0])
+        weight = self.opt.param_weight
+        max_sentences = self.opt.max_sentences
+        if max_sentences == 0:
+            max_sentences = None
+        max_sentence_length = self.opt.max_sentence_length
 
         sentences_map = {}
         with gzip.open(filepath, 'rt', encoding='utf8') if filepath.endswith('.gz') else open(filepath, encoding='utf8') as fIn:
@@ -84,31 +93,37 @@ class ParallelSentencesDataset(Dataset):
                     continue
 
                 eng_sentence = sentences[0]
+
+
                 if eng_sentence not in sentences_map:
                     sentences_map[eng_sentence] = set()
 
                 for sent in sentences:
-                    sentences_map[eng_sentence].add(sent)
+                    if sent != eng_sentence:
+                        sentences_map[eng_sentence].add(sent)
 
                 count += 1
                 if max_sentences is not None and count >= max_sentences:
                     break
 
         eng_sentences = list(sentences_map.keys())
+
         logging.info("Create sentence embeddings for " + os.path.basename(filepath))
-        labels = torch.tensor(teacher_model.encode(eng_sentences, batch_size=32, show_progress_bar=True),
-                              dtype=torch.float)
+        #encodings= self.model.netG_A.module.tokenize(eng_sentences)
+        eng_encodings = torch.tensor(self.model.netG_A.module.encode(eng_sentences))#, batch_size=32, show_progress_bar=True), dtype=torch.float)
+        self.dir_AB = os.path.join(self.opt.dataroot, self.opt.phase)  # get the image directory
 
         data = []
-        for idx in range(len(eng_sentences)):
+        for idx in tqdm(range(len(eng_sentences))):
             eng_key = eng_sentences[idx]
-            label = labels[idx]
+            embedding = eng_encodings[idx]
             for sent in sentences_map[eng_key]:
-                data.append([[student_model.tokenize(sent)], label])
+                data.append([torch.tensor(self.model.netG_B.module.encodeSentence(sent)), embedding])
 
         dataset_id = len(self.datasets)
         self.datasets.append(data)
         self.dataset_indices.extend([dataset_id] * weight)
+
 
     def __len__(self):
         return max([len(dataset) for dataset in self.datasets])
@@ -119,4 +134,12 @@ class ParallelSentencesDataset(Dataset):
             random.shuffle(self.copy_dataset_indices)
 
         dataset_idx = self.copy_dataset_indices.pop()
+
+        A = self.datasets[dataset_idx][idx % len(self.datasets[dataset_idx])]
+        print(A)
+        B = self.datasets[dataset_idx][idx % len(self.datasets[dataset_idx])]
+
+
+
+        return {'A': A, 'B': B, 'A_paths': self.filepaths[dataset_idx], 'B_paths': self.filepaths[dataset_idx]}
         return self.datasets[dataset_idx][idx % len(self.datasets[dataset_idx])]

@@ -22,7 +22,7 @@ from .SentencesDataset import SentencesDataset
 
 
 def find_dataset_using_name(dataset_type):
-    """Import the module "data/[dataset_type]Reader.py".
+    """Import the module "data/[dataset_type]Dataset.py".
 
     In the file, the class called DatasetTypeDataset() will
     be instantiated. It has to be a subclass of BaseDataset (non nel mio),
@@ -32,7 +32,7 @@ def find_dataset_using_name(dataset_type):
     datasetlib = importlib.import_module(dataset_filename)
 
     dataset = None
-    target_dataset_type = dataset_type.replace('_', '') + 'Reader'
+    target_dataset_type = dataset_type.replace('_', '') + 'Dataset'
     for name, cls in datasetlib.__dict__.items():
         if name.lower() == target_dataset_type.lower() and issubclass(cls, BaseDataset) :
             dataset = cls
@@ -49,7 +49,7 @@ def get_option_setter(dataset_type):
     return dataset_class.modify_commandline_options
 
 
-def create_dataset(opt):
+def create_dataset(opt, model):
     """Create a dataset given the option.
 
     This function wraps the class CustomDatasetDataLoader.
@@ -59,7 +59,7 @@ def create_dataset(opt):
         >>> from data import create_dataset
         >>> dataset = create_dataset(opt)
     """
-    data_loader = CustomDatasetDataLoader(opt)
+    data_loader = CustomDatasetDataLoader(opt, model)
     dataset = data_loader.load_data()
     return dataset
 
@@ -67,7 +67,7 @@ def create_dataset(opt):
 class CustomDatasetDataLoader():
     """Wrapper class of Dataset class that performs multi-threaded data loading"""
 
-    def __init__(self, opt):
+    def __init__(self, opt, model):
         """Initialize this class
 
         Step 1: create a dataset instance given the name [dataset_mode]
@@ -75,7 +75,8 @@ class CustomDatasetDataLoader():
         """
         self.opt = opt
         dataset_class = find_dataset_using_name(opt.dataset_mode)
-        self.dataset = dataset_class(opt)
+        self.dataset = dataset_class(opt, model)
+        self.dataset.load_data()
         print("dataset [%s] was created" % type(self.dataset).__name__)
         self.dataloader = torch.utils.data.DataLoader(
             self.dataset,

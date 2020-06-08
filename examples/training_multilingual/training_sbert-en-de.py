@@ -47,6 +47,7 @@ teacher_model = SentenceTransformer('bert-base-nli-stsb-mean-tokens')
 logging.info("Create student model from scratch")
 word_embedding_model = models.Transformer("xlm-roberta-base")
 
+
 # Apply mean pooling to get one fixed sized sentence vector
 pooling_model = models.Pooling(word_embedding_model.get_word_embedding_dimension(),
                                pooling_mode_mean_tokens=True,
