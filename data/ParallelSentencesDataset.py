@@ -136,7 +136,7 @@ class ParallelSentencesDataset(BaseDataset):
         dataset_idx = self.copy_dataset_indices.pop()
 
         A = self.datasets[dataset_idx][idx % len(self.datasets[dataset_idx])][0][0]
-        print(A)
+
         B = self.datasets[dataset_idx][idx % len(self.datasets[dataset_idx])][1]
 
 

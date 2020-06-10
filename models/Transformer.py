@@ -28,7 +28,8 @@ class Transformer(nn.Module):
         output_tokens = output_states[0]
 
         cls_tokens = output_tokens[:, 0, :]  # CLS token is first token
-        features.update({'token_embeddings': output_tokens, 'cls_token_embeddings': cls_tokens, 'attention_mask': features['attention_mask']})
+        feats = {}
+        feats.update({'token_embeddings': output_tokens, 'cls_token_embeddings': cls_tokens})#, 'attention_mask': features['attention_mask']})
 
         if self.auto_model.config.output_hidden_states:
             all_layer_idx = 2
@@ -36,9 +37,9 @@ class Transformer(nn.Module):
                 all_layer_idx = 1
 
             hidden_states = output_states[all_layer_idx]
-            features.update({'all_layer_embeddings': hidden_states})
+            feats.update({'all_layer_embeddings': hidden_states})
 
-        return features
+        return feats
 
     def get_word_embedding_dimension(self) -> int:
         return self.auto_model.config.hidden_size
