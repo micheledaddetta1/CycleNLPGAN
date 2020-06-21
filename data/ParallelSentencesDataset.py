@@ -110,7 +110,12 @@ class ParallelSentencesDataset(BaseDataset):
 
         logging.info("Create sentence embeddings for " + os.path.basename(filepath))
         #encodings= self.model.netG_A.module.tokenize(eng_sentences)
-        eng_encodings = self.model.netG_A.module.encode(eng_sentences)#, batch_size=32, show_progress_bar=True), dtype=torch.float)
+        if self.opt.model == 'cycle_gan':
+            eng_encodings = self.model.netG_A.module.encode(
+                eng_sentences)  # , batch_size=32, show_progress_bar=True), dtype=torch.float)
+        elif self.opt.model == 'gan':
+            eng_encodings = self.model.netref.module.encode(eng_sentences)  # , batch_size=32, show_progress_bar=True), dtype=torch.float)
+
         self.dir_AB = os.path.join(self.opt.dataroot, self.opt.phase)  # get the image directory
 
         data = []
@@ -118,7 +123,10 @@ class ParallelSentencesDataset(BaseDataset):
             eng_key = eng_sentences[idx]
             embedding = eng_encodings[idx]
             for sent in sentences_map[eng_key]:
-                data.append([self.model.netG_B.module.encodeSentence(sent), embedding])
+                if self.opt.model == 'cycle_gan':
+                    data.append([self.model.netG_B.module.encodeSentence(sent), embedding])
+                elif self.opt.model == 'gan':
+                    data.append([self.model.netref.module.encodeSentence(sent), embedding])
 
         dataset_id = len(self.datasets)
         self.datasets.append(data)

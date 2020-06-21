@@ -18,6 +18,7 @@ from .XLMRoBERTa import XLMRoBERTa
 from .XLNet import XLNet
 from .SentenceTransformer import SentenceTransformer
 from .cycle_gan_model import CycleGANModel
+from .gan_model import GANModel
 from .base_model import BaseModel
 from .multi_layer_perceptron import MultiLayerPerceptron
 from . import networks

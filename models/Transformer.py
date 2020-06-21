@@ -21,15 +21,17 @@ class Transformer(nn.Module):
         self.auto_model = AutoModel.from_pretrained(model_name_or_path, config=config, cache_dir=cache_dir)
         self.tokenizer = AutoTokenizer.from_pretrained(model_name_or_path, cache_dir=cache_dir)
 
+        self.auto_model.config.output_attentions = True
+        self.auto_model.config.output_hidden_states = True
 
     def forward(self, features):
         """Returns token_embeddings, cls_token"""
-        output_states = self.auto_model(features)
+        output_states = self.auto_model(**features)
         output_tokens = output_states[0]
 
         cls_tokens = output_tokens[:, 0, :]  # CLS token is first token
-        feats = {}
-        feats.update({'token_embeddings': output_tokens, 'cls_token_embeddings': cls_tokens})#, 'attention_mask': features['attention_mask']})
+
+        features.update({'token_embeddings': output_tokens, 'cls_token_embeddings': cls_tokens, 'attention_mask': features['attention_mask']})
 
         if self.auto_model.config.output_hidden_states:
             all_layer_idx = 2
@@ -37,9 +39,9 @@ class Transformer(nn.Module):
                 all_layer_idx = 1
 
             hidden_states = output_states[all_layer_idx]
-            feats.update({'all_layer_embeddings': hidden_states})
+            features.update({'all_layer_embeddings': hidden_states})
 
-        return feats
+        return features
 
     def get_word_embedding_dimension(self) -> int:
         return self.auto_model.config.hidden_size
@@ -79,11 +81,11 @@ class Transformer(nn.Module):
             config = json.load(fIn)
         return Transformer(model_name_or_path=input_path, **config)
 
-    def encode(self,sentences):
+    def encode(self, sentences):
         logging.info("Trainer - encoding training data")
         train_input_ids = []
         for text in tqdm(sentences):
-            input_ids = self.tokenizer .encode(
+            input_ids = self.tokenizer.encode(
                 text,
                 add_special_tokens=True,
                 max_length=self.max_seq_length,
@@ -95,7 +97,7 @@ class Transformer(nn.Module):
         return train_input_ids
 
     def encodeSentence(self,sentence):
-        logging.info("Trainer - encoding training data")
+        logging.info("Trainer - encoding sentence")
         train_input_ids = []
         input_ids = self.tokenizer.encode(
                 sentence,
