@@ -98,7 +98,6 @@ class Transformer(nn.Module):
 
     def encodeSentence(self,sentence):
         logging.info("Trainer - encoding sentence")
-        train_input_ids = []
         input_ids = self.tokenizer.encode(
                 sentence,
                 add_special_tokens=True,
@@ -106,6 +105,7 @@ class Transformer(nn.Module):
                 pad_to_max_length=True,
                 return_tensors='pt'
             )
-        return input_ids
+
+        return input_ids[0, :]
 
 

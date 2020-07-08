@@ -34,7 +34,7 @@ def find_dataset_using_name(dataset_type):
     dataset = None
     target_dataset_type = dataset_type.replace('_', '') + 'Dataset'
     for name, cls in datasetlib.__dict__.items():
-        if name.lower() == target_dataset_type.lower() and issubclass(cls, BaseDataset) :
+        if name.lower() == target_dataset_type.lower() and issubclass(cls, BaseDataset):
             dataset = cls
 
     if dataset is None:

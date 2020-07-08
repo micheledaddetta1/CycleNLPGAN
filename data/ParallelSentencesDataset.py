@@ -143,11 +143,10 @@ class ParallelSentencesDataset(BaseDataset):
 
         dataset_idx = self.copy_dataset_indices.pop()
 
-        A = self.datasets[dataset_idx][idx % len(self.datasets[dataset_idx])][0][0]
+        A = self.datasets[dataset_idx][idx % len(self.datasets[dataset_idx])][0]
 
         B = self.datasets[dataset_idx][idx % len(self.datasets[dataset_idx])][1]
 
 
 
         return {'A': A, 'B': B, 'A_paths': self.filepaths[dataset_idx], 'B_paths': self.filepaths[dataset_idx]}
-        return self.datasets[dataset_idx][idx % len(self.datasets[dataset_idx])]
