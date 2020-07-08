@@ -5,6 +5,7 @@ from losses import CosineSimilarityLoss
 from util.image_pool import ImagePool
 from .base_model import BaseModel
 from . import networks
+from errors import NotEqualDimensionsError
 
 
 class GANModel(BaseModel):
@@ -41,6 +42,7 @@ class GANModel(BaseModel):
         parser.set_defaults(no_dropout=True)  # default CycleGAN did not use dropout
         if is_train:
             parser.add_argument('--net_ref', type=str, default='bert-base-cased', help='specify generator architecture [bert-base-cased]')
+            parser.add_argument('--type', type=str, default='A', help='specify the GAN model that should be used [A,B]') #A->concatenati e mandati insieme, B-> singolarmente
             parser.add_argument('--netG', type=str, default='bert-base-german-cased', help='specify generator architecture and language [bert-base-german-cased]')
 
 
@@ -75,15 +77,22 @@ class GANModel(BaseModel):
         # define networks (both Generators and discriminators)
         # The naming is different from those used in the paper.
         # Code (vs. paper): G_A (G), G_B (F), D_A (D_Y), D_B (D_X)
-        self.netG = networks.define_G(opt.netG, opt.norm,
+        self.netG = networks.define_G("encoder", opt.netG, opt.norm,
                                         not opt.no_dropout, opt.init_type, opt.init_gain, self.gpu_ids)
 
-        self.netref = networks.define_G(opt.net_ref, opt.norm,
+        self.netref = networks.define_G("encoder", opt.net_ref, opt.norm,
                                         not opt.no_dropout, opt.init_type, opt.init_gain, self.gpu_ids)
 
         if self.isTrain:  # define discriminators
-            in_dim = self.netG._modules['module'].get_word_embedding_dimension()
-            in_dim += self.netref._modules['module'].get_word_embedding_dimension()
+            if opt.type == 'A':
+                in_dim = self.netG._modules['module'].get_word_embedding_dimension()
+                in_dim += self.netref._modules['module'].get_word_embedding_dimension()
+            elif opt.type == 'B':
+                in_dim_G = self.netG._modules['module'].get_word_embedding_dimension()
+                in_dim_ref = self.netref._modules['module'].get_word_embedding_dimension() + 1
+                if in_dim_G != in_dim_ref :
+                    raise NotEqualDimensionsError('The reference model and the generator have different output dimensions')
+                in_dim=in_dim_G
 
             self.netD = networks.define_D(in_dim, opt.netD,
                                             opt.n_layers_D, opt.norm, opt.init_type, opt.init_gain, self.gpu_ids)
@@ -91,8 +100,6 @@ class GANModel(BaseModel):
         if self.isTrain:
             # define loss functions
             self.criterionGAN = networks.GANLoss(opt.gan_mode).to(self.device)  # define GAN loss.
-            self.criterionCycle = torch.nn.L1Loss()
-            self.criterionIdt = CosineSimilarityLoss()
             # initialize optimizers; schedulers will be automatically created by function <BaseModel.setup>.
             self.optimizer_G = torch.optim.Adam(self.netG.parameters(), lr=opt.lr, betas=(opt.beta1, 0.999))
             self.optimizer_D = torch.optim.Adam(self.netD.parameters(), lr=opt.lr, betas=(opt.beta1, 0.999))
@@ -124,10 +131,18 @@ class GANModel(BaseModel):
     def backward_D(self):
         """Calculate GAN loss for discriminator D_A"""
         # Real
-        pred_real = self.netD(torch.cat([self.landmark['all_layer_embeddings'].detach(), self.generated['all_layer_embeddings'].detach()]))
+        if self.opt.type == "A":
+            pred_real = self.netD(torch.cat([self.landmark['all_layer_embeddings'].detach(), self.generated['all_layer_embeddings'].detach()]))
+            generated = torch.tensor([]).to(self.device)
+            for i in range(len(self.generated['all_layer_embeddings'])):
+                j = (i+1) % len(self.generated['all_layer_embeddings'])
+                generated = torch.cat([generated, self.generated['all_layer_embeddings'][j]], dim=0)
+            pred_fake = self.netD(generated.detach())
+        elif self.opt.type == "B":
+            pred_real = self.netD(self.landmark['all_layer_embeddings'].detach())
+            pred_fake = self.netD(self.generated['all_layer_embeddings'].detach())
+
         loss_D_real = self.criterionGAN(pred_real, True)
-        # Fake
-        pred_fake = self.netD(torch.cat([self.landmark['all_layer_embeddings'].detach(), self.generated['all_layer_embeddings'].detach()]))
         loss_D_fake = self.criterionGAN(pred_fake, False)
 
         # Combined loss and calculate gradients
@@ -154,7 +169,7 @@ class GANModel(BaseModel):
             self.loss_idt_B = 0
         '''
         # GAN loss D(G(A))
-        self.loss_G = self.criterionGAN(self.netD(torch.cat([self.landmark['all_layer_embeddings'], self.generated['all_layer_embeddings']])), True)
+        self.loss_G = self.criterionGAN(self.netD(self.generated['all_layer_embeddings']), True)
         # combined loss and calculate gradients
         #self.loss_G = self.loss_G
         self.loss_G.backward()

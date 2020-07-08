@@ -6,6 +6,7 @@ from .BoW import BoW
 from .CamemBERT import CamemBERT
 from .Dense import Dense
 from .DistilBERT import DistilBERT
+from .EncDecModel import EncDecModel
 from .LSTM import LSTM
 from .Pooling import Pooling
 from .RoBERTa import RoBERTa

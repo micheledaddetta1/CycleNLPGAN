@@ -38,6 +38,13 @@ class CycleGANModel(BaseModel):
         Identity loss (optional): lambda_identity * (||G_A(B) - B|| * lambda_B + ||G_B(A) - A|| * lambda_A) (Sec 5.2 "Photo generation from paintings" in the paper)
         Dropout is not used in the original CycleGAN paper.
         """
+
+        parser.add_argument('--netG_A', type=str, default='marianMT',
+                            help='specify generator architecture and language [marianMT|bert-base-german-cased]')
+        parser.add_argument('--netG_B', type=str, default='marianMT',
+                            help='specify generator architecture and language [marianMT|bert-base-german-cased]')
+        parser.add_argument('--language', type=str, default='it', help='specify destination language')
+
         parser.set_defaults(no_dropout=True)  # default CycleGAN did not use dropout
         if is_train:
             parser.add_argument('--lambda_A', type=float, default=10.0, help='weight for cycle loss (A -> B -> A)')
@@ -72,15 +79,13 @@ class CycleGANModel(BaseModel):
         # define networks (both Generators and discriminators)
         # The naming is different from those used in the paper.
         # Code (vs. paper): G_A (G), G_B (F), D_A (D_Y), D_B (D_X)
-        self.ref_model = networks.define_G(opt.net_ref, opt.norm,
+        self.netG_A = networks.define_G("encoder-decoder", opt.netG_A, 'en', opt.language, opt.norm,
                                         not opt.no_dropout, opt.init_type, opt.init_gain, self.gpu_ids)
-        self.netG_A = networks.define_G(opt.netG_A, opt.norm,
-                                        not opt.no_dropout, opt.init_type, opt.init_gain, self.gpu_ids)
-        self.netG_B = networks.define_G(opt.netG_B, opt.norm,
+        self.netG_B = networks.define_G("encoder-decoder", opt.netG_B, opt.language, 'en', opt.norm,
                                         not opt.no_dropout, opt.init_type, opt.init_gain, self.gpu_ids)
 
         if self.isTrain:  # define discriminators
-            in_dim=self.netG_A._modules['module'].get_word_embedding_dimension()
+            in_dim = self.netG_A._modules['module'].get_word_embedding_dimension()
 
             self.netD_A = networks.define_D(in_dim, opt.netD,
                                             opt.n_layers_D, opt.norm, opt.init_type, opt.init_gain, self.gpu_ids)
@@ -116,13 +121,9 @@ class CycleGANModel(BaseModel):
     def forward(self):
         """Run forward pass; called by both functions <optimize_parameters> and <test>."""
         self.fake_B = self.netG_A(self.real_A)  # G_A(A)
-
-        fake_B = {'input_ids': self.fake_B['all_layer_embeddings'], 'attention_mask' : (self.fake_B['all_layer_embeddings'] > 0).to(self.device)}
-
-        #self.rec_A = self.netG_B(fake_B)   # G_B(G_A(A))
+        self.rec_A = self.netG_B(self.fake_B)   # G_B(G_A(A))
         self.fake_A = self.netG_B(self.real_B)  # G_B(B)
-        fake_A= {'input_ids': self.fake_B['all_layer_embeddings'], 'attention_mask' : (self.fake_B['all_layer_embeddings'] >0).to(self.device)}
-        #self.rec_B = self.netG_A(fake_A)   # G_A(G_B(B))
+        self.rec_B = self.netG_A(self.fake_A)   # G_A(G_B(B))
 
     def backward_D_basic(self, netD, real, fake):
         """Calculate GAN loss for the discriminator

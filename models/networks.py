@@ -3,7 +3,9 @@ import torch.nn as nn
 from torch.nn import init
 import functools
 from torch.optim import lr_scheduler
-from . import Transformer
+from transformers import EncoderDecoderModel, MarianTokenizer, MarianMTModel
+
+from . import Transformer, EncDecModel
 from . import SentenceTransformer
 from . import BERT
 from .multi_layer_perceptron import MultiLayerPerceptron
@@ -120,13 +122,11 @@ def init_net(net, init_type='normal', init_gain=0.02, gpu_ids=[]):
     return net#net_modules[next(iter(net._modules))]
 
 
-def define_G(netG, norm='batch', use_dropout=False, init_type='normal', init_gain=0.02, gpu_ids=[]):
+def define_G(model, netG, source='en', dest='it', norm='batch', use_dropout=False, init_type='normal', init_gain=0.02, gpu_ids=[]):
     """Create a generator
 
     Parameters:
-        input_nc (int) -- the number of channels in input images
-        output_nc (int) -- the number of channels in output images
-        ngf (int) -- the number of filters in the last conv layer
+        model (str) -- the type of the network: encoder | encoder-decoder
         netG (str) -- the architecture's name: resnet_9blocks | resnet_6blocks | unet_256 | unet_128
         norm (str) -- the name of normalization layers used in the network: batch | instance | none
         use_dropout (bool) -- if use dropout layers.
@@ -162,17 +162,21 @@ def define_G(netG, norm='batch', use_dropout=False, init_type='normal', init_gai
     else:
         raise NotImplementedError('Generator model name [%s] is not recognized' % netG)
     '''
-    net=Transformer(netG)
-    #net=SentenceTransformer(netG)
-    #BERT=net._first_module()
-    #net=BERT(netG)
-    #return net
+    if model == 'encoder':
+        net = Transformer(netG)
+    elif model == 'encoder-decoder':
+        if netG == 'marianMT':
+            model_name = 'Helsinki-NLP/opus-mt-'+source+'-'+dest
+            net = EncDecModel(model_name)
+        else:
+            net = EncoderDecoderModel.from_encoder_decoder_pretrained('bert-base-cased', 'bert-base-german-cased')    #net=SentenceTransformer(netG)
+
     return init_net(net, init_type, init_gain, gpu_ids)
 
 
 
 def define_D(input_dim, netD, n_layers_D=3, norm='batch', init_type='normal', init_gain=0.02, gpu_ids=[]):
-    """Create a discriminator
+    """Create a discriminator9
 
     Parameters:
         input_nc (int)     -- the number of channels in input images
