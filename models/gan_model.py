@@ -77,10 +77,10 @@ class GANModel(BaseModel):
         # define networks (both Generators and discriminators)
         # The naming is different from those used in the paper.
         # Code (vs. paper): G_A (G), G_B (F), D_A (D_Y), D_B (D_X)
-        self.netG = networks.define_G("encoder", opt.netG, opt.norm,
+        self.netG = networks.define_G("encoder", opt.netG, '', '', opt.norm,
                                         not opt.no_dropout, opt.init_type, opt.init_gain, self.gpu_ids)
 
-        self.netref = networks.define_G("encoder", opt.net_ref, opt.norm,
+        self.netref = networks.define_G("encoder", opt.net_ref, '', '', opt.norm,
                                         not opt.no_dropout, opt.init_type, opt.init_gain, self.gpu_ids)
 
         if self.isTrain:  # define discriminators
@@ -177,6 +177,8 @@ class GANModel(BaseModel):
     def optimize_parameters(self):
         """Calculate losses, gradients, and update network weights; called in every training iteration"""
         # forward
+        self.netG._modules['module'].train()
+        self.netD._modules['module'].train()
         self.forward()      # compute fake images and reconstruction images.
         # G_A and G_B
         self.set_requires_grad(self.netD, False)  # Ds require no gradients when optimizing Gs
@@ -189,3 +191,7 @@ class GANModel(BaseModel):
         self.backward_D()      # calculate gradients for D_A
         #self.backward_D_B()      # calculate graidents for D_B
         self.optimizer_D.step()  # update D_A and D_B's weights
+
+
+        self.netG._modules['module'].eval()
+        self.netD._modules['module'].eval()

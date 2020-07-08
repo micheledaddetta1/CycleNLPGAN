@@ -49,7 +49,7 @@ class ParallelSentencesDataset(BaseDataset):
         """
         BaseDataset.__init__(self, opt)
         self.model = model
-        self.filepaths = ["TED2013-en-de.txt.gz", "STS2017.en-de.txt.gz", "xnli-en-de.txt.gz"]
+        self.filepaths = ["TED2013-en-de.txt.gz"]#, "STS2017.en-de.txt.gz", "xnli-en-de.txt.gz"]
         self.datasets = []
         self.dataset_indices = []
         self.copy_dataset_indices = []
