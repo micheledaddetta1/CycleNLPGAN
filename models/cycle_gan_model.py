@@ -1,3 +1,5 @@
+from copy import deepcopy
+
 import torch
 import itertools
 
@@ -43,7 +45,7 @@ class CycleGANModel(BaseModel):
                             help='specify generator architecture and language [marianMT|bert-base-german-cased]')
         parser.add_argument('--netG_B', type=str, default='marianMT',
                             help='specify generator architecture and language [marianMT|bert-base-german-cased]')
-        parser.add_argument('--language', type=str, default='it', help='specify destination language')
+        parser.add_argument('--language', type=str, default='de', help='specify destination language')
 
         parser.set_defaults(no_dropout=True)  # default CycleGAN did not use dropout
         if is_train:
@@ -84,6 +86,15 @@ class CycleGANModel(BaseModel):
         self.netG_B = networks.define_G("encoder-decoder", opt.netG_B, opt.language, 'en', opt.norm,
                                         not opt.no_dropout, opt.init_type, opt.init_gain, self.gpu_ids)
 
+        tmp = deepcopy(self.netG_A._modules['module'].get_encoder())
+        self.netG_A._modules['module'].model.base_model.encoder = deepcopy(self.netG_B._modules['module'].model.get_encoder())
+        self.netG_B._modules['module'].model.base_model.encoder = deepcopy(tmp)
+        self.netG_A._modules['module'].to(self.gpu_ids[0])
+        self.netG_B._modules['module'].to(self.gpu_ids[0])
+
+
+
+
         if self.isTrain:  # define discriminators
             in_dim = self.netG_A._modules['module'].get_word_embedding_dimension()
 
@@ -113,17 +124,35 @@ class CycleGANModel(BaseModel):
         """
         torch.cuda.empty_cache()
         AtoB = self.opt.direction == 'AtoB'
-        self.real_A = {'input_ids': input['A' if AtoB else 'B'].to(self.device), 'attention_mask': (input['A' if AtoB else 'B'] > 0).to(self.device)}
-        self.real_B = {'input_ids': input['B' if AtoB else 'A'].to(self.device), 'attention_mask': (input['B' if AtoB else 'A'] > 0).to(self.device)}
+        if self.opt.dataset_mode == "ParallelSentences":
+            self.real_A = input['A' if AtoB else 'B']
+            self.real_B = input['B' if AtoB else 'A']
+        else:
+            self.real_A = {'input_ids': input['A' if AtoB else 'B'].to(self.device), 'attention_mask': (input['A' if AtoB else 'B'] > 0).to(self.device)}
+            self.real_B = {'input_ids': input['B' if AtoB else 'A'].to(self.device), 'attention_mask': (input['B' if AtoB else 'A'] > 0).to(self.device)}
 
         self.sentence_paths = input['A_paths' if AtoB else 'B_paths']
 
     def forward(self):
-        """Run forward pass; called by both functions <optimize_parameters> and <test>."""
-        self.fake_B = self.netG_A(self.real_A)  # G_A(A)
-        self.rec_A = self.netG_B(self.fake_B)   # G_B(G_A(A))
-        self.fake_A = self.netG_B(self.real_B)  # G_B(B)
-        self.rec_B = self.netG_A(self.fake_A)   # G_A(G_B(B))
+
+        if self.opt.dataset_mode == "ParallelSentences":
+            self.fake_B = self.netG_A._modules['module'].generate(self.real_A)
+            self.fake_B = self.netG_A._modules['module'].decode(self.fake_B)
+
+            self.rec_A = self.netG_B._modules['module'].generate(self.fake_B)
+            self.rec_A = self.netG_A._modules['module'].decode(self.rec_A)
+
+            self.fake_A = self.netG_A._modules['module'].generate(self.real_B)
+            self.fake_A = self.netG_A._modules['module'].decode(self.fake_A)
+
+            self.rec_B = self.netG_A._modules['module'].generate(self.fake_A)
+            self.rec_B = self.netG_A._modules['module'].decode(self.rec_B)
+        elif self.opt.dataset_mode == "ParallelEmbeddings":
+            """Run forward pass; called by both functions <optimize_parameters> and <test>."""
+            self.fake_B = self.netG_A(self.real_A)  # G_A(A)
+            self.rec_A = self.netG_B(self.fake_B)   # G_B(G_A(A))
+            self.fake_A = self.netG_B(self.real_B)  # G_B(B)
+            self.rec_B = self.netG_A(self.fake_A)   # G_A(G_B(B))
 
     def backward_D_basic(self, netD, real, fake):
         """Calculate GAN loss for the discriminator
@@ -166,7 +195,7 @@ class CycleGANModel(BaseModel):
         if lambda_idt > 0:
             # G_A should be identity if real_B is fed: ||G_A(B) - B||
             self.idt_A = self.netG_A(self.real_B)
-            self.loss_idt_A = self.criterionIdt(self.idt_A['all_layer_embeddings'], self.real_B['all_layer_embeddings']) * lambda_B * lambda_idt
+            self.loss_idt_A = self.criterionIdt(self.idt_A, self.real_B) * lambda_B * lambda_idt
             # G_B should be identity if real_A is fed: ||G_B(A) - A||
             self.idt_B = self.netG_B(self.real_A)
             self.loss_idt_B = self.criterionIdt(self.idt_B, self.real_A) * lambda_A * lambda_idt

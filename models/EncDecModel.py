@@ -1,13 +1,14 @@
 import torch
 from torch import nn
 from tqdm import tqdm
-from transformers import AutoModel, AutoTokenizer, AutoConfig
+from transformers import AutoModel, AutoTokenizer, AutoConfig, MarianTokenizer, MarianMTModel
 import json
 from typing import List, Dict, Optional, Tuple
 import os
 import numpy as np
 import logging
 from transformers import modeling_bart
+from transformers.tokenization_utils import BatchEncoding
 
 
 class EncDecModel(nn.Module):
@@ -20,82 +21,25 @@ class EncDecModel(nn.Module):
         self.max_seq_length = max_seq_length
 
         config = AutoConfig.from_pretrained(model_name_or_path, **model_args, cache_dir=cache_dir)
-        model = AutoModel.from_pretrained(model_name_or_path, config=config, cache_dir=cache_dir)
-        self.encoder = model.encoder
-        self.decoder = model.decoder
-        self.config = model.config
-        self.config_class = model.config_class
-        self.device = model.device
-        self.dtype = model.dtype
-        self.tokenizer = AutoTokenizer.from_pretrained(model_name_or_path, cache_dir=cache_dir)
+        self.model = MarianMTModel.from_pretrained(model_name_or_path, config=config, cache_dir=cache_dir)
+        self.tokenizer = MarianTokenizer.from_pretrained(model_name_or_path, cache_dir=cache_dir)
 
+        self.config = self.model.config
+        self.config_class = self.model.config_class
+        self.device = self.model.device
+        self.dtype = self.model.dtype
 
         self.output_attentions = True
         self.output_hidden_states = True
         self.config.output_attentions = True
         self.config.output_hidden_states = True
-        self.encoder.output_attentions = True
-        self.encoder.output_hidden_states = True
-        self.decoder.output_attentions = True
-        self.decoder.output_hidden_states = True
-
-    def forward(self, features):
-        """Returns token_embeddings, cls_token"""
-        decoder_input_ids=None
-        if 'decoder_input_ids' not in features:
-            use_cache = False
-        else:
-            decoder_input_ids= features['decoder_input_ids']
-
-        decoder_attention_mask= features['decoder_attention_mask'] if 'decoder_attention_mask' in features else None
-        output_attentions = self.config.output_attentions
-        output_hidden_states = self.config.output_hidden_states
-        decoder_cached_states = features['decoder_cached_states'] if 'decoder_cached_states' in features else None
-
-        use_cache = use_cache if use_cache is not None else self.config.use_cache
-
-        # make masks if user doesn't supply
-        if not use_cache:
-            decoder_input_ids, decoder_padding_mask, causal_mask = modeling_bart._prepare_bart_decoder_inputs(
-                self.config,
-                features['input_ids'],
-                decoder_input_ids=decoder_input_ids,
-                decoder_padding_mask=decoder_attention_mask,
-                causal_mask_dtype=self.dtype,
-            )
-        else:
-            decoder_padding_mask, causal_mask = None, None
-
-        assert decoder_input_ids is not None
-
-        if 'encoder_outputs' not in features:
-            encoder_outputs = self.encoder(
-                input_ids=features['input_ids'],
-                attention_mask=features['attention_mask'],
-            )
-
-        assert isinstance(encoder_outputs, tuple)
-        # decoder outputs consists of (dec_features, layer_state, dec_hidden, dec_attn)
-        decoder_outputs = self.decoder(
-            decoder_input_ids,
-            encoder_outputs[0],
-            features['attention_mask'],
-            decoder_padding_mask,
-            decoder_causal_mask=causal_mask,
-            decoder_cached_states=decoder_cached_states,
-            output_attentions=output_attentions,
-            output_hidden_states=output_hidden_states,
-            use_cache=use_cache,
-        )
-
-        # Attention and hidden_states will be [] or None if they aren't needed
-        decoder_outputs: Tuple = modeling_bart._filter_out_falsey_values(decoder_outputs)
-        assert isinstance(decoder_outputs[0], torch.Tensor)
-        encoder_outputs: Tuple = modeling_bart._filter_out_falsey_values(encoder_outputs)
-
-        return decoder_outputs + encoder_outputs
 
 
+    def forward(self, sentences):
+        output = self.generate(sentences)
+        output = self.decode(output)
+
+        return output
 
 
     def get_word_embedding_dimension(self) -> int:
@@ -161,5 +105,15 @@ class EncDecModel(nn.Module):
                 pad_to_max_length=True,
                 return_tensors='pt'
             )
-        return input_ids
+        return input_ids[0, :]
 
+    def generate(self, text):
+        encod = self.tokenizer.prepare_translation_batch(text).to(self.model.device)
+        return self.model.generate(**encod)
+
+    def get_encoder(self):
+        return self.model.get_encoder()
+
+
+    def decode(self, tokens):
+        return [self.tokenizer.decode(t, skip_special_tokens=True) for t in tokens]

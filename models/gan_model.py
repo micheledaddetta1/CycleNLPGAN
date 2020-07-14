@@ -179,6 +179,7 @@ class GANModel(BaseModel):
         # forward
         self.netG._modules['module'].train()
         self.netD._modules['module'].train()
+
         self.forward()      # compute fake images and reconstruction images.
         # G_A and G_B
         self.set_requires_grad(self.netD, False)  # Ds require no gradients when optimizing Gs

@@ -17,6 +17,7 @@ import torch.utils.data
 from .BaseDataset import BaseDataset
 from .InputExample import InputExample
 from .ParallelSentencesDataset import ParallelSentencesDataset
+from .ParallelEmbeddingsDataset import ParallelEmbeddingsDataset
 #from .SentenceLabelDataset import SentenceLabelDataset
 from .SentencesDataset import SentencesDataset
 

@@ -12,7 +12,7 @@ import urllib.request
 
 
 
-class ParallelSentencesDataset(BaseDataset):
+class ParallelEmbeddingsDataset(BaseDataset):
     """
     This dataset reader can be used to read-in parallel sentences, i.e., it reads in a file with tab-seperated sentences with the same
     sentence in different languages. For example, the file can look like this (EN\tDE\tES):
@@ -76,7 +76,6 @@ class ParallelSentencesDataset(BaseDataset):
         :param max_sentence_length: Skip the example if one of the sentences is has more characters than max_sentence_length
         :return:
         """
-        data=[]
         filepath = os.path.join(self.root, self.filepaths[0])
         weight = self.opt.param_weight
         max_sentences = self.opt.max_sentences
@@ -102,7 +101,6 @@ class ParallelSentencesDataset(BaseDataset):
                 for sent in sentences:
                     if sent != eng_sentence:
                         sentences_map[eng_sentence].add(sent)
-                        data.append([sent, eng_sentence])
 
                 count += 1
                 if max_sentences is not None and count >= max_sentences:
@@ -110,7 +108,25 @@ class ParallelSentencesDataset(BaseDataset):
 
         eng_sentences = list(sentences_map.keys())
 
+        logging.info("Create sentence embeddings for " + os.path.basename(filepath))
+        #encodings= self.model.netG_A.module.tokenize(eng_sentences)
+        if self.opt.model == 'cycle_gan':
+            eng_encodings = self.model.netG_A.module.encode(
+                eng_sentences)  # , batch_size=32, show_progress_bar=True), dtype=torch.float)
+        elif self.opt.model == 'gan':
+            eng_encodings = self.model.netref.module.encode(eng_sentences)  # , batch_size=32, show_progress_bar=True), dtype=torch.float)
+
         self.dir_AB = os.path.join(self.opt.dataroot, self.opt.phase)  # get the image directory
+
+        data = []
+        for idx in tqdm(range(len(eng_sentences))):
+            eng_key = eng_sentences[idx]
+            embedding = eng_encodings[idx]
+            for sent in sentences_map[eng_key]:
+                if self.opt.model == 'cycle_gan':
+                    data.append([self.model.netG_B.module.encodeSentence(sent), embedding])
+                elif self.opt.model == 'gan':
+                    data.append([self.model.netref.module.encodeSentence(sent), embedding])
 
         dataset_id = len(self.datasets)
         self.datasets.append(data)

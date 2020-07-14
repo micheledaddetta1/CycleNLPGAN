@@ -122,7 +122,7 @@ def init_net(net, init_type='normal', init_gain=0.02, gpu_ids=[]):
     return net#net_modules[next(iter(net._modules))]
 
 
-def define_G(model, netG, source='en', dest='it', norm='batch', use_dropout=False, init_type='normal', init_gain=0.02, gpu_ids=[]):
+def define_G(model, netG, source='en', dest='de', norm='batch', use_dropout=False, init_type='normal', init_gain=0.02, gpu_ids=[]):
     """Create a generator
 
     Parameters:
