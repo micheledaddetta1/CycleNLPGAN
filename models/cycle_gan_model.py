@@ -81,16 +81,10 @@ class CycleGANModel(BaseModel):
         # define networks (both Generators and discriminators)
         # The naming is different from those used in the paper.
         # Code (vs. paper): G_A (G), G_B (F), D_A (D_Y), D_B (D_X)
-        self.netG_A = networks.define_G("encoder-decoder", opt.netG_A, 'en', opt.language, opt.norm,
-                                        not opt.no_dropout, opt.init_type, opt.init_gain, self.gpu_ids)
-        self.netG_B = networks.define_G("encoder-decoder", opt.netG_B, opt.language, 'en', opt.norm,
-                                        not opt.no_dropout, opt.init_type, opt.init_gain, self.gpu_ids)
 
-        tmp = deepcopy(self.netG_A._modules['module'].get_encoder())
-        self.netG_A._modules['module'].model.base_model.encoder = deepcopy(self.netG_B._modules['module'].model.get_encoder())
-        self.netG_B._modules['module'].model.base_model.encoder = deepcopy(tmp)
-        self.netG_A._modules['module'].to(self.gpu_ids[0])
-        self.netG_B._modules['module'].to(self.gpu_ids[0])
+
+        self.netG_A, self.netG_B = networks.define_Gs(opt.netG_A, opt.netG_B, 'en', opt.language, opt.norm,
+                                        not opt.no_dropout, opt.init_type, opt.init_gain, self.gpu_ids)
 
 
 
@@ -134,7 +128,7 @@ class CycleGANModel(BaseModel):
         self.sentence_paths = input['A_paths' if AtoB else 'B_paths']
 
     def forward(self):
-
+        '''
         if self.opt.dataset_mode == "ParallelSentences":
             self.fake_B = self.netG_A._modules['module'].generate(self.real_A)
             self.fake_B = self.netG_A._modules['module'].decode(self.fake_B)
@@ -148,11 +142,13 @@ class CycleGANModel(BaseModel):
             self.rec_B = self.netG_A._modules['module'].generate(self.fake_A)
             self.rec_B = self.netG_A._modules['module'].decode(self.rec_B)
         elif self.opt.dataset_mode == "ParallelEmbeddings":
-            """Run forward pass; called by both functions <optimize_parameters> and <test>."""
-            self.fake_B = self.netG_A(self.real_A)  # G_A(A)
-            self.rec_A = self.netG_B(self.fake_B)   # G_B(G_A(A))
-            self.fake_A = self.netG_B(self.real_B)  # G_B(B)
-            self.rec_B = self.netG_A(self.fake_A)   # G_A(G_B(B))
+        '''
+
+        """Run forward pass; called by both functions <optimize_parameters> and <test>."""
+        self.fake_B = self.netG_A(self.real_A)  # G_A(A)
+        self.rec_A = self.netG_B(self.fake_B)   # G_B(G_A(A))
+        self.fake_A = self.netG_B(self.real_B)  # G_B(B)
+        self.rec_B = self.netG_A(self.fake_A)   # G_A(G_B(B))
 
     def backward_D_basic(self, netD, real, fake):
         """Calculate GAN loss for the discriminator

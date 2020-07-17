@@ -26,7 +26,7 @@ class EncDecModel(nn.Module):
 
         self.config = self.model.config
         self.config_class = self.model.config_class
-        self.device = self.model.device
+        #self.device = self.model.device
         self.dtype = self.model.dtype
 
         self.output_attentions = True
@@ -35,11 +35,14 @@ class EncDecModel(nn.Module):
         self.config.output_hidden_states = True
 
 
-    def forward(self, sentences):
-        output = self.generate(sentences)
-        output = self.decode(output)
+    def forward(self, sentences, partial_value=False):
+        partial = self.generate(sentences)
+        output = self.decode(partial)
 
-        return output
+        if partial_value:
+            return output, partial
+        else:
+            return output
 
 
     def get_word_embedding_dimension(self) -> int:
@@ -109,7 +112,8 @@ class EncDecModel(nn.Module):
 
     def generate(self, text):
         encod = self.tokenizer.prepare_translation_batch(text).to(self.model.device)
-        return self.model.generate(**encod)
+        output = self.model.generate(**encod)
+        return output
 
     def get_encoder(self):
         return self.model.get_encoder()

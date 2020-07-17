@@ -1,3 +1,5 @@
+from copy import deepcopy
+
 import torch
 import torch.nn as nn
 from torch.nn import init
@@ -116,13 +118,35 @@ def init_net(net, init_type='normal', init_gain=0.02, gpu_ids=[]):
     """
     if len(gpu_ids) > 0:
         assert(torch.cuda.is_available())
-        net.to(gpu_ids[0])
-        net=torch.nn.DataParallel(net,gpu_ids) #net._modules[next(iter(net._modules))] = torch.nn.DataParallel(net._first_module(), gpu_ids)  # multi-GPUs
+        net = net.to(gpu_ids[0])
+        net = torch.nn.DataParallel(net, gpu_ids)
+
+        #net._modules[next(iter(net._modules))] = torch.nn.DataParallel(net._first_module(), gpu_ids)  # multi-GPUs
     #init_weights(net, init_type, init_gain=init_gain)
     return net#net_modules[next(iter(net._modules))]
 
 
-def define_G(model, netG, source='en', dest='de', norm='batch', use_dropout=False, init_type='normal', init_gain=0.02, gpu_ids=[]):
+def define_Gs(netG_A, netG_B, source='en', dest='de', norm='batch', use_dropout=False, init_type='normal', init_gain=0.02, gpu_ids=[]):
+    netA = define_G("encoder-decoder", netG_A, source, dest, norm, use_dropout, init_type, init_gain, gpu_ids, False)
+    netB = define_G("encoder-decoder", netG_B, dest, source, norm, use_dropout, init_type, init_gain, gpu_ids, False)
+
+    '''
+    tmp = deepcopy(netA.get_encoder())
+    netA.model.base_model.encoder = deepcopy(netB.model.get_encoder())
+    netB.model.base_model.encoder = deepcopy(tmp)
+    '''
+
+    tmp = netA.model.base_model.encoder
+    netA.model.base_model.encoder = netB.model.base_model.encoder
+    netB.model.base_model.encoder = tmp
+
+    netA = init_net(netA, init_type, init_gain, gpu_ids)
+    netB = init_net(netB, init_type, init_gain, gpu_ids)
+
+    return netA, netB
+
+
+def define_G(model, netG, source='en', dest='de', norm='batch', use_dropout=False, init_type='normal', init_gain=0.02, gpu_ids=[], use_init_net= True):
     """Create a generator
 
     Parameters:
@@ -171,8 +195,10 @@ def define_G(model, netG, source='en', dest='de', norm='batch', use_dropout=Fals
         else:
             net = EncoderDecoderModel.from_encoder_decoder_pretrained('bert-base-cased', 'bert-base-german-cased')    #net=SentenceTransformer(netG)
 
-    return init_net(net, init_type, init_gain, gpu_ids)
-
+    if use_init_net == True:
+        return init_net(net, init_type, init_gain, gpu_ids)
+    else:
+        return net
 
 
 def define_D(input_dim, netD, n_layers_D=3, norm='batch', init_type='normal', init_gain=0.02, gpu_ids=[]):

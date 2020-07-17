@@ -39,7 +39,7 @@ class BaseOptions():
         # dataset parameters
 
         parser.add_argument('--dataset_mode', type=str, default='ParallelSentences', help='chooses how datasets are loaded. [ParallelSentences | ParallelEmbeddings | Sentences]')
-        parser.add_argument('--max_sentences', type=int, default=128, help='Max number of lines to be read from filepath')
+        parser.add_argument('--max_sentences', type=int, default=0, help='Max number of lines to be read from filepath')
         parser.add_argument('--max_sentence_length', type=int, default=128, help='Skip the example if one of the sentences is has more characters than max_sentence_length')
         parser.add_argument('--param_weight', type=int, default=100,help='If more that one dataset is loaded with load_data: With which frequency should data be sampled from this dataset?')
 
