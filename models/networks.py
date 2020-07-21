@@ -125,21 +125,74 @@ def init_net(net, init_type='normal', init_gain=0.02, gpu_ids=[]):
     #init_weights(net, init_type, init_gain=init_gain)
     return net#net_modules[next(iter(net._modules))]
 
+def define_name(model_name,language):
+    if model_name == 'mpl':
+        return model_name
 
-def define_Gs(netG_A, netG_B, source='en', dest='de', norm='batch', use_dropout=False, init_type='normal', init_gain=0.02, gpu_ids=[]):
-    netA = define_G("encoder-decoder", netG_A, source, dest, norm, use_dropout, init_type, init_gain, gpu_ids, False)
-    netB = define_G("encoder-decoder", netG_B, dest, source, norm, use_dropout, init_type, init_gain, gpu_ids, False)
+    complete_name = model_name
+    if language == 'en':
+        complete_name = complete_name
+    elif language == 'de':
+        complete_name = complete_name+"-german"
+    else:
+        raise NotImplementedError('Language [%s] is not implemented',language)
 
-    '''
-    tmp = deepcopy(netA.get_encoder())
-    netA.model.base_model.encoder = deepcopy(netB.model.get_encoder())
-    netB.model.base_model.encoder = deepcopy(tmp)
-    '''
+    complete_name = complete_name +"-cased"
+    return complete_name
 
-    tmp = netA.model.base_model.encoder
-    netA.model.base_model.encoder = netB.model.base_model.encoder
-    netB.model.base_model.encoder = tmp
+def define_Gs(task, net_encoder, net_decoder,  source='de', dest='en', norm='batch', use_dropout=False, init_type='normal', init_gain=0.02, gpu_ids=[]):
 
+    netA = define_G("encoder-decoder", net_decoder, source, dest, norm, use_dropout, init_type, init_gain, gpu_ids, False)
+    netB = define_G("encoder-decoder", net_decoder, dest, source, norm, use_dropout, init_type, init_gain, gpu_ids, False)
+    netA.model.base_model.train()
+    netB.model.base_model.train()
+    netA.model.base_model.encoder.train()
+    netB.model.base_model.encoder.train()
+    netA.model.base_model.decoder.eval()
+    netB.model.base_model.decoder.eval()
+
+    if task == "translation":
+        netA_name = define_name(net_encoder, source)
+        netB_name = define_name(net_encoder, dest)
+        netA_encoder=define_G("encoder", netA_name, source, dest, norm, use_dropout, init_type, init_gain, gpu_ids, False)
+        #netA_encoder.auto_model = netA_encoder.auto_model
+        netB_encoder = define_G("encoder", netB_name, source, dest, norm, use_dropout, init_type, init_gain, gpu_ids, False)
+        #netB_encoder.auto_model = netB_encoder.auto_model
+
+        original_encoder_out = netA.get_word_embedding_dimension()
+        new_encoder_out = netA_encoder.get_word_embedding_dimension()
+
+        netA_encoder.train()
+        netB_encoder.train()
+
+        netA.model.base_model.encoder = deepcopy(netA_encoder.auto_model)
+        netB.model.base_model.encoder = deepcopy(netB_encoder.auto_model)
+        netA.dest_tokenizer = deepcopy(netA.tokenizer)
+        netB.dest_tokenizer = deepcopy(netB.tokenizer)
+        netA.tokenizer = deepcopy(netA_encoder.tokenizer)
+        netB.tokenizer = deepcopy(netB_encoder.tokenizer)
+        if original_encoder_out != new_encoder_out:
+            netA.model.base_model.pooling_layer = nn.Linear(new_encoder_out, original_encoder_out)
+            netB.model.base_model.pooling_layer = nn.Linear(new_encoder_out, original_encoder_out)
+
+        netA.redefine_config()
+        netB.redefine_config()
+
+    elif task == "reconstruction":
+
+        tmp = deepcopy(netA.model.base_model.encoder)
+        netA.model.base_model.encoder = deepcopy(netB.model.base_model)
+        netB.model.base_model.encoder = deepcopy(tmp)
+        netA.dest_tokenizer = deepcopy(netA.tokenizer)
+        netB.dest_tokenizer = deepcopy(netB.tokenizer)
+        tmp = deepcopy(netA.tokenizer)
+        netA.tokenizer = deepcopy(netB.tokenizer)
+        netB.tokenizer = deepcopy(tmp)
+    else:
+        raise NotImplementedError('Task [%s] is not implemented', task)
+
+    netA.task = task
+    netB.task = task
     netA = init_net(netA, init_type, init_gain, gpu_ids)
     netB = init_net(netB, init_type, init_gain, gpu_ids)
 
@@ -202,7 +255,7 @@ def define_G(model, netG, source='en', dest='de', norm='batch', use_dropout=Fals
 
 
 def define_D(input_dim, netD, n_layers_D=3, norm='batch', init_type='normal', init_gain=0.02, gpu_ids=[]):
-    """Create a discriminator9
+    """Create a discriminator
 
     Parameters:
         input_nc (int)     -- the number of channels in input images
@@ -237,7 +290,8 @@ def define_D(input_dim, netD, n_layers_D=3, norm='batch', init_type='normal', in
     if netD == 'mlp':     # classify if each pixel is real or fake
         net = MultiLayerPerceptron(input_dim, out_dim=1, n_layers=n_layers_D)
     else:
-        raise NotImplementedError('Discriminator model name [%s] is not recognized' % netD)
+        net = Transformer(netD)
+        #raise NotImplementedError('Discriminator model name [%s] is not recognized' % netD)
     return init_net(net, init_type, init_gain, gpu_ids)
 
 

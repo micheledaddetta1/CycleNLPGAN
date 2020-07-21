@@ -4,20 +4,10 @@ from typing import Union, Tuple, List, Iterable, Dict
 from models import Transformer
 
 class CosineSimilarityLoss(nn.Module):
-    def __init__(self):#, model: Transformer):
+    def __init__(self):
         super(CosineSimilarityLoss, self).__init__()
-        #self.model = model
 
 
-    def forward(self, sentence_features: Iterable[Dict[str, Tensor]], labels: Tensor):
-        reps = [self.model(sentence_feature)['sentence_embedding'] for sentence_feature in sentence_features]
-        rep_a, rep_b = reps
-
-        output = torch.cosine_similarity(rep_a, rep_b)
-        loss_fct = nn.MSELoss()
-
-        if labels is not None:
-            loss = loss_fct(output, labels.view(-1))
-            return loss
-        else:
-            return reps, output
+    def forward(self, sentence_feature_generated, sentence_feature_real):
+        output = torch.cosine_similarity(sentence_feature_generated, sentence_feature_real)
+        return output

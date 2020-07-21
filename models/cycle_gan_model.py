@@ -40,19 +40,21 @@ class CycleGANModel(BaseModel):
         Identity loss (optional): lambda_identity * (||G_A(B) - B|| * lambda_B + ||G_B(A) - A|| * lambda_A) (Sec 5.2 "Photo generation from paintings" in the paper)
         Dropout is not used in the original CycleGAN paper.
         """
+        parser.add_argument('--task', type=str, default='reconstruction',
+                            help='specify the task of the CycleGAN [translation|reconstruction]')
+        parser.add_argument('--encoder', type=str, default='bert-base',
+                            help='specify generator architecture and language [marianMT|bert-base-german-cased]')
+        parser.add_argument('--decoder', type=str, default='marianMT',
+                            help='specify generator architecture and language [marianMT|bert-base-german-cased]')
 
-        parser.add_argument('--netG_A', type=str, default='marianMT',
-                            help='specify generator architecture and language [marianMT|bert-base-german-cased]')
-        parser.add_argument('--netG_B', type=str, default='marianMT',
-                            help='specify generator architecture and language [marianMT|bert-base-german-cased]')
         parser.add_argument('--language', type=str, default='de', help='specify destination language')
 
         parser.set_defaults(no_dropout=True)  # default CycleGAN did not use dropout
         if is_train:
             parser.add_argument('--lambda_A', type=float, default=10.0, help='weight for cycle loss (A -> B -> A)')
             parser.add_argument('--lambda_B', type=float, default=10.0, help='weight for cycle loss (B -> A -> B)')
-            parser.add_argument('--lambda_identity', type=float, default=0.5, help='use identity mapping. Setting lambda_identity other than 0 has an effect of scaling the weight of the identity mapping loss. For example, if the weight of the identity loss should be 10 times smaller than the weight of the reconstruction loss, please set lambda_identity = 0.1')
-
+            parser.add_argument('--lambda_identity', type=float, default=0, help='use identity mapping. Setting lambda_identity other than 0 has an effect of scaling the weight of the identity mapping loss. For example, if the weight of the identity loss should be 10 times smaller than the weight of the reconstruction loss, please set lambda_identity = 0.1')
+            #0.5
         return parser
 
     def __init__(self, opt):
@@ -83,24 +85,26 @@ class CycleGANModel(BaseModel):
         # Code (vs. paper): G_A (G), G_B (F), D_A (D_Y), D_B (D_X)
 
 
-        self.netG_A, self.netG_B = networks.define_Gs(opt.netG_A, opt.netG_B, 'en', opt.language, opt.norm,
+        self.netG_A, self.netG_B = networks.define_Gs(opt.task, opt.encoder, opt.decoder, opt.language, 'en', opt.norm,
                                         not opt.no_dropout, opt.init_type, opt.init_gain, self.gpu_ids)
-
-
-
+        self.set_requires_grad([self.netG_A._modules['module'].model.base_model.decoder, self.netG_B._modules['module'].model.base_model.decoder],
+                          False)  # Ds require no gradients when optimizing Gs
 
         if self.isTrain:  # define discriminators
             in_dim = self.netG_A._modules['module'].get_word_embedding_dimension()
 
-            self.netD_A = networks.define_D(in_dim, opt.netD,
+            netDB_name=networks.define_name(opt.netD, 'en')
+            netDA_name=networks.define_name(opt.netD, opt.language)
+
+            self.netD_A = networks.define_D(in_dim, netDA_name,
                                             opt.n_layers_D, opt.norm, opt.init_type, opt.init_gain, self.gpu_ids)
-            self.netD_B = networks.define_D(in_dim, opt.netD,
+            self.netD_B = networks.define_D(in_dim, netDB_name,
                                             opt.n_layers_D, opt.norm, opt.init_type, opt.init_gain, self.gpu_ids)
 
         if self.isTrain:
             # define loss functions
             self.criterionGAN = networks.GANLoss(opt.gan_mode).to(self.device)  # define GAN loss.
-            self.criterionCycle = torch.nn.L1Loss()
+            self.criterionCycle = CosineSimilarityLoss()
             self.criterionIdt = CosineSimilarityLoss()
             # initialize optimizers; schedulers will be automatically created by function <BaseModel.setup>.
             self.optimizer_G = torch.optim.Adam(itertools.chain(self.netG_A.parameters(), self.netG_B.parameters()), lr=opt.lr, betas=(opt.beta1, 0.999))
@@ -116,7 +120,7 @@ class CycleGANModel(BaseModel):
 
         The option 'direction' can be used to swap domain A and domain B.
         """
-        torch.cuda.empty_cache()
+        #torch.cuda.empty_cache()
         AtoB = self.opt.direction == 'AtoB'
         if self.opt.dataset_mode == "ParallelSentences":
             self.real_A = input['A' if AtoB else 'B']
@@ -145,10 +149,10 @@ class CycleGANModel(BaseModel):
         '''
 
         """Run forward pass; called by both functions <optimize_parameters> and <test>."""
-        self.fake_B = self.netG_A(self.real_A)  # G_A(A)
-        self.rec_A = self.netG_B(self.fake_B)   # G_B(G_A(A))
-        self.fake_A = self.netG_B(self.real_B)  # G_B(B)
-        self.rec_B = self.netG_A(self.fake_A)   # G_A(G_B(B))
+        self.fake_B, self.fake_B_embeddings = self.netG_A(self.real_A, True)  # G_A(A)
+        self.rec_A, self.rec_A_embeddings = self.netG_B(self.fake_B, True)   # G_B(G_A(A))
+        self.fake_A, self.fake_A_embeddings = self.netG_B(self.real_B, True)  # G_B(B)
+        self.rec_B, self.rec_B_embeddings = self.netG_A(self.fake_A, True)   # G_A(G_B(B))
 
     def backward_D_basic(self, netD, real, fake):
         """Calculate GAN loss for the discriminator
@@ -175,12 +179,12 @@ class CycleGANModel(BaseModel):
     def backward_D_A(self):
         """Calculate GAN loss for discriminator D_A"""
         #fake_B = self.fake_B_pool.query(self.fake_B)
-        self.loss_D_A = self.backward_D_basic(self.netD_A, self.real_B, fake_B)
+        self.loss_D_A = self.backward_D_basic(self.netD_A, self.netG_B.encode(self.real_B), self.fake_B_embeddings)
 
     def backward_D_B(self):
         """Calculate GAN loss for discriminator D_B"""
         #fake_A = self.fake_A_pool.query(self.fake_A)
-        self.loss_D_B = self.backward_D_basic(self.netD_B, self.real_A, fake_A)
+        self.loss_D_B = self.backward_D_basic(self.netD_B, self.netG_B.encode(self.real_A), self.fake_A_embeddings)
 
     def backward_G(self):
         """Calculate the loss for generators G_A and G_B"""
@@ -190,23 +194,33 @@ class CycleGANModel(BaseModel):
         # Identity loss
         if lambda_idt > 0:
             # G_A should be identity if real_B is fed: ||G_A(B) - B||
-            self.idt_A = self.netG_A(self.real_B)
-            self.loss_idt_A = self.criterionIdt(self.idt_A, self.real_B) * lambda_B * lambda_idt
+            _, self.idt_A = self.netG_A(self.real_B, True)
+            real = self.netG_B._modules['module'].encode(self.real_B)['input_ids']
+            self.loss_idt_A = self.criterionIdt(self.idt_A, real) * lambda_B * lambda_idt
             # G_B should be identity if real_A is fed: ||G_B(A) - A||
-            self.idt_B = self.netG_B(self.real_A)
-            self.loss_idt_B = self.criterionIdt(self.idt_B, self.real_A) * lambda_A * lambda_idt
+            _, self.idt_B = self.netG_B(self.real_A, True)
+            self.loss_idt_B = self.criterionIdt(self.idt_B, self.netG_B._modules['module'].encode(self.real_A)['input_ids']) * lambda_A * lambda_idt
         else:
             self.loss_idt_A = 0
             self.loss_idt_B = 0
 
+
+        fake_B=dict()
+        fake_B['input_ids'] =torch.tensor(self.fake_B_embeddings)#, dtype=torch.float32)
+        fake_B['attention_mask'] = (fake_B['input_ids'] > 0).to(self.device)
+
+        fake_A=dict()
+        fake_A['input_ids'] =torch.tensor(self.fake_A_embeddings)#, dtype=torch.float32)
+        fake_A['attention_mask'] = (fake_A['input_ids'] > 0).to(self.device)
         # GAN loss D_A(G_A(A))
-        self.loss_G_A = self.criterionGAN(self.netD_A(self.fake_B), True)
+        res1=self.netD_A(fake_B)
+        self.loss_G_A = self.criterionGAN(res1, True)
         # GAN loss D_B(G_B(B))
-        self.loss_G_B = self.criterionGAN(self.netD_B(self.fake_A), True)
+        self.loss_G_B = self.criterionGAN(self.netD_B(fake_A), True)
         # Forward cycle loss || G_B(G_A(A)) - A||
-        self.loss_cycle_A = self.criterionCycle(self.rec_A, self.real_A) * lambda_A
+        self.loss_cycle_A = self.criterionCycle(self.rec_A_embeddings, self.real_A_embeddings) * lambda_A
         # Backward cycle loss || G_A(G_B(B)) - B||
-        self.loss_cycle_B = self.criterionCycle(self.rec_B, self.real_B) * lambda_B
+        self.loss_cycle_B = self.criterionCycle(self.rec_B_embeddings, self.real_B_embeddings) * lambda_B
         # combined loss and calculate gradients
         self.loss_G = self.loss_G_A + self.loss_G_B + self.loss_cycle_A + self.loss_cycle_B + self.loss_idt_A + self.loss_idt_B
         self.loss_G.backward()
@@ -214,8 +228,13 @@ class CycleGANModel(BaseModel):
     def optimize_parameters(self):
         """Calculate losses, gradients, and update network weights; called in every training iteration"""
         # forward
+        self.netG_A._modules['module'].eval()
+        self.netG_B._modules['module'].eval()
+
         self.forward()      # compute fake images and reconstruction images.
         # G_A and G_B
+        self.netG_A._modules['module'].train()
+        self.netG_B._modules['module'].train()
         self.set_requires_grad([self.netD_A, self.netD_B], False)  # Ds require no gradients when optimizing Gs
         self.optimizer_G.zero_grad()  # set G_A and G_B's gradients to zero
         self.backward_G()             # calculate gradients for G_A and G_B
@@ -226,3 +245,4 @@ class CycleGANModel(BaseModel):
         self.backward_D_A()      # calculate gradients for D_A
         self.backward_D_B()      # calculate graidents for D_B
         self.optimizer_D.step()  # update D_A and D_B's weights
+
