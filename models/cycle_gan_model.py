@@ -205,15 +205,17 @@ class CycleGANModel(BaseModel):
             self.loss_idt_B = 0
 
 
-        fake_B=dict()
-        fake_B['input_ids'] =torch.tensor(self.fake_B_embeddings)#, dtype=torch.float32)
+        fake_B = dict()
+        dimensions = self.netD_A._modules['module'].auto_model.config.max_position_embeddings
+        fake_B['input_ids'] = torch.zeros(1,dimensions,dtype= torch.int64, device=self.device)
+        fake_B['input_ids'][0, 0:self.fake_B_embeddings.size()[1]] = self.fake_B_embeddings
         fake_B['attention_mask'] = (fake_B['input_ids'] > 0).to(self.device)
 
-        fake_A=dict()
-        fake_A['input_ids'] =torch.tensor(self.fake_A_embeddings)#, dtype=torch.float32)
+        fake_A = dict()
+        fake_A['input_ids'] = self.fake_A_embeddings.clone().detach()# , dtype=torch.float32)
         fake_A['attention_mask'] = (fake_A['input_ids'] > 0).to(self.device)
         # GAN loss D_A(G_A(A))
-        res1=self.netD_A(fake_B)
+        res1 = self.netD_A(fake_B)
         self.loss_G_A = self.criterionGAN(res1, True)
         # GAN loss D_B(G_B(B))
         self.loss_G_B = self.criterionGAN(self.netD_B(fake_A), True)
