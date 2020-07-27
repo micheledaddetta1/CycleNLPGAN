@@ -1,57 +1,31 @@
 import torch
 from torch import nn
 from tqdm import tqdm
-from transformers import AutoModel, AutoTokenizer, AutoConfig
-import models
+from transformers import AutoModel, AutoTokenizer, AutoConfig, AutoModelWithLMHead
 import json
 from typing import List, Dict, Optional
 import os
 import numpy as np
 import logging
 
-class Transformer(nn.Module):
+from models import Transformer
+
+
+class DiscriminatorTransformer(Transformer):
     """Huggingface AutoModel to generate token embeddings.
     Loads the correct class, e.g. BERT / RoBERTa etc.
     """
-    def __init__(self, model_name_or_path: str, max_seq_length: int = 128, model_args: Dict = {}, cache_dir: Optional[str] = None ):
-        super(Transformer, self).__init__()
-        self.config_keys = ['max_seq_length']
-        self.max_seq_length = max_seq_length
-
-        config = AutoConfig.from_pretrained(model_name_or_path, **model_args, cache_dir=cache_dir)
-        #config.output_hidden_states = True
-        self.auto_model = AutoModel.from_pretrained(model_name_or_path, config=config, cache_dir=cache_dir)
-        self.tokenizer = AutoTokenizer.from_pretrained(model_name_or_path, cache_dir=cache_dir)
-        self.pooling_model = models.Pooling(self.get_word_embedding_dimension(),
-                               pooling_mode_mean_tokens=True,
-                               pooling_mode_cls_token=False,
-                               pooling_mode_max_tokens=False)
-
-
-        self.auto_model.config.output_attentions = True
-        self.auto_model.config.output_hidden_states = True
+    def __init__(self, model_name_or_path: str, max_seq_length: int = 128, model_args: Dict = {}, cache_dir: Optional[str] = None, out_dim=2):
+        super(DiscriminatorTransformer, self).__init__(model_name_or_path)
+        self.layers = nn.Linear(self.get_word_embedding_dimension(), out_dim)
 
     def forward(self, features):
         """Returns token_embeddings, cls_token"""
-        output_states = self.auto_model(**features)
-        output_tokens = output_states[0]
-
-        #CHE cosa succede con gli embeddings?-
-        cls_tokens = output_tokens[:, 0, :]  # CLS token is first token
-
-        features.update({'token_embeddings': output_tokens, 'cls_token_embeddings': cls_tokens, 'attention_mask': features['attention_mask']})
-
-        if self.auto_model.config.output_hidden_states:
-            all_layer_idx = 2
-            if len(output_states) < 3: #Some models only output last_hidden_states and all_hidden_states
-                all_layer_idx = 1
-
-            hidden_states = output_states[all_layer_idx]
-            features.update({'all_layer_embeddings': hidden_states})
-
-        sentence_embedding = self.pooling_model(features)
-
-        return sentence_embedding
+        features = super(DiscriminatorTransformer, self).forward(features)
+        size = features['token_embeddings'].size()
+        features = self.layers(features['sentence_embedding'])
+        print(features.size())
+        return features
 
     def get_word_embedding_dimension(self) -> int:
         return self.auto_model.config.hidden_size

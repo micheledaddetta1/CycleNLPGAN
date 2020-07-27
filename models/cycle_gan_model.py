@@ -154,7 +154,7 @@ class CycleGANModel(BaseModel):
         self.fake_A, self.fake_A_embeddings = self.netG_B(self.real_B, True)  # G_B(B)
         self.rec_B, self.rec_B_embeddings = self.netG_A(self.fake_A, True)   # G_A(G_B(B))
 
-    def backward_D_basic(self, netD, real, fake):
+    def backward_D_basic(self, netD, real_sent, fake_sent, netG):
         """Calculate GAN loss for the discriminator
 
         Parameters:
@@ -165,11 +165,19 @@ class CycleGANModel(BaseModel):
         Return the discriminator loss.
         We also call loss_D.backward() to calculate the gradients.
         """
+        real = dict()
+        real['input_ids'] = netD._modules['module'].encode(real_sent)
+        real['attention_mask'] = (real['input_ids'] > 0).to(self.device)
+
+        fake = dict()
+        fake['input_ids'] = netD._modules['module'].encode(fake_sent)
+        fake['attention_mask'] = (fake['input_ids'] > 0).to(self.device)
+
         # Real
         pred_real = netD(real)
         loss_D_real = self.criterionGAN(pred_real, True)
         # Fake
-        pred_fake = netD(fake.detach())
+        pred_fake = netD(fake)
         loss_D_fake = self.criterionGAN(pred_fake, False)
         # Combined loss and calculate gradients
         loss_D = (loss_D_real + loss_D_fake) * 0.5
@@ -179,12 +187,12 @@ class CycleGANModel(BaseModel):
     def backward_D_A(self):
         """Calculate GAN loss for discriminator D_A"""
         #fake_B = self.fake_B_pool.query(self.fake_B)
-        self.loss_D_A = self.backward_D_basic(self.netD_A, self.netG_B.encode(self.real_B), self.fake_B_embeddings)
+        self.loss_D_A = self.backward_D_basic(self.netD_A, self.real_B, self.fake_B, self.netG_A)
 
     def backward_D_B(self):
         """Calculate GAN loss for discriminator D_B"""
         #fake_A = self.fake_A_pool.query(self.fake_A)
-        self.loss_D_B = self.backward_D_basic(self.netD_B, self.netG_B.encode(self.real_A), self.fake_A_embeddings)
+        self.loss_D_B = self.backward_D_basic(self.netD_B, self.real_A, self.fake_A, self.netG_B)
 
     def backward_G(self):
         """Calculate the loss for generators G_A and G_B"""
@@ -206,25 +214,26 @@ class CycleGANModel(BaseModel):
 
 
         fake_B = dict()
-        dimensions = self.netD_A._modules['module'].auto_model.config.max_position_embeddings
-        fake_B['input_ids'] = torch.zeros(1,dimensions,dtype= torch.int64, device=self.device)
-        fake_B['input_ids'][0, 0:self.fake_B_embeddings.size()[1]] = self.fake_B_embeddings
+        fake_B['input_ids'] = self.netD_A._modules['module'].encode(self.fake_B).to(self.device)
         fake_B['attention_mask'] = (fake_B['input_ids'] > 0).to(self.device)
 
         fake_A = dict()
-        fake_A['input_ids'] = self.fake_A_embeddings.clone().detach()# , dtype=torch.float32)
+        fake_A['input_ids'] = self.netD_B._modules['module'].encode(self.fake_A).to(self.device)
         fake_A['attention_mask'] = (fake_A['input_ids'] > 0).to(self.device)
+
         # GAN loss D_A(G_A(A))
-        res1 = self.netD_A(fake_B)
-        self.loss_G_A = self.criterionGAN(res1, True)
+        self.loss_G_A = self.criterionGAN(self.netD_A(fake_B), True)
         # GAN loss D_B(G_B(B))
         self.loss_G_B = self.criterionGAN(self.netD_B(fake_A), True)
         # Forward cycle loss || G_B(G_A(A)) - A||
-        self.loss_cycle_A = self.criterionCycle(self.rec_A_embeddings, self.real_A_embeddings) * lambda_A
+        self.loss_cycle_A = self.criterionCycle(self.netG_A._modules['module'].encode(self.rec_A).to(self.device, dtype=torch.float32),
+                                                self.netG_A._modules['module'].encode(self.real_A).to(self.device, dtype=torch.float32)) * lambda_A
         # Backward cycle loss || G_A(G_B(B)) - B||
-        self.loss_cycle_B = self.criterionCycle(self.rec_B_embeddings, self.real_B_embeddings) * lambda_B
+        self.loss_cycle_B = self.criterionCycle(self.netG_B._modules['module'].encode(self.rec_B).to(self.device, dtype=torch.float32),
+                                                self.netG_B._modules['module'].encode(self.real_B).to(self.device, dtype=torch.float32)) * lambda_B
         # combined loss and calculate gradients
         self.loss_G = self.loss_G_A + self.loss_G_B + self.loss_cycle_A + self.loss_cycle_B + self.loss_idt_A + self.loss_idt_B
+        self.loss_G.requires_grad = True
         self.loss_G.backward()
 
     def optimize_parameters(self):

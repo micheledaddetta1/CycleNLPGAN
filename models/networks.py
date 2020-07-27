@@ -10,6 +10,7 @@ from transformers import EncoderDecoderModel, MarianTokenizer, MarianMTModel
 from . import Transformer, EncDecModel
 from . import SentenceTransformer
 from . import BERT
+from .discriminator_transformer import DiscriminatorTransformer
 from .multi_layer_perceptron import MultiLayerPerceptron
 
 
@@ -290,7 +291,7 @@ def define_D(input_dim, netD, n_layers_D=3, norm='batch', init_type='normal', in
     if netD == 'mlp':     # classify if each pixel is real or fake
         net = MultiLayerPerceptron(input_dim, out_dim=1, n_layers=n_layers_D)
     else:
-        net = Transformer(netD)
+        net = DiscriminatorTransformer(netD)
         #raise NotImplementedError('Discriminator model name [%s] is not recognized' % netD)
     return init_net(net, init_type, init_gain, gpu_ids)
 
