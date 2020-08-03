@@ -37,37 +37,18 @@ class EncDecModel(nn.Module):
 
     def forward(self, sentences, partial_value=False):
 
+        embeddings = self.encode(sentences, False)
+        input = {'input_ids': embeddings.to(self.model.device),
+                 'attention_mask': (embeddings > 0).to(self.model.device)}
         if self.task == "translation":
-            embeddings = self.encode(sentences)
-            input = {'input_ids': embeddings.to(self.model.device),
-                'attention_mask': (embeddings > 0).to(self.model.device)}
-            partial = self.model.base_model.encoder(**input)
-            decoder_in = self.model.base_model.pooling_layer(partial[2][11])
-
-            partialdict = dict()
-
-            tgt_len = 0
-            '''
-            input_ids,
-            encoder_hidden_states,
-            encoder_padding_mask,
-            decoder_padding_mask,
-            decoder_causal_mask,
-            partialdict["input_ids"] = None
-            partialdict["decoder_casual_mask"] = torch.triu((torch.zeros(tgt_len, tgt_len).float().fill_(float("-inf"))), 1).to(dtype=torch.float32, device=self.model.device)
-            partialdict["encoder_padding_mask"] = None
-            partialdict["decoder_padding_mask"] = None
-            partialdict["encoder_hidden_states"] = decoder_in.to(self.model.device)
-            '''
-            output = self.model.base_model.decoder(embeddings.to(self.model.device), decoder_in.to(self.model.device), None, None, None)#**partialdict)
-            output = output[0]
+            output = self.model.generate(embeddings.to(self.model.device), attention_mask=input['attention_mask'].to(self.model.device))
             output = self.decode(output)
         else:
-            partial = self.generate(sentences)
-            output = self.decode(partial)
-
+            output = self.generate(sentences)
+            output = self.decode(output)
 
         if partial_value:
+            partial = self.model.base_model.encoder(**input)
             return output, partial
         else:
             return output
@@ -110,25 +91,8 @@ class EncDecModel(nn.Module):
             config = json.load(fIn)
         return EncDecModel(model_name_or_path=input_path, **config)
 
-    def encode(self, sentences):
-        train_input_ids = []
-        for text in tqdm(sentences):
-            input_ids = self.tokenizer.encode(
-                text,
-                add_special_tokens=True,
-                max_length=self.max_seq_length,
-                pad_to_max_length=True,
-                return_tensors='pt'
-            )
-            train_input_ids.append(input_ids)
-        train_input_ids = torch.cat(train_input_ids, dim=0)
-        return train_input_ids
-        '''
-        a = self.tokenizer.prepare_translation_batch(sentences).to(self.model.device)
-        return a
-        '''
 
-    def encodeSentence(self,sentence):
+    def encodeSentence(self, sentence):
         logging.info("Trainer - encoding sentence")
         train_input_ids = []
         input_ids = self.tokenizer.encode(
@@ -166,3 +130,33 @@ class EncDecModel(nn.Module):
         #self.config.hidden_size = None
         #self.config.hidden_size = self.model.base_model.encoder.config.hidden_size
         self.config.encoder_layers = self.model.base_model.encoder.config.num_hidden_layers
+
+
+    def encode(self, sentences, verbose=True):
+        logging.info("Trainer - encoding training data")
+        train_input_ids = []
+        if verbose:
+            for text in tqdm(sentences):
+                input_ids = self.tokenizer.encode(
+                    text,
+                    add_special_tokens=True,
+                    max_length=self.max_seq_length,
+                    pad_to_max_length=True,
+                    return_tensors='pt',
+                    truncation=True
+                )
+                train_input_ids.append(input_ids)
+        else:
+            for text in sentences:
+                input_ids = self.tokenizer.encode(
+                    text,
+                    add_special_tokens=True,
+                    max_length=self.max_seq_length,
+                    pad_to_max_length=True,
+                    return_tensors='pt',
+                    truncation=True
+                )
+                train_input_ids.append(input_ids)
+
+        train_input_ids = torch.cat(train_input_ids, dim=0)
+        return train_input_ids

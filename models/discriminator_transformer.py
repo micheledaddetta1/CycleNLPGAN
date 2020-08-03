@@ -22,9 +22,7 @@ class DiscriminatorTransformer(Transformer):
     def forward(self, features):
         """Returns token_embeddings, cls_token"""
         features = super(DiscriminatorTransformer, self).forward(features)
-        size = features['token_embeddings'].size()
         features = self.layers(features['sentence_embedding'])
-        print(features.size())
         return features
 
     def get_word_embedding_dimension(self) -> int:
@@ -65,20 +63,6 @@ class DiscriminatorTransformer(Transformer):
             config = json.load(fIn)
         return Transformer(model_name_or_path=input_path, **config)
 
-    def encode(self, sentences):
-        logging.info("Trainer - encoding training data")
-        train_input_ids = []
-        for text in tqdm(sentences):
-            input_ids = self.tokenizer.encode(
-                text,
-                add_special_tokens=True,
-                max_length=self.max_seq_length,
-                pad_to_max_length=True,
-                return_tensors='pt'
-            )
-            train_input_ids.append(input_ids)
-        train_input_ids = torch.cat(train_input_ids, dim=0)
-        return train_input_ids
 
     def encodeSentence(self,sentence):
         logging.info("Trainer - encoding sentence")

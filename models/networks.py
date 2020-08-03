@@ -7,7 +7,7 @@ import functools
 from torch.optim import lr_scheduler
 from transformers import EncoderDecoderModel, MarianTokenizer, MarianMTModel
 
-from . import Transformer, EncDecModel
+from . import Transformer, EncDecModel, PooledEncoder
 from . import SentenceTransformer
 from . import BERT
 from .discriminator_transformer import DiscriminatorTransformer
@@ -122,8 +122,6 @@ def init_net(net, init_type='normal', init_gain=0.02, gpu_ids=[]):
         net = net.to(gpu_ids[0])
         net = torch.nn.DataParallel(net, gpu_ids)
 
-        #net._modules[next(iter(net._modules))] = torch.nn.DataParallel(net._first_module(), gpu_ids)  # multi-GPUs
-    #init_weights(net, init_type, init_gain=init_gain)
     return net#net_modules[next(iter(net._modules))]
 
 def define_name(model_name,language):
@@ -155,19 +153,19 @@ def define_Gs(task, net_encoder, net_decoder,  source='de', dest='en', norm='bat
     if task == "translation":
         netA_name = define_name(net_encoder, source)
         netB_name = define_name(net_encoder, dest)
-        netA_encoder=define_G("encoder", netA_name, source, dest, norm, use_dropout, init_type, init_gain, gpu_ids, False)
+        original_encoder_out = netA.get_word_embedding_dimension()
+        netA_encoder=define_G("encoder", netA_name, source, dest, norm, use_dropout, init_type, init_gain, gpu_ids, False, out_dimension=original_encoder_out)
         #netA_encoder.auto_model = netA_encoder.auto_model
-        netB_encoder = define_G("encoder", netB_name, source, dest, norm, use_dropout, init_type, init_gain, gpu_ids, False)
+        netB_encoder = define_G("encoder", netB_name, source, dest, norm, use_dropout, init_type, init_gain, gpu_ids, False, out_dimension=original_encoder_out)
         #netB_encoder.auto_model = netB_encoder.auto_model
 
-        original_encoder_out = netA.get_word_embedding_dimension()
         new_encoder_out = netA_encoder.get_word_embedding_dimension()
 
         netA_encoder.train()
         netB_encoder.train()
 
-        netA.model.base_model.encoder = deepcopy(netA_encoder.auto_model)
-        netB.model.base_model.encoder = deepcopy(netB_encoder.auto_model)
+        netA.model.base_model.encoder = deepcopy(netA_encoder)
+        netB.model.base_model.encoder = deepcopy(netB_encoder)
         netA.dest_tokenizer = deepcopy(netA.tokenizer)
         netB.dest_tokenizer = deepcopy(netB.tokenizer)
         netA.tokenizer = deepcopy(netA_encoder.tokenizer)
@@ -182,7 +180,7 @@ def define_Gs(task, net_encoder, net_decoder,  source='de', dest='en', norm='bat
     elif task == "reconstruction":
 
         tmp = deepcopy(netA.model.base_model.encoder)
-        netA.model.base_model.encoder = deepcopy(netB.model.base_model)
+        netA.model.base_model.encoder = deepcopy(netB.model.base_model.encoder)
         netB.model.base_model.encoder = deepcopy(tmp)
         netA.dest_tokenizer = deepcopy(netA.tokenizer)
         netB.dest_tokenizer = deepcopy(netB.tokenizer)
@@ -200,7 +198,7 @@ def define_Gs(task, net_encoder, net_decoder,  source='de', dest='en', norm='bat
     return netA, netB
 
 
-def define_G(model, netG, source='en', dest='de', norm='batch', use_dropout=False, init_type='normal', init_gain=0.02, gpu_ids=[], use_init_net= True):
+def define_G(model, netG, source='en', dest='de', norm='batch', use_dropout=False, init_type='normal', init_gain=0.02, gpu_ids=[], use_init_net= True, out_dimension=None):
     """Create a generator
 
     Parameters:
@@ -241,7 +239,10 @@ def define_G(model, netG, source='en', dest='de', norm='batch', use_dropout=Fals
         raise NotImplementedError('Generator model name [%s] is not recognized' % netG)
     '''
     if model == 'encoder':
-        net = Transformer(netG)
+        if out_dimension is None:
+            net = Transformer(netG)
+        else:
+            net = PooledEncoder(netG, out_dimension=out_dimension)
     elif model == 'encoder-decoder':
         if netG == 'marianMT':
             model_name = 'Helsinki-NLP/opus-mt-'+source+'-'+dest

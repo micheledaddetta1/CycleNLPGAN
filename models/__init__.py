@@ -8,6 +8,7 @@ from .Dense import Dense
 from .DistilBERT import DistilBERT
 from .EncDecModel import EncDecModel
 from .LSTM import LSTM
+from .PooledEncoder import PooledEncoder
 from .Pooling import Pooling
 from .RoBERTa import RoBERTa
 from .T5 import T5
