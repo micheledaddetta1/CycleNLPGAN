@@ -30,6 +30,7 @@ from util.visualizer import Visualizer
 import torch
 
 if __name__ == '__main__':
+    logging.getLogger().setLevel(logging.INFO)
     opt = TrainOptions().parse()   # get training options
 
     torch.cuda.empty_cache()
