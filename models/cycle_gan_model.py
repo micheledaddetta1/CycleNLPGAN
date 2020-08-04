@@ -104,7 +104,7 @@ class CycleGANModel(BaseModel):
         if self.isTrain:
             # define loss functions
             self.criterionGAN = networks.GANLoss(opt.gan_mode).to(self.device)  # define GAN loss.
-            self.criterionCycle = torch.nn.CosineEmbeddingLoss()#CosineSimilarityLoss()
+            self.criterionCycle = CosineSimilarityLoss()
             self.criterionIdt = torch.nn.CosineEmbeddingLoss()#CosineSimilarityLoss()
             # initialize optimizers; schedulers will be automatically created by function <BaseModel.setup>.
             self.optimizer_G = torch.optim.Adam(itertools.chain(self.netG_A.parameters(), self.netG_B.parameters()), lr=opt.lr, betas=(opt.beta1, 0.999))
@@ -212,10 +212,12 @@ class CycleGANModel(BaseModel):
         self.loss_G_B = self.criterionGAN(self.netD_B(fake_A), True)
         # Forward cycle loss || G_B(G_A(A)) - A||
         rec_A_tokens = self.netG_A._modules['module'].encode(self.rec_A, False).to(self.device, dtype=torch.float32)
+        rec_size= rec_A_tokens.size()
         real_A_tokens = self.netG_A._modules['module'].encode(self.real_A, False).to(self.device, dtype=torch.float32)
+        real_size=real_A_tokens.size()
         self.loss_cycle_A = self.criterionCycle(real_A_tokens,
                                                 rec_A_tokens,
-                                                torch.ones(real_A_tokens.size()).to(self.device)) * lambda_A
+                                                torch.ones(real_A_tokens.size()[-1]).to(self.device)) * lambda_A
         # Backward cycle loss || G_A(G_B(B)) - B||
         self.loss_cycle_B = self.criterionCycle(self.netG_B._modules['module'].encode(self.rec_B, False).to(self.device, dtype=torch.float32),
                                                 self.netG_B._modules['module'].encode(self.real_B, False).to(self.device, dtype=torch.float32),
