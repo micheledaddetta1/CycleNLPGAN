@@ -42,7 +42,7 @@ class ParallelSentencesDataset(BaseDataset):
     """
 
 
-    def __init__(self,opt,model):
+    def __init__(self,opt,model, train_perc, eval_perc, test_perc):
         """
         Parallel sentences dataset reader to train student model given a teacher model
         :param opt: options used to create and read the dataset
@@ -54,7 +54,10 @@ class ParallelSentencesDataset(BaseDataset):
         self.dataset_indices = []
         self.copy_dataset_indices = []
         self.server = "https://public.ukp.informatik.tu-darmstadt.de/reimers/sentence-transformers/datasets/"
-        self.model=model
+        self.model = model
+        self.train_perc = train_perc
+        self.eval_perc = eval_perc
+        self.test_perc = test_perc
 
         for dataset in self.filepaths:
             print("Download", dataset)
@@ -66,7 +69,7 @@ class ParallelSentencesDataset(BaseDataset):
 
 
 
-    def load_data(self):
+    def load_data(self, dataset_type='train', seed=25):
         """
         Reads in a tab-seperated .txt/.csv/.tsv or .gz file. The different columns contain the different translations of the sentence in the first column
 
@@ -76,7 +79,7 @@ class ParallelSentencesDataset(BaseDataset):
         :param max_sentence_length: Skip the example if one of the sentences is has more characters than max_sentence_length
         :return:
         """
-        data=[]
+        data = []
         filepath = os.path.join(self.root, self.filepaths[0])
         weight = self.opt.param_weight
         max_sentences = self.opt.max_sentences
@@ -95,7 +98,12 @@ class ParallelSentencesDataset(BaseDataset):
 
                 eng_sentence = sentences[0]
 
+                if eng_sentence not in sentences_map:
+                    sentences_map[eng_sentence] = sentences[1]
 
+                    data.append([sentences[1], eng_sentence])
+
+                '''
                 if eng_sentence not in sentences_map:
                     sentences_map[eng_sentence] = set()
 
@@ -103,18 +111,39 @@ class ParallelSentencesDataset(BaseDataset):
                     if sent != eng_sentence:
                         sentences_map[eng_sentence].add(sent)
                         data.append([sent, eng_sentence])
+                '''
 
                 count += 1
                 if max_sentences is not None and count >= max_sentences:
                     break
 
+
         eng_sentences = list(sentences_map.keys())
+
+        random.seed(seed)
+        random.shuffle(eng_sentences)
+
+        n_train = int(self.train_perc*len(eng_sentences))
+        n_eval = int(self.eval_perc*len(eng_sentences))
+        n_test = int(self.test_perc*len(eng_sentences))
+
+        if dataset_type == 'train':
+            data = eng_sentences[:n_train]
+        elif dataset_type == 'eval':
+            data = eng_sentences[n_train:n_train+n_eval]
+        elif dataset_type == 'test':
+            data = eng_sentences[n_train+n_eval:]
+        else:
+            data = []
+
+        data = [[sentences_map[sentence], sentence] for sentence in data]
 
         self.dir_AB = os.path.join(self.opt.dataroot, self.opt.phase)  # get the image directory
 
         dataset_id = len(self.datasets)
         self.datasets.append(data)
         self.dataset_indices.extend([dataset_id] * weight)
+
 
 
     def __len__(self):

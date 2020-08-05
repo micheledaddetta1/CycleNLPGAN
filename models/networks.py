@@ -155,9 +155,7 @@ def define_Gs(task, net_encoder, net_decoder,  source='de', dest='en', norm='bat
         netB_name = define_name(net_encoder, dest)
         original_encoder_out = netA.get_word_embedding_dimension()
         netA_encoder=define_G("encoder", netA_name, source, dest, norm, use_dropout, init_type, init_gain, gpu_ids, False, out_dimension=original_encoder_out)
-        #netA_encoder.auto_model = netA_encoder.auto_model
         netB_encoder = define_G("encoder", netB_name, source, dest, norm, use_dropout, init_type, init_gain, gpu_ids, False, out_dimension=original_encoder_out)
-        #netB_encoder.auto_model = netB_encoder.auto_model
 
         new_encoder_out = netA_encoder.get_word_embedding_dimension()
 

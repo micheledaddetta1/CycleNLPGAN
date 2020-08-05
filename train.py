@@ -37,8 +37,8 @@ if __name__ == '__main__':
     model = create_model(opt)  # create a model given opt.model and other options
     model.setup(opt)  # regular setup: load and print networks; create schedulers
 
-    dataset = create_dataset(opt, model)  # create a dataset given opt.dataset_mode and other options
-    dataset_size = len(dataset)    # get the number of images in the dataset.
+    train_dataset, eval_dataset, test_dataset = create_dataset(opt, model)  # create a dataset given opt.dataset_mode and other options
+    dataset_size = len(train_dataset)    # get the number of images in the dataset.
     logging.info('The number of training sentences = %d' % dataset_size)
 
     visualizer = Visualizer(opt)   # create a visualizer that display/save images and plots
@@ -50,7 +50,7 @@ if __name__ == '__main__':
         epoch_iter = 0                  # the number of training iterations in current epoch, reset to 0 every epoch
         visualizer.reset()              # reset the visualizer: make sure it saves the results to HTML at least once every epoch
 
-        for i, data in enumerate(dataset):  # inner loop within one epoch
+        for i, data in enumerate(train_dataset):  # inner loop within one epoch
             iter_start_time = time.time()  # timer for computation per iteration
             if total_iters % opt.print_freq == 0:
                 t_data = iter_start_time - iter_data_time
@@ -60,11 +60,6 @@ if __name__ == '__main__':
             model.set_input(data)         # unpack data from dataset and apply preprocessing
             model.optimize_parameters()   # calculate loss functions, get gradients, update network weights
 
-            if total_iters % opt.display_freq == 0:   # display images on visdom and save images to a HTML file
-                save_result = total_iters % opt.update_html_freq == 0
-                #model.compute_visuals()
-                #visualizer.display_current_results(model.get_current_visuals(), epoch, save_result)
-
             if total_iters % opt.print_freq == 0:    # print training losses and save logging information to the disk
                 losses = model.get_current_losses()
                 t_comp = (time.time() - iter_start_time) / opt.batch_size
@@ -73,14 +68,28 @@ if __name__ == '__main__':
 
             if total_iters % opt.save_latest_freq == 0:   # cache our latest model every <save_latest_freq> iterations
                 logging.info('saving the latest model (epoch %d, total_iters %d)' % (epoch, total_iters))
-                save_suffix = 'iter_%d' % total_iters if opt.save_by_iter else 'latest'
+                save_suffix = 'iter_%d' % total_iters
                 model.save_networks(save_suffix)
 
             iter_data_time = time.time()
-        if epoch % opt.save_epoch_freq == 0:              # cache our model every <save_epoch_freq> epochs
-            logging.info('saving the model at the end of epoch %d, iters %d' % (epoch, total_iters))
-            model.save_networks('latest')
-            model.save_networks(epoch)
+        logging.info('saving the model at the end of epoch %d, iters %d' % (epoch, total_iters))
+        #model.save_networks('latest')
+        model.save_networks(epoch)
+
+        for i, data in enumerate(eval_dataset):  # inner loop within one epoch
+            logging.info("\n\nEvaluating...")
+            model.set_input(data)         # unpack data from dataset and apply preprocessing
+            model.forward()   # calculate loss functions, get gradients, update network weights
+            with open("eval_sentences.txt", "a") as sentences_file:
+                for j in range(len(model.real_A)):
+                    str1 = " A->B->A : "+model.real_A[j]+" -> "+model.fake_B[j]+" -> "+model.rec_A[j]
+                    str2 = " B->A->B : "+model.real_B[j]+" -> "+model.fake_A[j]+" -> "+model.rec_B[j]+"\n\n"
+                    logging.info(str1)
+                    logging.info(str2)
+                    sentences_file.write('%s\n' % str1)  # save the message
+                    sentences_file.write('%s\n' % str2)  # save the message
+            losses = model.get_current_losses()
+            visualizer.print_current_losses(epoch, epoch_iter, losses, t_comp, t_data)
 
         logging.info('End of epoch %d / %d \t Time Taken: %d sec' % (epoch, opt.n_epochs + opt.n_epochs_decay, time.time() - epoch_start_time))
         model.update_learning_rate()                     # update learning rates at the end of every epoch.

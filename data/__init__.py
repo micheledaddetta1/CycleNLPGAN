@@ -11,6 +11,8 @@ Now you can use the dataset class by specifying flag '--dataset_mode dummy'.
 See our template dataset class 'template_dataset.py' for more details.
 """
 import importlib
+from copy import deepcopy
+
 import torch.utils.data
 #from data.base_dataset import BaseDataset
 
@@ -60,24 +62,35 @@ def create_dataset(opt, model):
         >>> from data import create_dataset
         >>> dataset = create_dataset(opt)
     """
-    data_loader = CustomDatasetDataLoader(opt, model)
-    dataset = data_loader.load_data()
-    return dataset
+    assert opt.train_percentage+opt.eval_percentage+opt.test_percentage == 1.0
+
+    train_data_loader = CustomDatasetDataLoader(opt, model, 'train')
+    train_dataset = train_data_loader.load_data()
+    eval_data_loader = CustomDatasetDataLoader(opt, model, 'eval')
+    eval_dataset = eval_data_loader.load_data()
+    test_data_loader = CustomDatasetDataLoader(opt, model, 'test')
+    test_dataset = test_data_loader.load_data()
+    return train_dataset, eval_dataset, test_dataset
 
 
 class CustomDatasetDataLoader():
     """Wrapper class of Dataset class that performs multi-threaded data loading"""
 
-    def __init__(self, opt, model):
+    def __init__(self, opt, model, dataset_type='train'):
         """Initialize this class
 
         Step 1: create a dataset instance given the name [dataset_mode]
         Step 2: create a multi-threaded data loader.
         """
         self.opt = opt
+        self.train_perc = opt.train_percentage
+        self.eval_perc = opt.eval_percentage
+        self.test_perc = opt.test_percentage
+
         dataset_class = find_dataset_using_name(opt.dataset_mode)
-        self.dataset = dataset_class(opt, model)
-        self.dataset.load_data()
+        self.dataset = dataset_class(opt, model,self.train_perc, self.eval_perc, self.test_perc)
+        self.dataset.load_data(dataset_type)
+
         print("dataset [%s] was created" % type(self.dataset).__name__)
         self.dataloader = torch.utils.data.DataLoader(
             self.dataset,

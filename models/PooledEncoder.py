@@ -108,7 +108,6 @@ class PooledEncoder(nn.Module):
         return PooledEncoder(model_name_or_path=input_path, **config)
 
     def encode(self, sentences, verbose=True):
-        logging.info("Trainer - encoding training data")
         train_input_ids = []
         if verbose:
             for text in tqdm(sentences):
@@ -137,7 +136,6 @@ class PooledEncoder(nn.Module):
         return train_input_ids
 
     def encodeSentence(self,sentence):
-        logging.info("Trainer - encoding sentence")
         input_ids = self.tokenizer.encode(
                 sentence,
                 add_special_tokens=True,

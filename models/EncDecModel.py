@@ -133,7 +133,6 @@ class EncDecModel(nn.Module):
 
 
     def encode(self, sentences, verbose=True):
-        logging.info("Trainer - encoding training data")
         train_input_ids = []
         if verbose:
             for text in tqdm(sentences):

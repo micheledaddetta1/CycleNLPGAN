@@ -11,17 +11,17 @@ class TrainOptions(BaseOptions):
         parser = BaseOptions.initialize(self, parser)
         # visdom and HTML visualization parameters
         parser.add_argument('--on_colab', type=bool, default=False, help='runna su Colab o no')
-        parser.add_argument('--display_freq', type=int, default=512, help='frequency of showing training results on screen')
+        parser.add_argument('--display_freq', type=int, default=64, help='frequency of showing training results on screen')
         parser.add_argument('--display_ncols', type=int, default=4, help='if positive, display all images in a single visdom web panel with certain number of images per row.')
         parser.add_argument('--display_id', type=int, default=1, help='window id of the web display')
         parser.add_argument('--display_server', type=str, default="http://localhost", help='visdom server of the web display')
         parser.add_argument('--display_env', type=str, default='main', help='visdom display environment name (default is "main")')
         parser.add_argument('--display_port', type=int, default=8097, help='visdom port of the web display')
         parser.add_argument('--update_html_freq', type=int, default=1000, help='frequency of saving training results to html')
-        parser.add_argument('--print_freq', type=int, default=128, help='frequency of showing training results on console')
+        parser.add_argument('--print_freq', type=int, default=64, help='frequency of showing training results on console')
         parser.add_argument('--no_html', action='store_true', help='do not save intermediate training results to [opt.checkpoints_dir]/[opt.name]/web/')
         # network saving and loading parameters
-        parser.add_argument('--save_latest_freq', type=int, default=4096, help='frequency of saving the latest results')
+        parser.add_argument('--save_latest_freq', type=int, default=512, help='frequency of saving the latest results')
         parser.add_argument('--save_epoch_freq', type=int, default=1, help='frequency of saving checkpoints at the end of epochs')
         parser.add_argument('--save_by_iter', action='store_true', help='whether saves model by iteration')
         parser.add_argument('--continue_train', action='store_true', help='continue training: load the latest model')
@@ -37,5 +37,9 @@ class TrainOptions(BaseOptions):
         parser.add_argument('--lr_policy', type=str, default='linear', help='learning rate policy. [linear | step | plateau | cosine]')
         parser.add_argument('--lr_decay_iters', type=int, default=50, help='multiply by a gamma every lr_decay_iters iterations')
 
+
+        parser.add_argument('--train_percentage', type=float, default=0.8, help='multiply by a gamma every lr_decay_iters iterations')
+        parser.add_argument('--eval_percentage', type=float, default=0.1, help='multiply by a gamma every lr_decay_iters iterations')
+        parser.add_argument('--test_percentage', type=float, default=0.1, help='multiply by a gamma every lr_decay_iters iterations')
         self.isTrain = True
         return parser

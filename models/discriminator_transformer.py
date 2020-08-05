@@ -65,7 +65,6 @@ class DiscriminatorTransformer(Transformer):
 
 
     def encodeSentence(self,sentence):
-        logging.info("Trainer - encoding sentence")
         input_ids = self.tokenizer.encode(
                 sentence,
                 add_special_tokens=True,
