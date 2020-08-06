@@ -7,8 +7,9 @@ from typing import List, Dict, Optional, Tuple
 import os
 import numpy as np
 import logging
-from transformers import modeling_bart
+from models.Pooling import Pooling
 from transformers.tokenization_utils import BatchEncoding
+
 
 
 class EncDecModel(nn.Module):
@@ -48,7 +49,13 @@ class EncDecModel(nn.Module):
             output = self.decode(output)
 
         if partial_value:
+            input.update({'output_hidden_states':True})
             partial = self.model.base_model.encoder(**input)
+            input.update({'token_embeddings': partial[0]})# 'attention_mask': (partial[0] > 0)})
+            if self.task == "reconstruction":
+                cls_tokens = partial[0][:, 0, :]  # CLS token is first token
+                input.update({'cls_token_embeddings':cls_tokens})
+                partial = self.embedding_pooling(input)
             return output, partial
         else:
             return output
@@ -159,3 +166,10 @@ class EncDecModel(nn.Module):
 
         train_input_ids = torch.cat(train_input_ids, dim=0)
         return train_input_ids
+
+    def add_pooling_layer(self):
+        if not hasattr(self, 'embedding_pooling') and self.task == "reconstruction":
+            self.embedding_pooling = Pooling(self.get_word_embedding_dimension(),
+                                     pooling_mode_mean_tokens=True,
+                                     pooling_mode_cls_token=False,
+                                     pooling_mode_max_tokens=False)

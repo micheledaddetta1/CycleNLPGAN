@@ -40,6 +40,8 @@ if __name__ == '__main__':
     train_dataset, eval_dataset, test_dataset = create_dataset(opt, model)  # create a dataset given opt.dataset_mode and other options
     dataset_size = len(train_dataset)    # get the number of images in the dataset.
     logging.info('The number of training sentences = %d' % dataset_size)
+    logging.info('The number of evaluation sentences = %d' % len(eval_dataset))
+    logging.info('The number of test sentences = %d' % len(test_dataset))
 
     visualizer = Visualizer(opt)   # create a visualizer that display/save images and plots
     total_iters = 0                # the total number of training iterations
@@ -77,19 +79,7 @@ if __name__ == '__main__':
         model.save_networks(epoch)
 
         for i, data in enumerate(eval_dataset):  # inner loop within one epoch
-            logging.info("\n\nEvaluating...")
-            model.set_input(data)         # unpack data from dataset and apply preprocessing
-            model.forward()   # calculate loss functions, get gradients, update network weights
-            with open("eval_sentences.txt", "a") as sentences_file:
-                for j in range(len(model.real_A)):
-                    str1 = " A->B->A : "+model.real_A[j]+" -> "+model.fake_B[j]+" -> "+model.rec_A[j]
-                    str2 = " B->A->B : "+model.real_B[j]+" -> "+model.fake_A[j]+" -> "+model.rec_B[j]+"\n\n"
-                    logging.info(str1)
-                    logging.info(str2)
-                    sentences_file.write('%s\n' % str1)  # save the message
-                    sentences_file.write('%s\n' % str2)  # save the message
-            losses = model.get_current_losses()
-            visualizer.print_current_losses(epoch, epoch_iter, losses, t_comp, t_data)
+            model.evaluate(data)
 
         logging.info('End of epoch %d / %d \t Time Taken: %d sec' % (epoch, opt.n_epochs + opt.n_epochs_decay, time.time() - epoch_start_time))
         model.update_learning_rate()                     # update learning rates at the end of every epoch.

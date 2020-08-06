@@ -1,5 +1,7 @@
+import logging
 from copy import deepcopy
 
+import sklearn
 import torch
 import itertools
 
@@ -7,6 +9,7 @@ from losses import CosineSimilarityLoss
 from util.image_pool import ImagePool
 from .base_model import BaseModel
 from . import networks
+import numpy as np
 
 
 class CycleGANModel(BaseModel):
@@ -248,3 +251,42 @@ class CycleGANModel(BaseModel):
         self.backward_D_B()      # calculate graidents for D_B
         self.optimizer_D.step()  # update D_A and D_B's weights
 
+
+
+
+    def evaluate(self, data):
+        logging.info("\n\nEvaluating...")
+        self.set_input(data)  # unpack data from dataset and apply preprocessing
+        self.forward()  # calculate loss functions, get gradients, update network weights
+        with open("eval_sentences.txt", "a") as sentences_file:
+            for j in range(len(self.real_A)):
+                str1 = " A->B->A : " + self.real_A[j] + " -> " + self.fake_B[j] + " -> " + self.rec_A[j]
+                str2 = " B->A->B : " + self.real_B[j] + " -> " + self.fake_A[j] + " -> " + self.rec_B[j] + "\n\n"
+                logging.info(str1)
+                logging.info(str2)
+                sentences_file.write('%s\n' % str1)  # save the message
+                sentences_file.write('%s\n' % str2)  # save the message
+
+        distances = sklearn.metrics.pairwise_distances(self.fake_A_embeddings['sentence_embedding'].cpu().detach().numpy(), self.fake_B_embeddings['sentence_embedding'].cpu().detach().numpy(), metric='cosine', n_jobs=-1)
+
+        dim = len(distances)
+        top_k = np.zeros(dim, dtype=np.float)
+        for i in range(dim):
+
+            lower = 0
+            for j in range(len(distances[i])):
+                if i != j and distances[i][i] > distances[i][j]:
+                    lower += 1
+            top_k[lower] += 1
+
+        with open("top_k.txt", "a") as top_file:
+            top_file.write("NEW EPOCH:\n")
+            tot = 0
+            for i in range(dim):
+                top_k[i] = top_k[i]/dim
+                tot += top_k[i]
+                top_file.write('Top '+str(i+1)+': '+str(tot)+'%\n')
+            top_file.write("\n\n")
+        #mi salvo in un dict per ogni frase quanto lontano è l'embedding reale (quanti ce ne sono più vicini) e faccio una classifica
+            #per vedere quanti hanno l'embedding reale nella top 1, top 2 e cosi via (cumulativo)
+            #salvo info in un file, per ogni epoca

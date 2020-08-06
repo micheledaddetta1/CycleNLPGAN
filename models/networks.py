@@ -7,7 +7,7 @@ import functools
 from torch.optim import lr_scheduler
 from transformers import EncoderDecoderModel, MarianTokenizer, MarianMTModel
 
-from . import Transformer, EncDecModel, PooledEncoder
+from . import Transformer, EncDecModel, PooledEncoder, Pooling
 from . import SentenceTransformer
 from . import BERT
 from .discriminator_transformer import DiscriminatorTransformer
@@ -168,9 +168,11 @@ def define_Gs(task, net_encoder, net_decoder,  source='de', dest='en', norm='bat
         netB.dest_tokenizer = deepcopy(netB.tokenizer)
         netA.tokenizer = deepcopy(netA_encoder.tokenizer)
         netB.tokenizer = deepcopy(netB_encoder.tokenizer)
+        '''
         if original_encoder_out != new_encoder_out:
             netA.model.base_model.pooling_layer = nn.Linear(new_encoder_out, original_encoder_out)
             netB.model.base_model.pooling_layer = nn.Linear(new_encoder_out, original_encoder_out)
+        '''
 
         netA.redefine_config()
         netB.redefine_config()
@@ -190,6 +192,10 @@ def define_Gs(task, net_encoder, net_decoder,  source='de', dest='en', norm='bat
 
     netA.task = task
     netB.task = task
+    if task == 'reconstruction':
+        netA.add_pooling_layer()
+        netB.add_pooling_layer()
+
     netA = init_net(netA, init_type, init_gain, gpu_ids)
     netB = init_net(netB, init_type, init_gain, gpu_ids)
 
