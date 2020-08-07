@@ -44,7 +44,14 @@ if __name__ == '__main__':
     logging.info('The number of test sentences = %d' % len(test_dataset))
 
     visualizer = Visualizer(opt)   # create a visualizer that display/save images and plots
-    total_iters = 0                # the total number of training iterations
+    total_iters = opt.iter_count                # the total number of training iterations
+
+    n = round(opt.iter_count/opt.batch_size) #NBatch totali
+    n -= opt.epoch_count*(round(len(train_dataset)/opt.batch_size))
+    logging.info("Skip first "+str(n)+" batches...")
+
+    for i in range(n):
+        data = next(iter(train_dataset))
 
     for epoch in range(opt.epoch_count, opt.n_epochs + opt.n_epochs_decay + 1):    # outer loop for different epochs; we save the model by <epoch_count>, <epoch_count>+<save_latest_freq>
         epoch_start_time = time.time()  # timer for entire epoch
@@ -75,7 +82,7 @@ if __name__ == '__main__':
 
             iter_data_time = time.time()
         logging.info('saving the model at the end of epoch %d, iters %d' % (epoch, total_iters))
-        #model.save_networks('latest')
+        model.save_networks('latest')
         model.save_networks(epoch)
 
         for i, data in enumerate(eval_dataset):  # inner loop within one epoch

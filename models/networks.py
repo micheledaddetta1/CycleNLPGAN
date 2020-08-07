@@ -242,6 +242,7 @@ def define_G(model, netG, source='en', dest='de', norm='batch', use_dropout=Fals
     else:
         raise NotImplementedError('Generator model name [%s] is not recognized' % netG)
     '''
+
     if model == 'encoder':
         if out_dimension is None:
             net = Transformer(netG)
