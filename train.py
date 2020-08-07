@@ -44,14 +44,11 @@ if __name__ == '__main__':
     logging.info('The number of test sentences = %d' % len(test_dataset))
 
     visualizer = Visualizer(opt)   # create a visualizer that display/save images and plots
-    total_iters = opt.iter_count                # the total number of training iterations
+    total_iters = opt.iter_count*opt.batch_size                # the total number of training iterations
+
 
     n = round(opt.iter_count/opt.batch_size) #NBatch totali
     n -= (opt.epoch_count-1)*(round(len(train_dataset)/opt.batch_size))
-    logging.info("Skip first "+str(n)+" batches...")
-
-    for i in range(n):
-        data = next(iter(train_dataset))
 
     for epoch in range(opt.epoch_count, opt.n_epochs + opt.n_epochs_decay + 1):    # outer loop for different epochs; we save the model by <epoch_count>, <epoch_count>+<save_latest_freq>
         epoch_start_time = time.time()  # timer for entire epoch
@@ -60,6 +57,10 @@ if __name__ == '__main__':
         visualizer.reset()              # reset the visualizer: make sure it saves the results to HTML at least once every epoch
 
         for i, data in enumerate(train_dataset):  # inner loop within one epoch
+            if epoch == opt.epoch_count:
+                if n > 0:
+                    n -= 1
+                    continue
             iter_start_time = time.time()  # timer for computation per iteration
             if total_iters % opt.print_freq == 0:
                 t_data = iter_start_time - iter_data_time
