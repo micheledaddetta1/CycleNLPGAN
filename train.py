@@ -47,7 +47,7 @@ if __name__ == '__main__':
     total_iters = opt.iter_count                # the total number of training iterations
 
     n = round(opt.iter_count/opt.batch_size) #NBatch totali
-    n -= opt.epoch_count*(round(len(train_dataset)/opt.batch_size))
+    n -= (opt.epoch_count-1)*(round(len(train_dataset)/opt.batch_size))
     logging.info("Skip first "+str(n)+" batches...")
 
     for i in range(n):
