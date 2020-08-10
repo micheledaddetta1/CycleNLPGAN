@@ -90,11 +90,11 @@ class CycleGANModel(BaseModel):
 
         self.netG_A, self.netG_B = networks.define_Gs(opt.task, opt.encoder, opt.decoder, opt.language, 'en', opt.norm,
                                         not opt.no_dropout, opt.init_type, opt.init_gain, self.gpu_ids)
-        self.set_requires_grad([self.netG_A._modules['module'].model.base_model.decoder, self.netG_B._modules['module'].model.base_model.decoder],
+        self.set_requires_grad([self.netG_A.module.model.base_model.decoder, self.netG_B.module.model.base_model.decoder],
                           False)  # Ds require no gradients when optimizing Gs
 
         if self.isTrain:  # define discriminators
-            in_dim = self.netG_A._modules['module'].get_word_embedding_dimension()
+            in_dim = self.netG_A.module.get_word_embedding_dimension()
 
             netDB_name=networks.define_name(opt.netD, 'en')
             netDA_name=networks.define_name(opt.netD, opt.language)
@@ -154,11 +154,11 @@ class CycleGANModel(BaseModel):
         We also call loss_D.backward() to calculate the gradients.
         """
         real = dict()
-        real['input_ids'] = netD._modules['module'].encode(real_sent, False)
+        real['input_ids'] = netD.module.encode(real_sent, False)
         real['attention_mask'] = (real['input_ids'] > 0).to(self.device)
 
         fake = dict()
-        fake['input_ids'] = netD._modules['module'].encode(fake_sent, False)
+        fake['input_ids'] = netD.module.encode(fake_sent, False)
         fake['attention_mask'] = (fake['input_ids'] > 0).to(self.device)
 
         # Real
@@ -191,22 +191,22 @@ class CycleGANModel(BaseModel):
         if lambda_idt > 0:
             # G_A should be identity if real_B is fed: ||G_A(B) - B||
             _, self.idt_A = self.netG_A(self.real_B, True)
-            real = self.netG_B._modules['module'].encode(self.real_B, False)
+            real = self.netG_B.module.encode(self.real_B, False)
             self.loss_idt_A = self.criterionIdt(self.idt_A, real) * lambda_B * lambda_idt
             # G_B should be identity if real_A is fed: ||G_B(A) - A||
             _, self.idt_B = self.netG_B(self.real_A, True)
-            self.loss_idt_B = self.criterionIdt(self.idt_B, self.netG_B._modules['module'].encode(self.real_A, False)) * lambda_A * lambda_idt
+            self.loss_idt_B = self.criterionIdt(self.idt_B, self.netG_B.module.encode(self.real_A, False)) * lambda_A * lambda_idt
         else:
             self.loss_idt_A = 0
             self.loss_idt_B = 0
 
 
         fake_B = dict()
-        fake_B['input_ids'] = self.netD_A._modules['module'].encode(self.fake_B, False).to(self.device)
+        fake_B['input_ids'] = self.netD_A.module.encode(self.fake_B, False).to(self.device)
         fake_B['attention_mask'] = (fake_B['input_ids'] > 0).to(self.device)
 
         fake_A = dict()
-        fake_A['input_ids'] = self.netD_B._modules['module'].encode(self.fake_A, False).to(self.device)
+        fake_A['input_ids'] = self.netD_B.module.encode(self.fake_A, False).to(self.device)
         fake_A['attention_mask'] = (fake_A['input_ids'] > 0).to(self.device)
 
         # GAN loss D_A(G_A(A))
@@ -214,16 +214,16 @@ class CycleGANModel(BaseModel):
         # GAN loss D_B(G_B(B))
         self.loss_G_B = self.criterionGAN(self.netD_B(fake_A), True)
         # Forward cycle loss || G_B(G_A(A)) - A||
-        rec_A_tokens = self.netG_A._modules['module'].encode(self.rec_A, False).to(self.device, dtype=torch.float32)
+        rec_A_tokens = self.netG_A.module.encode(self.rec_A, False).to(self.device, dtype=torch.float32)
         rec_size= rec_A_tokens.size()
-        real_A_tokens = self.netG_A._modules['module'].encode(self.real_A, False).to(self.device, dtype=torch.float32)
+        real_A_tokens = self.netG_A.module.encode(self.real_A, False).to(self.device, dtype=torch.float32)
         real_size=real_A_tokens.size()
         self.loss_cycle_A = self.criterionCycle(real_A_tokens,
                                                 rec_A_tokens,
                                                 torch.ones(real_A_tokens.size()[-1]).to(self.device)) * lambda_A
         # Backward cycle loss || G_A(G_B(B)) - B||
-        self.loss_cycle_B = self.criterionCycle(self.netG_B._modules['module'].encode(self.rec_B, False).to(self.device, dtype=torch.float32),
-                                                self.netG_B._modules['module'].encode(self.real_B, False).to(self.device, dtype=torch.float32),
+        self.loss_cycle_B = self.criterionCycle(self.netG_B.module.encode(self.rec_B, False).to(self.device, dtype=torch.float32),
+                                                self.netG_B.module.encode(self.real_B, False).to(self.device, dtype=torch.float32),
                                                 torch.ones(real_A_tokens.size()).to(self.device)) * lambda_B
         # combined loss and calculate gradients
         self.loss_G = self.loss_G_A + self.loss_G_B + self.loss_cycle_A + self.loss_cycle_B + self.loss_idt_A + self.loss_idt_B
@@ -233,13 +233,13 @@ class CycleGANModel(BaseModel):
     def optimize_parameters(self):
         """Calculate losses, gradients, and update network weights; called in every training iteration"""
         # forward
-        self.netG_A._modules['module'].eval()
-        self.netG_B._modules['module'].eval()
+        self.netG_A.module.eval()
+        self.netG_B.module.eval()
 
         self.forward()      # compute fake images and reconstruction images.
         # G_A and G_B
-        self.netG_A._modules['module'].train()
-        self.netG_B._modules['module'].train()
+        self.netG_A.module.train()
+        self.netG_B.module.train()
         self.set_requires_grad([self.netD_A, self.netD_B], False)  # Ds require no gradients when optimizing Gs
         self.optimizer_G.zero_grad()  # set G_A and G_B's gradients to zero
         self.backward_G()             # calculate gradients for G_A and G_B
