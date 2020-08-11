@@ -32,7 +32,9 @@ class Visualizer():
         self.saved = False
 
         # create a logging file to store training losses
-        self.log_name = os.path.join(opt.checkpoints_dir, opt.name, 'loss_log.txt')
+        self.log_names = [os.path.join(opt.checkpoints_dir, opt.name, 'loss_log.txt')]
+        if self.opt.on_colab:
+            self.log_names.append(os.path.join("/content/gdrive/My Drive/",opt.name,"loss_log.txt"))
         with open(self.log_name, "a") as log_file:
             now = time.strftime("%c")
             log_file.write('================ Training Loss (%s) ================\n' % now)
@@ -57,5 +59,6 @@ class Visualizer():
             message += '%s: %.3f ' % (k, v)
 
         logging.info(message)  # print the message
-        with open(self.log_name, "a") as log_file:
-            log_file.write('%s\n' % message)  # save the message
+        for log_name in self.log_names:
+            with open(log_name, "a") as log_file:
+                log_file.write('%s\n' % message)  # save the message

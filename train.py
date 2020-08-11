@@ -37,9 +37,6 @@ if __name__ == '__main__':
     model = create_model(opt)  # create a model given opt.model and other options
     model.setup(opt)  # regular setup: load and print networks; create schedulers
 
-    print(model.device)
-    print(str(model.netG_A.module.model.device))
-    print(str(model.netG_A.module.model.base_model.device))
 
     train_dataset, eval_dataset, test_dataset = create_dataset(opt, model)  # create a dataset given opt.dataset_mode and other options
     dataset_size = len(train_dataset)    # get the number of images in the dataset.
