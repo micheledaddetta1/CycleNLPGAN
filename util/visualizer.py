@@ -35,9 +35,10 @@ class Visualizer():
         self.log_names = [os.path.join(opt.checkpoints_dir, opt.name, 'loss_log.txt')]
         if self.opt.on_colab:
             self.log_names.append(os.path.join("/content/gdrive/My Drive/",opt.name,"loss_log.txt"))
-        with open(self.log_name, "a") as log_file:
-            now = time.strftime("%c")
-            log_file.write('================ Training Loss (%s) ================\n' % now)
+        for log_name in self.log_names:
+            with open(log_name, "a") as log_file:
+                now = time.strftime("%c")
+                log_file.write('================ Training Loss (%s) ================\n' % now)
 
     def reset(self):
         """Reset the self.saved status"""
