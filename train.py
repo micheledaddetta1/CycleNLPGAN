@@ -45,7 +45,7 @@ if __name__ == '__main__':
     logging.info('The number of test sentences = %d' % len(test_dataset))
 
     visualizer = Visualizer(opt)   # create a visualizer that display/save images and plots
-    total_iters = opt.iter_count*opt.batch_size                # the total number of training iterations
+    total_iters = opt.iter_count                # the total number of training iterations
 
 
     n = round(opt.iter_count/opt.batch_size) #NBatch totali
