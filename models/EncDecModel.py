@@ -49,7 +49,8 @@ class EncDecModel(nn.Module):
             output = self.decode(output)
 
         if partial_value:
-            input.update({'output_hidden_states':True})
+            if self.task == "reconstruction":
+                input.update({'output_hidden_states':True})
             partial = self.model.base_model.encoder(**input)
             input.update({'token_embeddings': partial[0]})# 'attention_mask': (partial[0] > 0)})
             if self.task == "reconstruction":
