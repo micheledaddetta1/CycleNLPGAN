@@ -152,7 +152,7 @@ class BaseModel(ABC):
                 save_filename = '%s_net_%s.pth' % (epoch, name)
                 save_paths = [os.path.join(self.save_dir, save_filename)]
                 if self.on_colab:
-                    save_paths.append(os.path.join("/content/gdrive/My Drive/", save_filename))
+                    save_paths.append(os.path.join("/content/gdrive/My Drive/", self.opt.name, save_filename))
 
                 net = getattr(self, 'net' + name)
                 for save_path in save_paths:
