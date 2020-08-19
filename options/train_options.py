@@ -27,7 +27,7 @@ class TrainOptions(BaseOptions):
         parser.add_argument('--continue_train', action='store_true', help='continue training: load the latest model')
         parser.add_argument('--epoch_count', type=int, default=1,
                             help='the starting epoch count, we save the model by <epoch_count>, <epoch_count>+<save_latest_freq>, ...')
-        parser.add_argument('--iter_count', type=int, default=2560,
+        parser.add_argument('--iter_count', type=int, default=0,
                             help='the starting epoch count, we save the model by <epoch_count>, <epoch_count>+<save_latest_freq>, ...')
 
         parser.add_argument('--phase', type=str, default='train', help='train, val, test, etc')

@@ -257,6 +257,9 @@ class CycleGANModel(BaseModel):
     def evaluate(self, data):
         logging.info("\n\nEvaluating...")
         self.set_input(data)  # unpack data from dataset and apply preprocessing
+        self.evaluate(self)
+
+    def evaluate(self):
         self.forward()  # calculate loss functions, get gradients, update network weights
         with open("eval_sentences.txt", "a") as sentences_file:
             for j in range(len(self.real_A)):

@@ -147,3 +147,13 @@ class PooledEncoder(nn.Module):
         return input_ids[0, :]
 
 
+
+    def train(self):
+        self.auto_model.base_model.encoder.train()
+        if hasattr(self.auto_model.base_model, "pooling_layer"):
+            self.auto_model.base_model.pooling_layer.train()
+
+    def eval(self):
+        self.auto_model.base_model.encoder.eval()
+        if hasattr(self.auto_model.base_model, "pooling_layer"):
+            self.auto_model.base_model.pooling_layer.eval()
