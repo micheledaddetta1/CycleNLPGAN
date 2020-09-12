@@ -4,7 +4,7 @@ import logging
 import gzip
 import os
 import random
-
+import csv
 from tqdm import tqdm
 
 from . import BaseDataset
@@ -49,7 +49,7 @@ class ParallelEmbeddingsDataset(BaseDataset):
         """
         BaseDataset.__init__(self, opt)
         self.model = model
-        self.filepaths = ["TED2013-en-de.txt.gz"]#, "STS2017.en-de.txt.gz", "xnli-en-de.txt.gz"]
+        self.filepaths = ["ted2020.tsv.gz"]#, "STS2017.en-de.txt.gz", "xnli-en-de.txt.gz"]
         self.datasets = []
         self.dataset_indices = []
         self.copy_dataset_indices = []
@@ -84,7 +84,11 @@ class ParallelEmbeddingsDataset(BaseDataset):
         max_sentence_length = self.opt.max_sentence_length
 
         sentences_map = {}
-        with gzip.open(filepath, 'rt', encoding='utf8') if filepath.endswith('.gz') else open(filepath, encoding='utf8') as fIn:
+
+        with gzip.open(filepath, 'rt', encoding='utf8') as fIn:
+            reader = csv.DictReader(fIn, delimiter='\t', quoting=csv.QUOTE_NONE)
+            for line in reader:
+                print(line)
             count = 0
             for line in fIn:
                 sentences = line.strip().split("\t")

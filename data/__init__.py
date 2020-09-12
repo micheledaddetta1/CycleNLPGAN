@@ -88,7 +88,7 @@ class CustomDatasetDataLoader():
         self.test_perc = opt.test_percentage
 
         dataset_class = find_dataset_using_name(opt.dataset_mode)
-        self.dataset = dataset_class(opt, model,self.train_perc, self.eval_perc, self.test_perc)
+        self.dataset = dataset_class(opt, model, self.train_perc, self.eval_perc, self.test_perc)
         self.dataset.load_data(dataset_type)
 
         print("dataset [%s] was created" % type(self.dataset).__name__)

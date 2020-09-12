@@ -1,3 +1,5 @@
+import csv
+
 from torch.utils.data import Dataset
 import torch
 import logging
@@ -42,14 +44,14 @@ class ParallelSentencesDataset(BaseDataset):
     """
 
 
-    def __init__(self,opt,model, train_perc, eval_perc, test_perc):
+    def __init__(self, opt, model, train_perc, eval_perc, test_perc):
         """
         Parallel sentences dataset reader to train student model given a teacher model
         :param opt: options used to create and read the dataset
         """
         BaseDataset.__init__(self, opt)
         self.model = model
-        self.filepaths = ["TED2013-en-de.txt.gz"]#, "STS2017.en-de.txt.gz", "xnli-en-de.txt.gz"]
+        self.filepaths = ["ted2020.tsv.gz"]#, "STS2017.en-de.txt.gz", "xnli-en-de.txt.gz"]
         self.datasets = []
         self.dataset_indices = []
         self.copy_dataset_indices = []
@@ -88,20 +90,30 @@ class ParallelSentencesDataset(BaseDataset):
         max_sentence_length = self.opt.max_sentence_length
 
         sentences_map = {}
-        with gzip.open(filepath, 'rt', encoding='utf8') if filepath.endswith('.gz') else open(filepath, encoding='utf8') as fIn:
+        with gzip.open(filepath, 'rt', encoding='utf8') as fIn:
+            reader = csv.DictReader(fIn, delimiter='\t', quoting=csv.QUOTE_NONE)
+                #print(line['en']+" -> "+line['it'])
+
             count = 0
-            for line in fIn:
-                sentences = line.strip().split("\t")
-                sentence_lengths = [len(sent) for sent in sentences]
+            for line in reader:
+
+                sentence_lengths = [len(sent) for sent in line.values()]
                 if max(sentence_lengths) > max_sentence_length:
                     continue
 
-                eng_sentence = sentences[0]
+                eng_sentence = line['en']
 
+                eng_sentence = eng_sentence.replace("(Mock sob)", "...")
+                eng_sentence = eng_sentence.replace("(Laughter)", "")
+                eng_sentence = eng_sentence.replace("(Applause)", "")
+                if '(' in eng_sentence or ')' in eng_sentence:
+                    eng_sentence
                 if eng_sentence not in sentences_map:
-                    sentences_map[eng_sentence] = sentences[1]
-
-                    data.append([sentences[1], eng_sentence])
+                    if line[self.opt.language] != "":
+                        if '(' in line[self.opt.language] or ')' in line[self.opt.language]:
+                            line[self.opt.language]
+                        sentences_map[eng_sentence] = line[self.opt.language]
+                        data.append([line[self.opt.language], eng_sentence])
 
                 '''
                 if eng_sentence not in sentences_map:

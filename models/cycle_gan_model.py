@@ -50,7 +50,7 @@ class CycleGANModel(BaseModel):
         parser.add_argument('--decoder', type=str, default='marianMT',
                             help='specify generator architecture and language [marianMT|bert-base-german-cased]')
 
-        parser.add_argument('--language', type=str, default='de', help='specify destination language')
+        parser.add_argument('--language', type=str, default='it', help='specify destination language')
 
         parser.set_defaults(no_dropout=True)  # default CycleGAN did not use dropout
         if is_train:
