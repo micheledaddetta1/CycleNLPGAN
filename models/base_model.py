@@ -33,7 +33,7 @@ class BaseModel(ABC):
         self.gpu_ids = opt.gpu_ids
         self.isTrain = opt.isTrain
         self.device = torch.device('cuda:{}'.format(self.gpu_ids[0])) if self.gpu_ids else torch.device('cpu')  # get device name: CPU or GPU
-        self.save_dir = os.path.join(opt.checkpoints_dir, opt.name)  # save all the checkpoints to save_dir
+        self.save_dir = os.path.join(os.getcwd(), opt.checkpoints_dir, opt.name)  # save all the checkpoints to save_dir
         if self.isTrain:
             self.on_colab = opt.on_colab
 
@@ -150,7 +150,7 @@ class BaseModel(ABC):
         for name in self.model_names:
             if isinstance(name, str):
                 save_filename = '%s_net_%s.pth' % (epoch, name)
-                save_paths = [os.path.join(self.save_dir, save_filename)]
+                save_paths = [os.path.join(os.getcwd(), self.save_dir, save_filename)]
                 if self.on_colab:
                     save_paths.append(os.path.join("/content/gdrive/My Drive/", self.opt.name, save_filename))
 
@@ -187,7 +187,7 @@ class BaseModel(ABC):
         for name in self.model_names:
             if isinstance(name, str):
                 load_filename = '%s_net_%s.pth' % (epoch, name)
-                load_path = os.path.join(self.save_dir, load_filename)
+                load_path = os.path.join(os.getcwd(), self.save_dir, load_filename)
                 net = getattr(self, 'net' + name)
                 if isinstance(net, torch.nn.DataParallel):
                     net = net.module
@@ -234,5 +234,5 @@ class BaseModel(ABC):
                 for param in net.parameters():
                     param.requires_grad = requires_grad
 
-    def evaluate(self, data):
+    def evaluate(self):
         pass

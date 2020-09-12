@@ -91,7 +91,7 @@ class TripletEvaluator(SentenceEvaluator):
         logging.info("Accuracy Euclidean Distance:\t{:.4f}\n".format(accuracy_euclidean))
 
         if output_path is not None:
-            csv_path = os.path.join(output_path, self.csv_file)
+            csv_path = os.path.join(os.getcwd(), output_path, self.csv_file)
             if not os.path.isfile(csv_path):
                 with open(csv_path, mode="w", encoding="utf-8") as f:
                     writer = csv.writer(f)

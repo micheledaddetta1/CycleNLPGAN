@@ -89,7 +89,8 @@ if __name__ == '__main__':
         model.save_networks(epoch)
 
         for i, data in enumerate(eval_dataset):  # inner loop within one epoch
-            model.evaluate(data)
+            model.set_input(data)  # unpack data from dataset and apply preprocessing
+            model.evaluate()
 
         logging.info('End of epoch %d / %d \t Time Taken: %d sec' % (epoch, opt.n_epochs + opt.n_epochs_decay, time.time() - epoch_start_time))
         model.update_learning_rate()                     # update learning rates at the end of every epoch.

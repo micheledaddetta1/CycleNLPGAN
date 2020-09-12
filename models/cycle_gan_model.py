@@ -254,12 +254,8 @@ class CycleGANModel(BaseModel):
 
 
 
-    def evaluate(self, data):
-        logging.info("\n\nEvaluating...")
-        self.set_input(data)  # unpack data from dataset and apply preprocessing
-        self.evaluate(self)
-
     def evaluate(self):
+        logging.info("\n\nEvaluating...")
         self.forward()  # calculate loss functions, get gradients, update network weights
         with open("eval_sentences.txt", "a") as sentences_file:
             for j in range(len(self.real_A)):
@@ -270,7 +266,10 @@ class CycleGANModel(BaseModel):
                 sentences_file.write('%s\n' % str1)  # save the message
                 sentences_file.write('%s\n' % str2)  # save the message
 
-        distances = sklearn.metrics.pairwise_distances(self.fake_A_embeddings['sentence_embedding'].cpu().detach().numpy(), self.fake_B_embeddings['sentence_embedding'].cpu().detach().numpy(), metric='cosine', n_jobs=-1)
+        distances = sklearn.metrics.pairwise_distances(self.fake_A_embeddings[-1].cpu().detach().numpy(),
+                                                       self.fake_B_embeddings[-1].cpu().detach().numpy(),
+                                                       metric='cosine',
+                                                       n_jobs=-1)
 
         dim = len(distances)
         top_k = np.zeros(dim, dtype=np.float)
