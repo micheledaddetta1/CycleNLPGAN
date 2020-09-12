@@ -64,7 +64,7 @@ class ParallelSentencesDataset(BaseDataset):
         for dataset in self.filepaths:
             print("Download", dataset)
             url = self.server+dataset
-            dataset_path = os.path.join(os.getcwd(), self.root, dataset)
+            dataset_path = os.path.join(self.root, dataset)
             urllib.request.urlretrieve(url, dataset_path)
 
         self.dir_AB = os.path.join(opt.dataroot, opt.phase)  # get the sentences directory
@@ -82,7 +82,7 @@ class ParallelSentencesDataset(BaseDataset):
         :return:
         """
         data = []
-        filepath = os.path.join(os.getcwd(), self.root, self.filepaths[0])
+        filepath = os.path.join(self.root, self.filepaths[0])
         weight = self.opt.param_weight
         max_sentences = self.opt.max_sentences
         if max_sentences == 0:
@@ -147,7 +147,7 @@ class ParallelSentencesDataset(BaseDataset):
 
         data = [[sentences_map[sentence], sentence] for sentence in data]
 
-        self.dir_AB = os.path.join(os.getcwd(), self.opt.dataroot, self.opt.phase)  # get the image directory
+        self.dir_AB = os.path.join(self.opt.dataroot, self.opt.phase)  # get the image directory
 
         dataset_id = len(self.datasets)
         self.datasets.append(data)

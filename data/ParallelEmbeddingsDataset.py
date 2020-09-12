@@ -59,10 +59,10 @@ class ParallelEmbeddingsDataset(BaseDataset):
         for dataset in self.filepaths:
             print("Download", dataset)
             url = self.server+dataset
-            dataset_path = os.path.join(os.getcwd(), self.root, dataset)
+            dataset_path = os.path.join(self.root, dataset)
             urllib.request.urlretrieve(url, dataset_path)
 
-        self.dir_AB = os.path.join(os.getcwd(), opt.dataroot, opt.phase)  # get the image directory
+        self.dir_AB = os.path.join(opt.dataroot, opt.phase)  # get the image directory
 
 
 
@@ -76,7 +76,7 @@ class ParallelEmbeddingsDataset(BaseDataset):
         :param max_sentence_length: Skip the example if one of the sentences is has more characters than max_sentence_length
         :return:
         """
-        filepath = os.path.join(os.getcwd(), self.root, self.filepaths[0])
+        filepath = os.path.join(self.root, self.filepaths[0])
         weight = self.opt.param_weight
         max_sentences = self.opt.max_sentences
         if max_sentences == 0:
@@ -120,7 +120,7 @@ class ParallelEmbeddingsDataset(BaseDataset):
         elif self.opt.model == 'gan':
             eng_encodings = self.model.netref.module.encode(eng_sentences)  # , batch_size=32, show_progress_bar=True), dtype=torch.float)
 
-        self.dir_AB = os.path.join(os.getcwd(), self.opt.dataroot, self.opt.phase)  # get the image directory
+        self.dir_AB = os.path.join(self.opt.dataroot, self.opt.phase)  # get the image directory
 
         data = []
         for idx in tqdm(range(len(eng_sentences))):
