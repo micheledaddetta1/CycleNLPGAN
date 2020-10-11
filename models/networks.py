@@ -155,6 +155,8 @@ def define_Gs(task, net_encoder, net_decoder,  source='de', dest='en', norm='bat
     netB.model.base_model.decoder.eval()
 
     if task == "translation":
+
+        '''
         netA_name = define_name(net_encoder, source)
         netB_name = define_name(net_encoder, dest)
         original_encoder_out = netA.get_word_embedding_dimension()
@@ -172,7 +174,7 @@ def define_Gs(task, net_encoder, net_decoder,  source='de', dest='en', norm='bat
         netB.dest_tokenizer = deepcopy(netB.tokenizer)
         netA.tokenizer = deepcopy(netA_encoder.tokenizer)
         netB.tokenizer = deepcopy(netB_encoder.tokenizer)
-        '''
+        
         if original_encoder_out != new_encoder_out:
             netA.model.base_model.pooling_layer = nn.Linear(new_encoder_out, original_encoder_out)
             netB.model.base_model.pooling_layer = nn.Linear(new_encoder_out, original_encoder_out)

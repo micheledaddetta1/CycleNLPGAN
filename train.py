@@ -31,6 +31,7 @@ import torch
 
 if __name__ == '__main__':
     logging.getLogger().setLevel(logging.INFO)
+    logging.basicConfig(format='%(asctime)s: %(message)s')
     opt = TrainOptions().parse()   # get training options
 
     torch.cuda.empty_cache()

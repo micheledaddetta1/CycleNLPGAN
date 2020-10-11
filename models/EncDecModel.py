@@ -42,13 +42,28 @@ class EncDecModel(nn.Module):
         input = {'input_ids': embeddings.to(self.model.device),
                  'attention_mask': (embeddings > 0).to(self.model.device)}
         if self.task == "translation":
+            '''
+            output = self.model.base_model.encoder(embeddings.to(self.model.device),
+                                                   attention_mask=input['attention_mask'].to(self.model.device))
+
+            encoder_outputs = (output[0], *output[1:])
+
+            output = self.model.base_model.decoder(encoder_outputs,
+                                                   attention_mask=input['attention_mask'].to(self.model.device))
+            '''
+            logging.info("Tempo prima della generate")
             output = self.model.generate(embeddings.to(self.model.device), attention_mask=input['attention_mask'].to(self.model.device))
+            logging.info("Tempo dopo la generate")
             output = self.decode(output)
+            logging.info("Tempo dopo decode")
         else:
             output = self.generate(sentences)
             output = self.decode(output)
 
+
         if partial_value:
+            logging.info("Tempo prima di partial value")
+
             if self.task == "reconstruction":
                 input.update({'output_hidden_states':True})
             partial = self.model.base_model.encoder(**input)
@@ -57,6 +72,8 @@ class EncDecModel(nn.Module):
                 cls_tokens = partial[0][:, 0, :]  # CLS token is first token
                 input.update({'cls_token_embeddings':cls_tokens})
                 partial = self.embedding_pooling(input)
+
+            logging.info("Tempo dopo partial value")
             return output, partial
         else:
             return output
