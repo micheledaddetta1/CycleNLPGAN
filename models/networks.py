@@ -180,9 +180,9 @@ def define_Gs(task, net_encoder, net_decoder,  source='de', dest='en', norm='bat
             netB.model.base_model.pooling_layer = nn.Linear(new_encoder_out, original_encoder_out)
         '''
 
-        netA.redefine_config()
-        netB.redefine_config()
-
+        #netA.redefine_config()
+        #netB.redefine_config()
+        pass
     elif task == "reconstruction":
 
         tmp = deepcopy(netA.model.base_model.encoder)
