@@ -51,18 +51,15 @@ class EncDecModel(nn.Module):
             output = self.model.base_model.decoder(encoder_outputs,
                                                    attention_mask=input['attention_mask'].to(self.model.device))
             '''
-            logging.info("Tempo prima della generate")
             output = self.model.generate(embeddings.to(self.model.device), attention_mask=input['attention_mask'].to(self.model.device))
-            logging.info("Tempo dopo la generate")
+
             output = self.decode(output)
-            logging.info("Tempo dopo decode")
         else:
             output = self.generate(sentences)
             output = self.decode(output)
 
 
         if partial_value:
-            logging.info("Tempo prima di partial value")
 
             if self.task == "reconstruction":
                 input.update({'output_hidden_states':True})
@@ -73,7 +70,6 @@ class EncDecModel(nn.Module):
                 input.update({'cls_token_embeddings':cls_tokens})
                 partial = self.embedding_pooling(input)
 
-            logging.info("Tempo dopo partial value")
             return output, partial
         else:
             return output
@@ -139,7 +135,8 @@ class EncDecModel(nn.Module):
 
 
     def decode(self, tokens):
-        return self.dest_tokenizer.batch_decode(tokens, skip_special_tokens=True)
+        return self.tokenizer.batch_decode(tokens, skip_special_tokens=True)
+        #return self.dest_tokenizer.batch_decode(tokens, skip_special_tokens=True)
 
 
 
