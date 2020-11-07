@@ -161,6 +161,7 @@ class EncDecModel(nn.Module):
                     return_tensors='pt',
                     max_length=self.max_seq_length,
                     pad_to_max_length=True,
+                    truncation=True
                 )
                 train_input_ids.append(input_ids)
         else:
@@ -170,6 +171,7 @@ class EncDecModel(nn.Module):
                     return_tensors='pt',
                     max_length=self.max_seq_length,
                     pad_to_max_length=True,
+                    truncation=True
                 )
 
                 train_input_ids.append(input_ids)
