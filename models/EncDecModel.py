@@ -40,7 +40,7 @@ class EncDecModel(nn.Module):
 
         embeddings = self.encode(sentences, False)
         input = {'input_ids': embeddings.to(self.model.device),
-                 'attention_mask': (embeddings > 0).to(self.model.device)}
+                 'attention_mask': (embeddings >= 0).to(self.model.device)}
         if self.task == "translation":
             '''
             output = self.model.base_model.encoder(embeddings.to(self.model.device),
@@ -51,7 +51,8 @@ class EncDecModel(nn.Module):
             output = self.model.base_model.decoder(encoder_outputs,
                                                    attention_mask=input['attention_mask'].to(self.model.device))
             '''
-            output = self.model.generate(embeddings.to(self.model.device), attention_mask=input['attention_mask'].to(self.model.device))
+            
+            output = self.model.generate(**input)
 
             output = self.decode(output)
         else:
@@ -118,9 +119,6 @@ class EncDecModel(nn.Module):
         train_input_ids = []
         input_ids = self.tokenizer.encode(
                 sentence,
-                add_special_tokens=True,
-                max_length=self.max_seq_length,
-                pad_to_max_length=True,
                 return_tensors='pt'
             )
         return input_ids[0, :]
@@ -160,23 +158,16 @@ class EncDecModel(nn.Module):
             for text in tqdm(sentences):
                 input_ids = self.tokenizer.encode(
                     text,
-                    add_special_tokens=True,
-                    max_length=self.max_seq_length,
-                    pad_to_max_length=True,
-                    return_tensors='pt',
-                    truncation=True
+                    return_tensors='pt'
                 )
                 train_input_ids.append(input_ids)
         else:
             for text in sentences:
                 input_ids = self.tokenizer.encode(
                     text,
-                    add_special_tokens=True,
-                    max_length=self.max_seq_length,
-                    pad_to_max_length=True,
-                    return_tensors='pt',
-                    truncation=True
+                    return_tensors='pt'
                 )
+
                 train_input_ids.append(input_ids)
 
         train_input_ids = torch.cat(train_input_ids, dim=0)
