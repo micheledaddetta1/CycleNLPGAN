@@ -266,8 +266,8 @@ class CycleGANModel(BaseModel):
                 sentences_file.write('%s\n' % str1)  # save the message
                 sentences_file.write('%s\n' % str2)  # save the message
 
-        distances = sklearn.metrics.pairwise_distances(self.fake_A_embeddings[-1].cpu().detach().numpy(),
-                                                       self.fake_B_embeddings[-1].cpu().detach().numpy(),
+        distances = sklearn.metrics.pairwise_distances(self.fake_A_embeddings[-1],#.cpu().detach().numpy(),
+                                                       self.fake_B_embeddings[-1],#.cpu().detach().numpy(),
                                                        metric='cosine',
                                                        n_jobs=-1)
 

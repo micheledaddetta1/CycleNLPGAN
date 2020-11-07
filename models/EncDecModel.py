@@ -51,7 +51,7 @@ class EncDecModel(nn.Module):
             output = self.model.base_model.decoder(encoder_outputs,
                                                    attention_mask=input['attention_mask'].to(self.model.device))
             '''
-            
+
             output = self.model.generate(**input)
 
             output = self.decode(output)
