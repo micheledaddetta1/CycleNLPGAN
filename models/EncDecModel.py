@@ -158,14 +158,18 @@ class EncDecModel(nn.Module):
             for text in tqdm(sentences):
                 input_ids = self.tokenizer.encode(
                     text,
-                    return_tensors='pt'
+                    return_tensors='pt',
+                    max_length=self.max_seq_length,
+                    pad_to_max_length=True,
                 )
                 train_input_ids.append(input_ids)
         else:
             for text in sentences:
                 input_ids = self.tokenizer.encode(
                     text,
-                    return_tensors='pt'
+                    return_tensors='pt',
+                    max_length=self.max_seq_length,
+                    pad_to_max_length=True,
                 )
 
                 train_input_ids.append(input_ids)
