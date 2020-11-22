@@ -57,7 +57,7 @@ if __name__ == '__main__':
         iter_data_time = time.time()    # timer for data loading per iteration
         epoch_iter = 0                  # the number of training iterations in current epoch, reset to 0 every epoch
         visualizer.reset()              # reset the visualizer: make sure it saves the results to HTML at least once every epoch
-        '''
+        
         for i, data in enumerate(train_dataset):  # inner loop within one epoch
             epoch_iter += opt.batch_size
 
@@ -88,7 +88,7 @@ if __name__ == '__main__':
         logging.info('saving the model at the end of epoch %d, iters %d' % (epoch, total_iters))
         model.save_networks('latest')
         model.save_networks(epoch)
-        '''
+
         sentences_filename = "eval_sentences.txt"
         distance_filename = "distances_"+str(epoch)+".txt"
         top_k_filename = "top_k.txt"
