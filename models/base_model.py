@@ -234,5 +234,5 @@ class BaseModel(ABC):
                 for param in net.parameters():
                     param.requires_grad = requires_grad
 
-    def evaluate(self):
+    def evaluate(self, sentences_file="eval_sentences.txt", distance_file="distances.txt", top_k_file="top_k.txt"):
         pass

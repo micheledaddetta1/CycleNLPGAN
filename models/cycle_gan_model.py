@@ -254,22 +254,30 @@ class CycleGANModel(BaseModel):
 
 
 
-    def evaluate(self):
+    def evaluate(self, sentences_file="eval_sentences.txt", distance_file="distances.txt", top_k_file="top_k.txt"):
         logging.info("\n\nEvaluating...")
+
+        self.netG_A.module.eval()
+        self.netG_B.module.eval()
+        self.netD_A.eval()
+        self.netD_B.eval()
         self.forward()  # calculate loss functions, get gradients, update network weights
-        with open("eval_sentences.txt", "a") as sentences_file:
+        with open(sentences_file, "a") as sentences_file:
             for j in range(len(self.real_A)):
                 str1 = " A->B->A : " + self.real_A[j] + " -> " + self.fake_B[j] + " -> " + self.rec_A[j]
-                str2 = " B->A->B : " + self.real_B[j] + " -> " + self.fake_A[j] + " -> " + self.rec_B[j] + "\n\n"
+                str2 = " B->A->B : " + self.real_B[j] + " -> " + self.fake_A[j] + " -> " + self.rec_B[j]
                 logging.info(str1)
                 logging.info(str2)
                 sentences_file.write('%s\n' % str1)  # save the message
-                sentences_file.write('%s\n' % str2)  # save the message
+                sentences_file.write('%s\n\n' % str2)  # save the message
 
-        distances = sklearn.metrics.pairwise_distances(self.fake_A_embeddings[-1],#.cpu().detach().numpy(),
-                                                       self.fake_B_embeddings[-1],#.cpu().detach().numpy(),
+        distances = sklearn.metrics.pairwise_distances(self.fake_A_embeddings.cpu().detach().numpy(),
+                                                       self.fake_B_embeddings.cpu().detach().numpy(),
                                                        metric='cosine',
                                                        n_jobs=-1)
+        np.savetxt(distance_file, distances, delimiter=',')  # X is an arra
+        #with open(distance_file, "a") as distances_file:
+        #    distances_file.write(distances+"\n")
 
         dim = len(distances)
         top_k = np.zeros(dim, dtype=np.float)
@@ -281,14 +289,18 @@ class CycleGANModel(BaseModel):
                     lower += 1
             top_k[lower] += 1
 
-        with open("top_k.txt", "a") as top_file:
-            top_file.write("NEW EPOCH:\n")
+        with open(top_k_file, "a") as top_file:
             tot = 0
             for i in range(dim):
                 top_k[i] = top_k[i]/dim
                 tot += top_k[i]
                 top_file.write('Top '+str(i+1)+': '+str(tot)+'%\n')
-            top_file.write("\n\n")
         #mi salvo in un dict per ogni frase quanto lontano è l'embedding reale (quanti ce ne sono più vicini) e faccio una classifica
             #per vedere quanti hanno l'embedding reale nella top 1, top 2 e cosi via (cumulativo)
             #salvo info in un file, per ogni epoca
+
+
+        self.netG_A.module.train()
+        self.netG_B.module.train()
+        self.netD_A.train()
+        self.netD_B.train()

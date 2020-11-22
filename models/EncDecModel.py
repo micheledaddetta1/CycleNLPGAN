@@ -37,12 +37,15 @@ class EncDecModel(nn.Module):
 
 
     def forward(self, sentences, partial_value=False):
-
-        embeddings = self.encode(sentences, False)
-        input = {'input_ids': embeddings.to(self.model.device),
-                 'attention_mask': (embeddings >= 0).to(self.model.device)}
+        embeddings = self.batch_encode_plus(sentences, False)
+        input = {'input_ids': embeddings['input_ids'].to(self.model.device),
+                 'attention_mask': embeddings['attention_mask'].to(self.model.device)}
         if self.task == "translation":
             '''
+            embeddings = self.batch_encode_plus(sentences, False)
+            input = {'input_ids': embeddings['input_ids'].to(self.model.device),
+                 'attention_mask': embeddings['attention_mask'].to(self.model.device)}
+        
             output = self.model.base_model.encoder(embeddings.to(self.model.device),
                                                    attention_mask=input['attention_mask'].to(self.model.device))
 
@@ -62,13 +65,14 @@ class EncDecModel(nn.Module):
 
         if partial_value:
 
-            if self.task == "reconstruction":
-                input.update({'output_hidden_states':True})
+            input.update({'output_hidden_states': True})
             partial = self.model.base_model.encoder(**input)
-            input.update({'token_embeddings': partial[0]})# 'attention_mask': (partial[0] > 0)})
+            input.update({'token_embeddings': partial[0]})
+            partial = partial[0][:, 0, :]  # CLS token is first token
+
             if self.task == "reconstruction":
                 cls_tokens = partial[0][:, 0, :]  # CLS token is first token
-                input.update({'cls_token_embeddings':cls_tokens})
+                input.update({'cls_token_embeddings': cls_tokens})
                 partial = self.embedding_pooling(input)
 
             return output, partial
@@ -151,7 +155,6 @@ class EncDecModel(nn.Module):
         #self.config.hidden_size = self.model.base_model.encoder.config.hidden_size
         self.config.encoder_layers = self.model.base_model.encoder.config.num_hidden_layers
 
-
     def encode(self, sentences, verbose=True):
         train_input_ids = []
         if verbose:
@@ -177,6 +180,16 @@ class EncDecModel(nn.Module):
                 train_input_ids.append(input_ids)
 
         train_input_ids = torch.cat(train_input_ids, dim=0)
+        return train_input_ids
+
+    def batch_encode_plus(self, sentences, verbose=True):
+        train_input_ids = self.tokenizer.batch_encode_plus(
+                sentences,
+                return_tensors='pt',
+                max_length=self.max_seq_length,
+                pad_to_max_length=True,
+                truncation=True
+            )
         return train_input_ids
 
     def add_pooling_layer(self):
