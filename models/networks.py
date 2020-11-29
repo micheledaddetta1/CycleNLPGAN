@@ -149,10 +149,6 @@ def define_Gs(task, net_encoder, net_decoder,  source='de', dest='en', norm='bat
     netB = define_G("encoder-decoder", net_decoder, dest, source, norm, use_dropout, init_type, init_gain, gpu_ids, False)
     netA.model.base_model.train()
     netB.model.base_model.train()
-    netA.model.base_model.encoder.train()
-    netB.model.base_model.encoder.train()
-    netA.model.base_model.decoder.eval()
-    netB.model.base_model.decoder.eval()
 
     if task == "translation":
 

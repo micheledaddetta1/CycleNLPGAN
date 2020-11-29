@@ -111,6 +111,7 @@ class EncDecModel(nn.Module):
         with open(os.path.join(output_path, 'sentence_bert_config.json'), 'w') as fOut:
             json.dump(self.get_config_dict(), fOut, indent=2)
 
+
     @staticmethod
     def load(input_path: str):
         with open(os.path.join(input_path, 'sentence_bert_config.json')) as fIn:
@@ -127,10 +128,12 @@ class EncDecModel(nn.Module):
             )
         return input_ids[0, :]
 
+
     def generate(self, text):
         encod = self.tokenizer.prepare_translation_batch(text).to(self.model.device)
         output = self.model.generate(**encod)
         return output
+
 
     def get_encoder(self):
         return self.model.get_encoder()
@@ -143,10 +146,12 @@ class EncDecModel(nn.Module):
 
 
     def train(self):
-        self.model.base_model.encoder.train()
+        self.model.train()
+
 
     def eval(self):
-        self.model.base_model.encoder.eval()
+        self.model.eval()
+
 
     def redefine_config(self):
         self.config.architectures[0] = "MixedModel"
@@ -154,6 +159,7 @@ class EncDecModel(nn.Module):
         #self.config.hidden_size = None
         #self.config.hidden_size = self.model.base_model.encoder.config.hidden_size
         self.config.encoder_layers = self.model.base_model.encoder.config.num_hidden_layers
+
 
     def encode(self, sentences, verbose=True):
         train_input_ids = []
