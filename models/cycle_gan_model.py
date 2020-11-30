@@ -205,6 +205,7 @@ class CycleGANModel(BaseModel):
 
         fake_B = self.netD_A.module.batch_encode_plus(self.fake_B, False).to(self.device)
 
+
         fake_A = self.netD_B.module.batch_encode_plus(self.fake_A, False).to(self.device)
 
         # GAN loss D_A(G_A(A))
@@ -212,10 +213,11 @@ class CycleGANModel(BaseModel):
         # GAN loss D_B(G_B(B))
         self.loss_G_B = self.criterionGAN(self.netD_B(fake_A), True)
 
+
         # Forward cycle loss || G_B(G_A(A)) - A||
         size = self.netG_A.module.batch_encode_plus(self.real_A, False)["input_ids"].size()[-1]
-        self.loss_cycle_A = self.criterionCycle(self.netG_B.module.batch_encode_plus(self.real_A, False)["input_ids"].to(self.device, dtype=torch.float32),
-                                                self.netG_B.module.batch_encode_plus(self.rec_A, False)["input_ids"].to(self.device, dtype=torch.float32),
+        self.loss_cycle_A = self.criterionCycle(self.netG_A.module.batch_encode_plus(self.real_A, False)["input_ids"].to(self.device, dtype=torch.float32),
+                                                self.netG_A.module.batch_encode_plus(self.rec_A, False)["input_ids"].to(self.device, dtype=torch.float32),
                                                 torch.ones(size).to(self.device)) * lambda_A
         # Backward cycle loss || G_A(G_B(B)) - B||
         self.loss_cycle_B = self.criterionCycle(self.netG_B.module.batch_encode_plus(self.real_B, False)["input_ids"].to(self.device, dtype=torch.float32),
@@ -226,20 +228,21 @@ class CycleGANModel(BaseModel):
 
         # Backward cycle loss || G_B(B) - G_A(A)||
         self.loss_cycle_C_1 = self.criterionCycle(self.fake_A_embeddings.to(self.device, dtype=torch.float32),
-                                                self.fake_B_embeddings.to(self.device, dtype=torch.float32),
-                                                torch.ones(size).to(self.device)) * lambda_C_1
+                                                  self.fake_B_embeddings.to(self.device, dtype=torch.float32),
+                                                  torch.ones(size).to(self.device)) * lambda_C_1
+
         # Backward cycle loss || G_B(B) - G_A(A)||
         self.loss_cycle_C_2_1 = self.criterionCycle(self.fake_A_embeddings.to(self.device, dtype=torch.float32),
-                                                self.rec_B_embeddings.to(self.device, dtype=torch.float32),
-                                                torch.ones(size).to(self.device)) * lambda_C_2
+                                                    self.rec_B_embeddings.to(self.device, dtype=torch.float32),
+                                                    torch.ones(size).to(self.device)) * lambda_C_2
         # Backward cycle loss || G_B(B) - G_A(A)||
         self.loss_cycle_C_2_2 = self.criterionCycle(self.fake_B_embeddings.to(self.device, dtype=torch.float32),
-                                                self.rec_A_embeddings.to(self.device, dtype=torch.float32),
-                                                torch.ones(size).to(self.device)) * lambda_C_2
+                                                    self.rec_A_embeddings.to(self.device, dtype=torch.float32),
+                                                    torch.ones(size).to(self.device)) * lambda_C_2
         # Backward cycle loss || G_B(B) - G_A(A)||
         self.loss_cycle_C_3 = self.criterionCycle(self.rec_A_embeddings.to(self.device, dtype=torch.float32),
-                                                self.rec_B_embeddings.to(self.device, dtype=torch.float32),
-                                                torch.ones(size).to(self.device)) * lambda_C_3
+                                                  self.rec_B_embeddings.to(self.device, dtype=torch.float32),
+                                                  torch.ones(size).to(self.device)) * lambda_C_3
         #'weight for embedding loss (fakeA -> recB, fakeB -> recA)')  # mixed loss
         #'weight for embedding loss (recA -> recB)')  # mixed loss (dubbio translation)
 
