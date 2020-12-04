@@ -10,7 +10,7 @@ from util.image_pool import ImagePool
 from .base_model import BaseModel
 from . import networks
 import numpy as np
-
+import time
 
 class CycleGANModel(BaseModel):
     """
@@ -255,24 +255,38 @@ class CycleGANModel(BaseModel):
     def optimize_parameters(self):
         """Calculate losses, gradients, and update network weights; called in every training iteration"""
         # forward
+        a = time.time()
         self.netG_A.module.eval()
         self.netG_B.module.eval()
-
+        logging.info("Tempo set eval:"+str(time.time()-a))
+        a = time.time()
         self.forward()      # compute fake images and reconstruction images.
+        logging.info("Tempo forward:" + str(time.time() - a))
+        a = time.time()
         # G_A and G_B
         self.netG_A.module.train()
         self.netG_B.module.train()
+        logging.info("Tempo set train:" + str(time.time() - a))
+        a = time.time()
         self.set_requires_grad([self.netD_A, self.netD_B], False)  # Ds require no gradients when optimizing Gs
         self.optimizer_G.zero_grad()  # set G_A and G_B's gradients to zero
         self.backward_G()             # calculate gradients for G_A and G_B
+        logging.info("Tempo backward G:" + str(time.time() - a))
+        a = time.time()
         self.optimizer_G.step()       # update G_A and G_B's weights
+        logging.info("Tempo step G:" + str(time.time() - a))
+        a = time.time()
         # D_A and D_B
         self.set_requires_grad([self.netD_A, self.netD_B], True)
         self.optimizer_D.zero_grad()   # set D_A and D_B's gradients to zero
         self.backward_D_A()      # calculate gradients for D_A
+        logging.info("Tempo backward D_A:"+str(time.time()-a))
+        a = time.time()
         self.backward_D_B()      # calculate graidents for D_B
+        logging.info("Tempo backward D_B:" + str(time.time() - a))
+        a = time.time()
         self.optimizer_D.step()  # update D_A and D_B's weights
-
+        logging.info("Tempo step D:" + str(time.time() - a))
 
 
 
