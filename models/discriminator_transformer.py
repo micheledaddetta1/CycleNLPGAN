@@ -45,7 +45,7 @@ class DiscriminatorTransformer(Transformer):
         :return: embedding ids, segment ids and mask for the sentence
         """
         pad_seq_length = min(pad_seq_length, self.max_seq_length) + 3 #Add space for special tokens
-        return self.tokenizer.prepare_for_model(tokens, max_length=pad_seq_length, pad_to_max_length=True, return_tensors='pt')
+        return self.tokenizer.prepare_for_model(tokens, max_length=pad_seq_length, padding=True, return_tensors='pt')
 
     def get_config_dict(self):
         return {key: self.__dict__[key] for key in self.config_keys}
@@ -69,7 +69,8 @@ class DiscriminatorTransformer(Transformer):
                 sentence,
                 add_special_tokens=True,
                 max_length=self.max_seq_length,
-                pad_to_max_length=True,
+                padding=True,
+                #pad_to_max_length=True,
                 return_tensors='pt'
             )
 
@@ -81,6 +82,7 @@ class DiscriminatorTransformer(Transformer):
                 sentences,
                 add_special_tokens=True,
                 max_length=self.max_seq_length,
+                #padding=True,
                 pad_to_max_length=True,
                 return_tensors='pt',
                 truncation=True

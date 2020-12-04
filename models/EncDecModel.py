@@ -84,7 +84,7 @@ class EncDecModel(nn.Module):
         :return: embedding ids, segment ids and mask for the sentence
         """
         pad_seq_length = min(pad_seq_length, self.max_seq_length) + 3 #Add space for special tokens
-        return self.tokenizer.prepare_for_model(tokens, max_length=pad_seq_length, pad_to_max_length=True, return_tensors='pt')
+        return self.tokenizer.prepare_for_model(tokens, max_length=pad_seq_length, padding=True, return_tensors='pt')
 
     def get_config_dict(self):
         return {key: self.__dict__[key] for key in self.config_keys}
@@ -154,7 +154,8 @@ class EncDecModel(nn.Module):
                     text,
                     return_tensors='pt',
                     max_length=self.max_seq_length,
-                    pad_to_max_length=True,
+                    padding=True,
+                    #pad_to_max_length=True,
                     truncation=True
                 )
                 train_input_ids.append(input_ids)
@@ -164,7 +165,8 @@ class EncDecModel(nn.Module):
                     text,
                     return_tensors='pt',
                     max_length=self.max_seq_length,
-                    pad_to_max_length=True,
+                    padding=True,
+                    #pad_to_max_length=True,
                     truncation=True
                 )
 
@@ -178,6 +180,7 @@ class EncDecModel(nn.Module):
                 sentences,
                 return_tensors='pt',
                 max_length=self.max_seq_length,
+                #padding=True,
                 pad_to_max_length=True,
                 truncation=True
             )

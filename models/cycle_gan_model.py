@@ -115,6 +115,8 @@ class CycleGANModel(BaseModel):
             self.optimizer_D = torch.optim.Adam(itertools.chain(self.netD_A.parameters(), self.netD_B.parameters()), lr=opt.lr, betas=(opt.beta1, 0.999))
             self.optimizers.append(self.optimizer_G)
             self.optimizers.append(self.optimizer_D)
+        self.tempo_medio = 0
+        self.n_iter = 0
 
     def set_input(self, input):
         """Unpack input data from the dataloader and perform necessary pre-processing steps.
@@ -278,39 +280,41 @@ class CycleGANModel(BaseModel):
     def optimize_parameters(self):
         """Calculate losses, gradients, and update network weights; called in every training iteration"""
         # forward
-        a = time.time()
         self.netG_A.module.eval()
         self.netG_B.module.eval()
-        logging.info("Tempo set eval:"+str(time.time()-a))
+
+        total = 0
+        for sentence in self.real_A:
+            total += len(sentence.split(' '))
+        for sentence in self.real_B:
+            total += len(sentence.split(' '))
+        total = float(total) / (len(self.real_A)+len(self.real_B))
+        logging.info("Lunghezza frasi:" + str(total))
         a = time.time()
         self.forward()      # compute fake images and reconstruction images.
-        logging.info("Tempo forward:" + str(time.time() - a))
-        a = time.time()
+        b = time.time()
+        logging.info("Tempo forward:" + str(b - a))
+        logging.info("Tempo medio per parola:" + str(float(b - a)/total))
+
+        self.tempo_medio += (b-a)
+        self.n_iter += 1
+        logging.info("Tempo medio forward:" + str(float(self.tempo_medio)/self.n_iter))
+        print("\n\n")
+
         # G_A and G_B
         self.netG_A.module.train()
         self.netG_B.module.train()
-        logging.info("Tempo set train:" + str(time.time() - a))
-        a = time.time()
         self.set_requires_grad([self.netD_A, self.netD_B], False)  # Ds require no gradients when optimizing Gs
         self.optimizer_G.zero_grad()  # set G_A and G_B's gradients to zero
         self.backward_G()             # calculate gradients for G_A and G_B
-        logging.info("Tempo backward G:" + str(time.time() - a))
-        a = time.time()
         self.optimizer_G.step()       # update G_A and G_B's weights
-        logging.info("Tempo step G:" + str(time.time() - a))
-        a = time.time()
+
         # D_A and D_B
         self.set_requires_grad([self.netD_A, self.netD_B], True)
         self.optimizer_D.zero_grad()   # set D_A and D_B's gradients to zero
         self.backward_D_A()      # calculate gradients for D_A
-        logging.info("Tempo backward D_A:"+str(time.time()-a))
-        a = time.time()
         self.backward_D_B()      # calculate graidents for D_B
-        logging.info("Tempo backward D_B:" + str(time.time() - a))
-        a = time.time()
         self.optimizer_D.step()  # update D_A and D_B's weights
-        logging.info("Tempo step D:" + str(time.time() - a))
-
 
 
     def evaluate(self, sentences_file="eval_sentences.txt", distance_file="distances.txt", top_k_file="top_k.txt"):
