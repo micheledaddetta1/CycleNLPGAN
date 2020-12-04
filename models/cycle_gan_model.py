@@ -214,6 +214,8 @@ class CycleGANModel(BaseModel):
         # GAN loss D_B(G_B(B))
         self.loss_G_B = self.criterionGAN(self.netD_B(fake_A), True)
 
+        del fake_A
+        del fake_B
 
         # Forward cycle loss || G_B(G_A(A)) - A||
         size_vector = torch.ones(self.netG_A.module.batch_encode_plus(self.real_A, False)["input_ids"].size()[-1]).to(self.device)
@@ -269,8 +271,7 @@ class CycleGANModel(BaseModel):
         del real_A_tokens
         del rec_A_tokens
         del size_vector
-        del fake_A
-        del fake_B
+
         self.loss_G.retain_grad()
         self.loss_G.backward()
 

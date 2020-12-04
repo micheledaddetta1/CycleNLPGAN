@@ -38,25 +38,9 @@ class EncDecModel(nn.Module):
 
     def forward(self, sentences, partial_value=False):
         embeddings = self.batch_encode_plus(sentences, False)
-        input = {'input_ids': embeddings['input_ids'].to(self.model.device),
-                 'attention_mask': embeddings['attention_mask'].to(self.model.device)}
+        embeddings = embeddings.to(self.model.device)
         if self.task == "translation":
-            '''
-            embeddings = self.batch_encode_plus(sentences, False)
-            input = {'input_ids': embeddings['input_ids'].to(self.model.device),
-                 'attention_mask': embeddings['attention_mask'].to(self.model.device)}
-        
-            output = self.model.base_model.encoder(embeddings.to(self.model.device),
-                                                   attention_mask=input['attention_mask'].to(self.model.device))
-
-            encoder_outputs = (output[0], *output[1:])
-
-            output = self.model.base_model.decoder(encoder_outputs,
-                                                   attention_mask=input['attention_mask'].to(self.model.device))
-            '''
-
-            output = self.model.generate(**input)
-
+            output = self.model.generate(**embeddings)
             output = self.decode(output)
         else:
             output = self.generate(sentences)
@@ -65,18 +49,19 @@ class EncDecModel(nn.Module):
 
         if partial_value:
 
-            input.update({'output_hidden_states': True})
-            partial = self.model.base_model.encoder(**input)
-            input.update({'token_embeddings': partial[0]})
+            embeddings.update({'output_hidden_states': True})
+            partial = self.model.base_model.encoder(**embeddings)
             partial = partial[0][:, 0, :]  # CLS token is first token
 
             if self.task == "reconstruction":
                 cls_tokens = partial[0][:, 0, :]  # CLS token is first token
-                input.update({'cls_token_embeddings': cls_tokens})
-                partial = self.embedding_pooling(input)
-
+                embeddings.update({'cls_token_embeddings': cls_tokens})
+                partial = self.embedding_pooling(embeddings)
+            del embeddings
             return output, partial
         else:
+            del embeddings
+
             return output
 
     def get_word_embedding_dimension(self) -> int:
