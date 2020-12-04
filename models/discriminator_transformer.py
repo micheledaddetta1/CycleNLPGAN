@@ -79,9 +79,10 @@ class DiscriminatorTransformer(Transformer):
     def batch_encode_plus(self, sentences, verbose=True):
         train_input_ids = self.tokenizer.batch_encode_plus(
                 sentences,
-                return_tensors='pt',
+                add_special_tokens=True,
                 max_length=self.max_seq_length,
                 pad_to_max_length=True,
+                return_tensors='pt',
                 truncation=True
             )
         return train_input_ids
