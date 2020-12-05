@@ -156,9 +156,9 @@ class CycleGANModel(BaseModel):
         Return the discriminator loss.
         We also call loss_D.backward() to calculate the gradients.
         """
-        real = netD.module.batch_encode_plus(real_sent, False).to(self.device)
+        real = netD.module.batch_encode_plus(real_sent, verbose=False).to(self.device)
 
-        fake = netD.module.batch_encode_plus(fake_sent, False).to(self.device)
+        fake = netD.module.batch_encode_plus(fake_sent, verbose=False).to(self.device)
 
         # Real
         pred_real = netD(real)
@@ -207,8 +207,8 @@ class CycleGANModel(BaseModel):
             self.loss_idt_B = 0
 
 
-        fake_A = self.netD_B.module.batch_encode_plus(self.fake_A, False).to(self.device)
-        fake_B = self.netD_A.module.batch_encode_plus(self.fake_B, False).to(self.device)
+        fake_A = self.netD_B.module.batch_encode_plus(self.fake_A, verbose=False).to(self.device)
+        fake_B = self.netD_A.module.batch_encode_plus(self.fake_B, verbose=False).to(self.device)
 
 
         # GAN loss D_A(G_A(A))
@@ -220,16 +220,16 @@ class CycleGANModel(BaseModel):
         del fake_B
 
         # Forward cycle loss || G_B(G_A(A)) - A||
-        size_vector = torch.ones(self.netG_A.module.batch_encode_plus(self.real_A, False)["input_ids"].size()[-1]).to(self.device)
-        real_A_tokens = self.netG_A.module.batch_encode_plus(self.real_A, False)["input_ids"].to(self.device, dtype=torch.float32)
-        rec_A_tokens = self.netG_A.module.batch_encode_plus(self.rec_A, False)["input_ids"].to(self.device, dtype=torch.float32)
+        size_vector = torch.ones(self.netG_A.module.batch_encode_plus(self.real_A, verbose=False)["input_ids"].size()[-1]).to(self.device)
+        real_A_tokens = self.netG_A.module.batch_encode_plus(self.real_A, verbose=False)["input_ids"].to(self.device, dtype=torch.float32)
+        rec_A_tokens = self.netG_A.module.batch_encode_plus(self.rec_A, verbose=False)["input_ids"].to(self.device, dtype=torch.float32)
         self.loss_cycle_A = self.criterionCycle(real_A_tokens,
                                                 rec_A_tokens,
                                                 size_vector) * lambda_A
 
         # Backward cycle loss || G_A(G_B(B)) - B||
-        real_B_real = self.netG_B.module.batch_encode_plus(self.real_B, False)["input_ids"].to(self.device, dtype=torch.float32)
-        rec_B_tokens = self.netG_B.module.batch_encode_plus(self.rec_B, False)["input_ids"].to(self.device, dtype=torch.float32),
+        real_B_real = self.netG_B.module.batch_encode_plus(self.real_B, verbose=False)["input_ids"].to(self.device, dtype=torch.float32)
+        rec_B_tokens = self.netG_B.module.batch_encode_plus(self.rec_B, verbose=False)["input_ids"].to(self.device, dtype=torch.float32),
 
         self.loss_cycle_B = self.criterionCycle(real_B_real,
                                                 rec_B_tokens,
@@ -293,12 +293,12 @@ class CycleGANModel(BaseModel):
         a = time.time()
         self.forward()      # compute fake images and reconstruction images.
         b = time.time()
-        logging.info("Tempo forward:" + str(b - a))
-        logging.info("Tempo medio per parola:" + str(float(b - a)/total))
+        logging.info("Tempo forward totale:" + str(b - a))
+        logging.info("Tempo medio per parola (considera 4 forward):" + str(float(b - a)/(4*total)))
 
         self.tempo_medio += (b-a)
         self.n_iter += 1
-        logging.info("Tempo medio forward:" + str(float(self.tempo_medio)/self.n_iter))
+        logging.info("Tempo medio forward totale:" + str(float(self.tempo_medio)/self.n_iter))
         print("\n\n")
 
         # G_A and G_B
@@ -306,7 +306,7 @@ class CycleGANModel(BaseModel):
         self.netG_B.module.train()
         self.set_requires_grad([self.netD_A, self.netD_B], False)  # Ds require no gradients when optimizing Gs
         self.optimizer_G.zero_grad()  # set G_A and G_B's gradients to zero
-        self.backward_G()             # calculate gradients for G_A and G_B
+        #self.backward_G()             # calculate gradients for G_A and G_B
         self.optimizer_G.step()       # update G_A and G_B's weights
 
         # D_A and D_B

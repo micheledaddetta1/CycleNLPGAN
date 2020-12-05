@@ -37,7 +37,7 @@ class EncDecModel(nn.Module):
 
 
     def forward(self, sentences, partial_value=False):
-        embeddings = self.batch_encode_plus(sentences, False)
+        embeddings = self.batch_encode_plus(sentences, padding=True, verbose=False)
         embeddings = embeddings.to(self.model.device)
         if self.task == "translation":
             output = self.model.generate(**embeddings)
@@ -175,13 +175,13 @@ class EncDecModel(nn.Module):
         train_input_ids = torch.cat(train_input_ids, dim=0)
         return train_input_ids
 
-    def batch_encode_plus(self, sentences, verbose=True):
+    def batch_encode_plus(self, sentences, padding='max_length', verbose=True):
         train_input_ids = self.tokenizer.batch_encode_plus(
                 sentences,
                 return_tensors='pt',
                 max_length=self.max_seq_length,
-                #padding=True,
-                pad_to_max_length=True,
+                padding=padding,
+                #pad_to_max_length=True,
                 truncation=True
             )
         return train_input_ids

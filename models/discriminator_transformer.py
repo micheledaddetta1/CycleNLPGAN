@@ -82,8 +82,8 @@ class DiscriminatorTransformer(Transformer):
                 sentences,
                 add_special_tokens=True,
                 max_length=self.max_seq_length,
-                #padding=True,
-                pad_to_max_length=True,
+                padding=True,
+                #pad_to_max_length=True,
                 return_tensors='pt',
                 truncation=True
             )
