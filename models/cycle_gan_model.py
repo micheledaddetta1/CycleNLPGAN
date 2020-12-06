@@ -244,25 +244,21 @@ class CycleGANModel(BaseModel):
 
         # Backward cycle loss || G_B(B) - G_A(A)||
 
-        fake_A_embeddings = self.fake_A_embeddings.to(self.device)
-        fake_B_embeddings = self.fake_B_embeddings.to(self.device)
-        rec_A_embeddings = self.rec_A_embeddings.to(self.device)
-        rec_B_embeddings = self.rec_B_embeddings.to(self.device)
-        self.loss_cycle_C_1 = self.criterionCycle(fake_A_embeddings,
-                                                  fake_B_embeddings,
+        self.loss_cycle_C_1 = self.criterionCycle(self.fake_A_embeddings,
+                                                  self.fake_B_embeddings,
                                                   size_vector) * lambda_C_1
 
         # Backward cycle loss || G_B(B) - G_A(A)||
-        self.loss_cycle_C_2_1 = self.criterionCycle(fake_A_embeddings,
-                                                    rec_B_embeddings,
+        self.loss_cycle_C_2_1 = self.criterionCycle(self.fake_A_embeddings,
+                                                    self.rec_B_embeddings,
                                                     size_vector) * lambda_C_2
         # Backward cycle loss || G_B(B) - G_A(A)||
-        self.loss_cycle_C_2_2 = self.criterionCycle(fake_B_embeddings,
-                                                    rec_A_embeddings,
+        self.loss_cycle_C_2_2 = self.criterionCycle(self.fake_B_embeddings,
+                                                    self.rec_A_embeddings,
                                                     size_vector) * lambda_C_2
         # Backward cycle loss || G_B(B) - G_A(A)||
-        self.loss_cycle_C_3 = self.criterionCycle(rec_A_embeddings,
-                                                  rec_B_embeddings,
+        self.loss_cycle_C_3 = self.criterionCycle(self.rec_A_embeddings,
+                                                  self.rec_B_embeddings,
                                                   size_vector) * lambda_C_3
         # 'weight for embedding loss (fakeA -> recB, fakeB -> recA)')  # mixed loss
         # 'weight for embedding loss (recA -> recB)')  # mixed loss (dubbio translation)
@@ -278,11 +274,6 @@ class CycleGANModel(BaseModel):
         del real_B_tokens
         del rec_B_tokens
         del size_vector
-        del fake_A_embeddings
-        del fake_B_embeddings
-        del rec_A_embeddings
-        del rec_B_embeddings
-        del size_vector
         torch.cuda.empty_cache()
 
         self.loss_G.retain_grad()
@@ -292,6 +283,7 @@ class CycleGANModel(BaseModel):
     def optimize_parameters(self):
         """Calculate losses, gradients, and update network weights; called in every training iteration"""
         # forward
+        torch.enable_grad()
         self.netG_A.module.eval()
         self.netG_B.module.eval()
 
@@ -327,6 +319,17 @@ class CycleGANModel(BaseModel):
         self.backward_D_A()      # calculate gradients for D_A
         self.backward_D_B()      # calculate graidents for D_B
         self.optimizer_D.step()  # update D_A and D_B's weights
+
+        del self.fake_A_embeddings
+        del self.fake_B_embeddings
+        del self.rec_A_embeddings
+        del self.rec_B_embeddings
+        del self.fake_A
+        del self.fake_B
+        del self.rec_A
+        del self.rec_B
+        torch.no_grad()
+        torch.cuda.empty_cache()
 
 
     def evaluate(self, sentences_file="eval_sentences.txt", distance_file="distances.txt", top_k_file="top_k.txt"):
