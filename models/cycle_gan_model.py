@@ -214,8 +214,7 @@ class CycleGANModel(BaseModel):
         # GAN loss D_B(G_B(B))
         self.loss_G_B = self.criterionGAN(self.netD_B(fake_A), True)
 
-        del fake_A
-        del fake_B
+
 
         # Forward cycle loss || G_B(G_A(A)) - A||
         size_vector = torch.ones(
@@ -228,8 +227,7 @@ class CycleGANModel(BaseModel):
                                                 rec_A_tokens,
                                                 size_vector) * lambda_A
 
-        del real_A_tokens
-        del rec_A_tokens
+
 
         # Backward cycle loss || G_A(G_B(B)) - B||
         real_B_tokens = self.netG_B.module.batch_encode_plus(self.real_B, verbose=False)["input_ids"].to(self.device,
@@ -241,9 +239,6 @@ class CycleGANModel(BaseModel):
                                                 rec_B_tokens,
                                                 size_vector) * lambda_B
 
-        del real_B_tokens
-        del rec_B_tokens
-        del size_vector
 
         size_vector = torch.ones(self.fake_A_embeddings.size()[-1]).to(self.device)
 
@@ -275,11 +270,20 @@ class CycleGANModel(BaseModel):
         # combined loss and calculate gradients
         self.loss_G = self.loss_G_A + self.loss_G_B + self.loss_cycle_A + self.loss_cycle_B + self.loss_idt_A + self.loss_cycle_C_1 + self.loss_cycle_C_2_2 + self.loss_cycle_C_2_2 + self.loss_cycle_C_3 + self.loss_idt_B
         # self.loss_G.requires_grad = True
+
+        del real_A_tokens
+        del rec_A_tokens
+        del fake_A
+        del fake_B
+        del real_B_tokens
+        del rec_B_tokens
+        del size_vector
         del fake_A_embeddings
         del fake_B_embeddings
         del rec_A_embeddings
         del rec_B_embeddings
         del size_vector
+        torch.cuda.empty_cache()
 
         self.loss_G.retain_grad()
         self.loss_G.backward()
