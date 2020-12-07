@@ -278,11 +278,16 @@ class CycleGANModel(BaseModel):
         # combined loss and calculate gradients
         self.loss_cycle_A = self.loss_cycle_A + loss_cycle_C_1 + loss_cycle_C_2_2 + loss_cycle_C_3
         self.loss_cycle_B = self.loss_cycle_B + loss_cycle_C_1 + loss_cycle_C_2_1 + loss_cycle_C_3
-        self.loss_G = self.loss_G_A.item() + self.loss_G_B.item() + self.loss_cycle_A.item() + self.loss_cycle_B.item() #+ self.loss_idt_A.item() + self.loss_idt_B.item()
+        self.loss_G = self.loss_G_A + self.loss_G_B + self.loss_cycle_A + self.loss_cycle_B #+ self.loss_idt_A.item() + self.loss_idt_B.item()
         # self.loss_G.requires_grad = True
 
-        #self.loss_G.retain_grad()
-        (self.loss_G_A+self.loss_G_B+self.loss_cycle_A+self.loss_cycle_B+self.loss_idt_A+self.loss_idt_B).backward()
+        self.loss_G.retain_grad()
+        self.loss_G.backward()
+
+        self.loss_G_A = self.loss_G_A.item()
+        self.loss_G_B = self.loss_G_B.item()
+        self.loss_cycle_A = self.loss_cycle_A.item()
+        self.loss_cycle_B = self.loss_cycle_B.item()
 
         del real_A_tokens
         del rec_A_tokens
