@@ -181,7 +181,7 @@ class CycleGANModel(BaseModel):
         del real
         del fake
         loss_D.backward()
-        return loss_D
+        return loss_D.item()
 
     def backward_D_A(self):
         """Calculate GAN loss for discriminator D_A"""
