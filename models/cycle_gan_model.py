@@ -118,6 +118,14 @@ class CycleGANModel(BaseModel):
         self.tempo_medio = 0
         self.n_iter = 0
 
+        self.loss_G_A = 0
+        self.loss_G_B = 0
+        self.loss_D_A = 0
+        self.loss_D_B = 0
+        self.loss_cycle_A = 0
+        self.loss_cycle_B = 0
+        self.loss_G = 0
+
     def set_input(self, input):
         """Unpack input data from the dataloader and perform necessary pre-processing steps.
 
@@ -244,27 +252,36 @@ class CycleGANModel(BaseModel):
 
         # Backward cycle loss || G_B(B) - G_A(A)||
 
-        self.loss_cycle_C_1 = self.criterionCycle(self.fake_A_embeddings,
-                                                  self.fake_B_embeddings,
-                                                  size_vector) * lambda_C_1
+        loss_cycle_C_1 = self.criterionCycle(self.fake_A_embeddings,
+                                             self.fake_B_embeddings,
+                                             size_vector) * lambda_C_1
+
+        self.loss_cycle_A += loss_cycle_C_1
+        self.loss_cycle_B += loss_cycle_C_1
 
         # Backward cycle loss || G_B(B) - G_A(A)||
-        self.loss_cycle_C_2_1 = self.criterionCycle(self.fake_A_embeddings,
-                                                    self.rec_B_embeddings,
-                                                    size_vector) * lambda_C_2
+        loss_cycle_C_2_1 = self.criterionCycle(self.fake_A_embeddings,
+                                               self.rec_B_embeddings,
+                                               size_vector) * lambda_C_2
+
+        self.loss_cycle_B += loss_cycle_C_2_1
         # Backward cycle loss || G_B(B) - G_A(A)||
-        self.loss_cycle_C_2_2 = self.criterionCycle(self.fake_B_embeddings,
-                                                    self.rec_A_embeddings,
-                                                    size_vector) * lambda_C_2
+        loss_cycle_C_2_2 = self.criterionCycle(self.fake_B_embeddings,
+                                               self.rec_A_embeddings,
+                                               size_vector) * lambda_C_2
+        self.loss_cycle_A += loss_cycle_C_2_2
         # Backward cycle loss || G_B(B) - G_A(A)||
-        self.loss_cycle_C_3 = self.criterionCycle(self.rec_A_embeddings,
-                                                  self.rec_B_embeddings,
-                                                  size_vector) * lambda_C_3
+        loss_cycle_C_3 = self.criterionCycle(self.rec_A_embeddings,
+                                             self.rec_B_embeddings,
+                                             size_vector) * lambda_C_3
+
+        self.loss_cycle_A += loss_cycle_C_3
+        self.loss_cycle_B += loss_cycle_C_3
         # 'weight for embedding loss (fakeA -> recB, fakeB -> recA)')  # mixed loss
         # 'weight for embedding loss (recA -> recB)')  # mixed loss (dubbio translation)
 
         # combined loss and calculate gradients
-        self.loss_G = self.loss_G_A + self.loss_G_B + self.loss_cycle_A + self.loss_cycle_B + self.loss_idt_A + self.loss_cycle_C_1 + self.loss_cycle_C_2_2 + self.loss_cycle_C_2_2 + self.loss_cycle_C_3 + self.loss_idt_B
+        self.loss_G = self.loss_G_A + self.loss_G_B + self.loss_cycle_A + self.loss_cycle_B + self.loss_idt_A + self.loss_idt_B
         # self.loss_G.requires_grad = True
 
         del real_A_tokens
@@ -294,11 +311,11 @@ class CycleGANModel(BaseModel):
             total += len(sentence.split(' '))
         total = float(total) / (len(self.real_A)+len(self.real_B))
         logging.info("Lunghezza frasi:" + str(total))
-        logging.info("\n\n1" + str(torch.cuda.memory_stats(device=self.device)))
+        print("\n\n1" + str(torch.cuda.memory_summary(device=self.device)))
         a = time.time()
         self.forward()      # compute fake images and reconstruction images.
         b = time.time()
-        logging.info("\n\n2" + str(torch.cuda.memory_stats(device=self.device)))
+        print("\n\n2" + str(torch.cuda.memory_summary(device=self.device)))
         logging.info("Tempo forward totale:" + str(b - a))
         logging.info("Tempo medio per parola (considera 4 forward):" + str(float(b - a)/(4*total)))
 
@@ -312,10 +329,10 @@ class CycleGANModel(BaseModel):
         self.netG_B.module.train()
         self.set_requires_grad([self.netD_A, self.netD_B], False)  # Ds require no gradients when optimizing Gs
         self.optimizer_G.zero_grad()  # set G_A and G_B's gradients to zero
-        logging.info("\n\n3"+str(torch.cuda.memory_stats(device=self.device)))
+        print("\n\n3"+str(torch.cuda.memory_summary(device=self.device)))
 
         self.backward_G()             # calculate gradients for G_A and G_B
-        logging.info("\n\n4" + str(torch.cuda.memory_stats(device=self.device)))
+        print("\n\n4" + str(torch.cuda.memory_summary(device=self.device)))
 
         self.optimizer_G.step()       # update G_A and G_B's weights
 
