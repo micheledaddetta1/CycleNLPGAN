@@ -297,35 +297,15 @@ class CycleGANModel(BaseModel):
         self.netG_A.module.eval()
         self.netG_B.module.eval()
 
-        total = 0
-        for sentence in self.real_A:
-            total += len(sentence.split(' '))
-        for sentence in self.real_B:
-            total += len(sentence.split(' '))
-        total = float(total) / (len(self.real_A)+len(self.real_B))
-        logging.info("Lunghezza frasi:" + str(total))
-        print("\n\n1" + str(torch.cuda.memory_summary(device=self.device)))
-        a = time.time()
         self.forward()      # compute fake images and reconstruction images.
-        b = time.time()
-        print("\n\n2" + str(torch.cuda.memory_summary(device=self.device)))
-        logging.info("Tempo forward totale:" + str(b - a))
-        logging.info("Tempo medio per parola (considera 4 forward):" + str(float(b - a)/(4*total)))
-
-        self.tempo_medio += (b-a)
-        self.n_iter += 1
-        logging.info("Tempo medio forward totale:" + str(float(self.tempo_medio)/self.n_iter))
-        print("\n\n")
 
         # G_A and G_B
         self.netG_A.module.train()
         self.netG_B.module.train()
         self.set_requires_grad([self.netD_A, self.netD_B], False)  # Ds require no gradients when optimizing Gs
         self.optimizer_G.zero_grad()  # set G_A and G_B's gradients to zero
-        print("\n\n3"+str(torch.cuda.memory_summary(device=self.device)))
 
         self.backward_G()             # calculate gradients for G_A and G_B
-        print("\n\n4" + str(torch.cuda.memory_summary(device=self.device)))
 
         self.optimizer_G.step()       # update G_A and G_B's weights
 
