@@ -56,7 +56,7 @@ class CycleGANModel(BaseModel):
         if is_train:
             parser.add_argument('--lambda_A', type=float, default=10.0, help='weight for cycle loss (A -> B -> A)')
             parser.add_argument('--lambda_B', type=float, default=10.0, help='weight for cycle loss (B -> A -> B)')
-            parser.add_argument('--lambda_C_1', type=float, default=10.0, help='weight for embedding loss (fakeA -> fakeB)')  #aligment loss
+            parser.add_argument('--lambda_C_1', type=float, default=20.0, help='weight for embedding loss (fakeA -> fakeB)')  #aligment loss
             parser.add_argument('--lambda_C_2', type=float, default=5.0, help='weight for embedding loss (fakeA -> recB, fakeB -> recA)') #mixed loss
             parser.add_argument('--lambda_C_3', type=float, default=2.5, help='weight for embedding loss (recA -> recB)') #mixed loss (dubbio translation)
             parser.add_argument('--lambda_identity', type=float, default=0, help='use identity mapping. Setting lambda_identity other than 0 has an effect of scaling the weight of the identity mapping loss. For example, if the weight of the identity loss should be 10 times smaller than the weight of the reconstruction loss, please set lambda_identity = 0.1')
@@ -199,20 +199,9 @@ class CycleGANModel(BaseModel):
         lambda_A = self.opt.lambda_A
         lambda_B = self.opt.lambda_B
         lambda_C_1 = self.opt.lambda_C_1
-        lambda_C_2 = self.opt.lambda_C_2
-        lambda_C_3 = self.opt.lambda_C_3
-        # Identity loss
-        if lambda_idt > 0:
-            # G_A should be identity if real_B is fed: ||G_A(B) - B||
-            _, self.idt_A = self.netG_A(self.real_B, True)
-            real = self.netG_B.module.encode(self.real_B, False)
-            self.loss_idt_A = self.criterionIdt(self.idt_A, real) * lambda_B * lambda_idt
-            # G_B should be identity if real_A is fed: ||G_B(A) - A||
-            _, self.idt_B = self.netG_B(self.real_A, True)
-            self.loss_idt_B = self.criterionIdt(self.idt_B, self.netG_B.module.encode(self.real_A, False)) * lambda_A * lambda_idt
-        else:
-            self.loss_idt_A = 0
-            self.loss_idt_B = 0
+        #lambda_C_2 = self.opt.lambda_C_2
+        #lambda_C_3 = self.opt.lambda_C_3
+
 
         fake_A = self.netD_B.module.batch_encode_plus(self.fake_A, verbose=False).to(self.device)
         fake_B = self.netD_A.module.batch_encode_plus(self.fake_B, verbose=False).to(self.device)
@@ -256,7 +245,7 @@ class CycleGANModel(BaseModel):
                                              self.fake_B_embeddings,
                                              size_vector) * lambda_C_1
 
-
+        '''
         # Backward cycle loss || G_B(B) - G_A(A)||
         loss_cycle_C_2_1 = self.criterionCycle(self.fake_A_embeddings,
                                                self.rec_B_embeddings,
@@ -271,14 +260,14 @@ class CycleGANModel(BaseModel):
         loss_cycle_C_3 = self.criterionCycle(self.rec_A_embeddings,
                                              self.rec_B_embeddings,
                                              size_vector) * lambda_C_3
-
+        '''
         # 'weight for embedding loss (fakeA -> recB, fakeB -> recA)')  # mixed loss
         # 'weight for embedding loss (recA -> recB)')  # mixed loss (dubbio translation)
 
         # combined loss and calculate gradients
-        self.loss_cycle_A = self.loss_cycle_A + loss_cycle_C_1 + loss_cycle_C_2_2 + loss_cycle_C_3
-        self.loss_cycle_B = self.loss_cycle_B + loss_cycle_C_1 + loss_cycle_C_2_1 + loss_cycle_C_3
-        self.loss_G = self.loss_G_A + self.loss_G_B + self.loss_cycle_A + self.loss_cycle_B #+ self.loss_idt_A.item() + self.loss_idt_B.item()
+        self.loss_cycle_A = self.loss_cycle_A + loss_cycle_C_1 #+ loss_cycle_C_2_2 + loss_cycle_C_3
+        self.loss_cycle_B = self.loss_cycle_B + loss_cycle_C_1 #+ loss_cycle_C_2_1 + loss_cycle_C_3
+        self.loss_G = self.loss_G_A + self.loss_G_B + self.loss_cycle_A + self.loss_cycle_B + loss_cycle_C_1 #+ self.loss_idt_A.item() + self.loss_idt_B.item()
         # self.loss_G.requires_grad = True
 
         self.loss_G.retain_grad()
@@ -286,8 +275,8 @@ class CycleGANModel(BaseModel):
 
         self.loss_G_A = self.loss_G_A.item()
         self.loss_G_B = self.loss_G_B.item()
-        self.loss_cycle_A = self.loss_cycle_A.item()
-        self.loss_cycle_B = self.loss_cycle_B.item()
+        self.loss_cycle_A = self.loss_cycle_A.item() + loss_cycle_C_1.item()
+        self.loss_cycle_B = self.loss_cycle_B.item() + loss_cycle_C_1.item()
 
         del real_A_tokens
         del rec_A_tokens
