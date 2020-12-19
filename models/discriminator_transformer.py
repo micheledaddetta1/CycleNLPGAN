@@ -18,11 +18,14 @@ class DiscriminatorTransformer(Transformer):
     def __init__(self, model_name_or_path: str, max_seq_length: int = 128, model_args: Dict = {}, cache_dir: Optional[str] = None, out_dim=2):
         super(DiscriminatorTransformer, self).__init__(model_name_or_path)
         self.layers = nn.Linear(self.get_word_embedding_dimension(), out_dim)
+        self.softmax = nn.Softmax(dim=1)
 
     def forward(self, features):
         """Returns token_embeddings, cls_token"""
         features = super(DiscriminatorTransformer, self).forward(features)
         features = self.layers(features['sentence_embedding'])
+        features = self.softmax(features)
+        _, features = torch.max(features, 1)
         return features
 
     def get_word_embedding_dimension(self) -> int:

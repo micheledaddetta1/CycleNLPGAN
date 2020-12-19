@@ -9,7 +9,7 @@ import random
 
 from tqdm import tqdm
 
-from . import BaseDataset
+from data import BaseDataset
 import urllib.request
 
 
@@ -52,6 +52,7 @@ class ParallelSentencesDataset(BaseDataset):
         BaseDataset.__init__(self, opt)
         self.model = model
         self.filepaths = ["ted2020.tsv.gz"]#, "STS2017.en-de.txt.gz", "xnli-en-de.txt.gz"]
+        self.cachedfiles = ["ted2020_", "ted2020_", "ted2020_"]#, "STS2017.en-de.txt.gz", "xnli-en-de.txt.gz"]
         self.datasets = []
         self.dataset_indices = []
         self.copy_dataset_indices = []
@@ -65,7 +66,9 @@ class ParallelSentencesDataset(BaseDataset):
             print("Download", dataset)
             url = self.server+dataset
             dataset_path = os.path.join(self.root, dataset)
-            urllib.request.urlretrieve(url, dataset_path)
+
+            if not os.path.exists(dataset_path):
+                urllib.request.urlretrieve(url, dataset_path)
 
         self.dir_AB = os.path.join(opt.dataroot, opt.phase)  # get the sentences directory
 
@@ -147,7 +150,7 @@ class ParallelSentencesDataset(BaseDataset):
 
         data = [[sentences_map[sentence], sentence] for sentence in data]
 
-        self.dir_AB = os.path.join(self.opt.dataroot, self.opt.phase)  # get the image directory
+        self.dir_AB = os.path.join(self.opt.dataroot, self.opt.phase)  # get the sentences directory
 
         dataset_id = len(self.datasets)
         self.datasets.append(data)

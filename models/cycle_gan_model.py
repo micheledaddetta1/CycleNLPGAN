@@ -6,6 +6,7 @@ import torch
 import itertools
 
 from losses import CosineSimilarityLoss
+from losses import MSELoss
 from util.image_pool import ImagePool
 from .base_model import BaseModel
 from . import networks
@@ -97,8 +98,8 @@ class CycleGANModel(BaseModel):
         if self.isTrain:  # define discriminators
             in_dim = self.netG_A.module.get_word_embedding_dimension()
 
-            netDB_name = networks.define_name(opt.netD, 'en')
-            netDA_name = networks.define_name(opt.netD, opt.language)
+            netDA_name = networks.define_name(opt.netD, 'en')
+            netDB_name = networks.define_name(opt.netD, opt.language)
 
             self.netD_A = networks.define_D(in_dim, netDA_name,
                                             opt.n_layers_D, opt.norm, opt.init_type, opt.init_gain, self.gpu_ids)
@@ -108,7 +109,7 @@ class CycleGANModel(BaseModel):
         if self.isTrain:
             # define loss functions
             self.criterionGAN = networks.GANLoss(opt.gan_mode).to(self.device)  # define GAN loss.
-            self.criterionCycle = CosineSimilarityLoss()
+            self.criterionCycle = MSELoss().to(self.device)
             self.criterionIdt = torch.nn.CosineEmbeddingLoss()#CosineSimilarityLoss()
             # initialize optimizers; schedulers will be automatically created by function <BaseModel.setup>.
             self.optimizer_G = torch.optim.Adam(itertools.chain(self.netG_A.parameters(), self.netG_B.parameters()), lr=opt.lr, betas=(opt.beta1, 0.999))
@@ -230,7 +231,7 @@ class CycleGANModel(BaseModel):
         real_B_tokens = self.netG_B.module.batch_encode_plus(self.real_B, verbose=False)["input_ids"].to(self.device,
                                                                                                          dtype=torch.float32)
         rec_B_tokens = self.netG_B.module.batch_encode_plus(self.rec_B, verbose=False)["input_ids"].to(self.device,
-                                                                                                       dtype=torch.float32),
+                                                                                                       dtype=torch.float32)
 
         self.loss_cycle_B = self.criterionCycle(real_B_tokens,
                                                 rec_B_tokens,

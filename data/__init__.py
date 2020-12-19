@@ -11,6 +11,8 @@ Now you can use the dataset class by specifying flag '--dataset_mode dummy'.
 See our template dataset class 'template_dataset.py' for more details.
 """
 import importlib
+import os
+import joblib
 from copy import deepcopy
 
 import torch.utils.data
@@ -64,19 +66,40 @@ def create_dataset(opt, model):
     """
     assert opt.train_percentage+opt.eval_percentage+opt.test_percentage == 1.0
 
-    train_data_loader = CustomDatasetDataLoader(opt, model, 'train')
-    train_dataset = train_data_loader.load_data()
-    eval_data_loader = CustomDatasetDataLoader(opt, model, 'eval')
-    eval_dataset = eval_data_loader.load_data()
-    test_data_loader = CustomDatasetDataLoader(opt, model, 'test')
-    test_dataset = test_data_loader.load_data()
-    return train_dataset, eval_dataset, test_dataset
+    cachedfiles = ["ted2020_"]  # , "STS2017.en-de.txt.gz", "xnli-en-de.txt.gz"]
+    cached_filepath_train = os.path.join(opt.dataroot, cachedfiles[0] + 'train.bkp')
+    cached_filepath_eval = os.path.join(opt.dataroot, cachedfiles[0] + 'eval.bkp')
+    cached_filepath_test = os.path.join(opt.dataroot, cachedfiles[0] + 'test.bkp')
+
+    if os.path.exists(cached_filepath_train):
+        dataloader = torch.load(cached_filepath_train)
+        train_data_loader = CustomDatasetDataLoader(opt, model, dataloader=dataloader, dataset_type='train')
+    else:
+        train_data_loader = CustomDatasetDataLoader(opt, model, dataloader=None, dataset_type='train')
+        torch.save(train_data_loader.dataloader, cached_filepath_train)
+
+
+    if os.path.exists(cached_filepath_eval):
+        dataloader = torch.load(cached_filepath_eval)
+        eval_data_loader = CustomDatasetDataLoader(opt, model, dataloader=dataloader, dataset_type='eval')
+    else:
+        eval_data_loader = CustomDatasetDataLoader(opt, model, dataloader=None, dataset_type='eval')
+        torch.save(eval_data_loader.dataloader, cached_filepath_eval)
+
+    if os.path.exists(cached_filepath_test):
+        dataloader = torch.load(cached_filepath_train)
+        test_data_loader = CustomDatasetDataLoader(opt, model, dataloader=dataloader, dataset_type='test')
+    else:
+        test_data_loader = CustomDatasetDataLoader(opt, model, dataloader=None, dataset_type='test')
+        torch.save(test_data_loader.dataloader, cached_filepath_test)
+
+    return train_data_loader, eval_data_loader, test_data_loader
 
 
 class CustomDatasetDataLoader():
     """Wrapper class of Dataset class that performs multi-threaded data loading"""
 
-    def __init__(self, opt, model, dataset_type='train'):
+    def __init__(self, opt, model, dataloader=None, dataset_type='train'):
         """Initialize this class
 
         Step 1: create a dataset instance given the name [dataset_mode]
@@ -92,14 +115,19 @@ class CustomDatasetDataLoader():
         self.dataset.load_data(dataset_type)
 
         print("dataset [%s] was created" % type(self.dataset).__name__)
-        self.dataloader = torch.utils.data.DataLoader(
-            self.dataset,
-            batch_size=opt.batch_size,
-            shuffle=not opt.serial_batches,
-            num_workers=int(opt.num_threads))
+        if dataloader is None:
+            n_threads = int(opt.num_threads)
+            self.dataloader = torch.utils.data.DataLoader(
+                self.dataset,
+                batch_size=opt.batch_size,
+                shuffle=not opt.serial_batches,
+                num_workers=n_threads)
+        else:
+            self.dataloader = dataloader
 
     def load_data(self):
         return self
+
 
     def __len__(self):
         """Return the number of data in the dataset"""
