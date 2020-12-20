@@ -177,8 +177,8 @@ class CycleGANModel(BaseModel):
         loss_D_fake = self.criterionGAN(pred_fake, False)
         # Combined loss and calculate gradients
         loss_D = (loss_D_real + loss_D_fake) * 0.5
-
-        #loss_D.retain_grad()
+        loss_D.requires_grad = True
+        loss_D.retain_grad()
         del real
         del fake
         loss_D.backward()
