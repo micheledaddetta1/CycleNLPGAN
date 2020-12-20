@@ -11,8 +11,13 @@ class MSELoss(nn.Module):
         super(MSELoss, self).__init__()
 
     def forward(self, sentence_feature_real, sentence_feature_generated, target):
+        output_list = list()
+        output = 0
 
-        output = ((sentence_feature_real - sentence_feature_generated) ** 2).mean()
-
+        for i, (real, generated) in enumerate(zip(sentence_feature_real, sentence_feature_generated)):
+            output_list.append(((real - generated) ** 2.0).mean())
+            output += output_list[i]
+        dim = len(output_list)
+        output /= dim
         return output
 

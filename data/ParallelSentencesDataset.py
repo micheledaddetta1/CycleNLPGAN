@@ -44,20 +44,18 @@ class ParallelSentencesDataset(BaseDataset):
     """
 
 
-    def __init__(self, opt, model, train_perc, eval_perc, test_perc):
+    def __init__(self, opt, train_perc, eval_perc, test_perc):
         """
         Parallel sentences dataset reader to train student model given a teacher model
         :param opt: options used to create and read the dataset
         """
         BaseDataset.__init__(self, opt)
-        self.model = model
         self.filepaths = ["ted2020.tsv.gz"]#, "STS2017.en-de.txt.gz", "xnli-en-de.txt.gz"]
         self.cachedfiles = ["ted2020_", "ted2020_", "ted2020_"]#, "STS2017.en-de.txt.gz", "xnli-en-de.txt.gz"]
         self.datasets = []
         self.dataset_indices = []
         self.copy_dataset_indices = []
         self.server = "https://public.ukp.informatik.tu-darmstadt.de/reimers/sentence-transformers/datasets/"
-        self.model = model
         self.train_perc = train_perc
         self.eval_perc = eval_perc
         self.test_perc = test_perc
