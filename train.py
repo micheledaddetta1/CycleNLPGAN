@@ -52,7 +52,7 @@ if __name__ == '__main__':
 
     n = round(opt.iter_count/opt.batch_size) #NBatch totali
     n -= (opt.epoch_count-1)*(round(len(train_dataset)/opt.batch_size))
-    previous_suffix=0
+    previous_suffix=None
 
     for epoch in range(opt.epoch_count, opt.n_epochs + opt.n_epochs_decay + 1):    # outer loop for different epochs; we save the model by <epoch_count>, <epoch_count>+<save_latest_freq>
         epoch_start_time = time.time()  # timer for entire epoch
@@ -87,7 +87,8 @@ if __name__ == '__main__':
                 save_suffix = 'epoch_'+str(epoch)+'_iter_%d' % total_iters
 
                 model.save_networks(save_suffix)
-                model.delete_networks(previous_suffix)
+                if previous_suffix is not None:
+                    model.delete_networks(previous_suffix)
                 previous_suffix = save_suffix
                 model.save_networks('latest')
 
