@@ -20,6 +20,7 @@ See frequently asked questions at: https://github.com/junyanz/pytorch-CycleGAN-a
 """
 import logging
 import time
+import os
 
 from tqdm import tqdm
 
@@ -51,6 +52,7 @@ if __name__ == '__main__':
 
     n = round(opt.iter_count/opt.batch_size) #NBatch totali
     n -= (opt.epoch_count-1)*(round(len(train_dataset)/opt.batch_size))
+    previous_suffix=0
 
     for epoch in range(opt.epoch_count, opt.n_epochs + opt.n_epochs_decay + 1):    # outer loop for different epochs; we save the model by <epoch_count>, <epoch_count>+<save_latest_freq>
         epoch_start_time = time.time()  # timer for entire epoch
@@ -82,8 +84,11 @@ if __name__ == '__main__':
 
             if total_iters % opt.save_latest_freq == 0:   # cache our latest model every <save_latest_freq> iterations
                 logging.info('saving the latest model (epoch %d, total_iters %d)' % (epoch, total_iters))
-                save_suffix = 'epoch_'+str(epoch)+'__iter_%d' % total_iters
+                save_suffix = 'epoch_'+str(epoch)+'_iter_%d' % total_iters
+
                 model.save_networks(save_suffix)
+                model.delete_networks(previous_suffix)
+                previous_suffix = save_suffix
                 model.save_networks('latest')
 
             iter_data_time = time.time()

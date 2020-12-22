@@ -57,11 +57,15 @@ class CycleGANModel(BaseModel):
         if is_train:
             parser.add_argument('--lambda_A', type=float, default=10.0, help='weight for cycle loss (A -> B -> A)')
             parser.add_argument('--lambda_B', type=float, default=10.0, help='weight for cycle loss (B -> A -> B)')
-            parser.add_argument('--lambda_C_1', type=float, default=20.0, help='weight for embedding loss (fakeA -> fakeB)')  #aligment loss
-            parser.add_argument('--lambda_C_2', type=float, default=5.0, help='weight for embedding loss (fakeA -> recB, fakeB -> recA)') #mixed loss
-            parser.add_argument('--lambda_C_3', type=float, default=2.5, help='weight for embedding loss (recA -> recB)') #mixed loss (dubbio translation)
-            parser.add_argument('--lambda_identity', type=float, default=0, help='use identity mapping. Setting lambda_identity other than 0 has an effect of scaling the weight of the identity mapping loss. For example, if the weight of the identity loss should be 10 times smaller than the weight of the reconstruction loss, please set lambda_identity = 0.1')
-            #0.5
+            parser.add_argument('--lambda_C_1', type=float, default=20.0,
+                                help='weight for embedding loss (fakeA -> fakeB)')  # aligment loss
+            parser.add_argument('--lambda_C_2', type=float, default=5.0,
+                                help='weight for embedding loss (fakeA -> recB, fakeB -> recA)')  # mixed loss
+            parser.add_argument('--lambda_C_3', type=float, default=2.5,
+                                help='weight for embedding loss (recA -> recB)')  # mixed loss (dubbio translation)
+            parser.add_argument('--lambda_identity', type=float, default=0,
+                                help='use identity mapping. Setting lambda_identity other than 0 has an effect of scaling the weight of the identity mapping loss. For example, if the weight of the identity loss should be 10 times smaller than the weight of the reconstruction loss, please set lambda_identity = 0.1')
+            # 0.5
         return parser
 
     def __init__(self, opt):
@@ -80,7 +84,7 @@ class CycleGANModel(BaseModel):
         #    visual_names_A.append('idt_B')
         #    visual_names_B.append('idt_A')
 
-        #self.visual_names = visual_names_A + visual_names_B  # combine visualizations for A and B
+        # self.visual_names = visual_names_A + visual_names_B  # combine visualizations for A and B
         # specify the models you want to save to the disk. The training/test scripts will call <BaseModel.save_networks> and <BaseModel.load_networks>.
         if self.isTrain:
             self.model_names = ['G_A', 'G_B', 'D_A', 'D_B']
@@ -91,9 +95,8 @@ class CycleGANModel(BaseModel):
         # The naming is different from those used in the paper.
         # Code (vs. paper): G_A (G), G_B (F), D_A (D_Y), D_B (D_X)
 
-
         self.netG_A, self.netG_B = networks.define_Gs(opt.task, opt.encoder, opt.decoder, opt.language, 'en', opt.norm,
-                                        not opt.no_dropout, opt.init_type, opt.init_gain, self.gpu_ids)
+                                                      not opt.no_dropout, opt.init_type, opt.init_gain, self.gpu_ids)
 
         if self.isTrain:  # define discriminators
             in_dim = self.netG_A.module.get_word_embedding_dimension()
@@ -109,11 +112,13 @@ class CycleGANModel(BaseModel):
         if self.isTrain:
             # define loss functions
             self.criterionGAN = networks.GANLoss(opt.gan_mode).to(self.device)  # define GAN loss.
-            self.criterionCycle = MSELoss().to(self.device)
-            self.criterionIdt = torch.nn.CosineEmbeddingLoss()#CosineSimilarityLoss()
+            self.criterionCycle = CosineSimilarityLoss().to(self.device)
+            self.criterionIdt = torch.nn.CosineEmbeddingLoss()  # CosineSimilarityLoss()
             # initialize optimizers; schedulers will be automatically created by function <BaseModel.setup>.
-            self.optimizer_G = torch.optim.Adam(itertools.chain(self.netG_A.parameters(), self.netG_B.parameters()), lr=opt.lr, betas=(opt.beta1, 0.999))
-            self.optimizer_D = torch.optim.Adam(itertools.chain(self.netD_A.parameters(), self.netD_B.parameters()), lr=opt.lr, betas=(opt.beta1, 0.999))
+            self.optimizer_G = torch.optim.Adam(itertools.chain(self.netG_A.parameters(), self.netG_B.parameters()),
+                                                lr=opt.lr, betas=(opt.beta1, 0.999))
+            self.optimizer_D = torch.optim.Adam(itertools.chain(self.netD_A.parameters(), self.netD_B.parameters()),
+                                                lr=opt.lr, betas=(opt.beta1, 0.999))
             self.optimizers.append(self.optimizer_G)
             self.optimizers.append(self.optimizer_D)
         self.tempo_medio = 0
@@ -135,14 +140,16 @@ class CycleGANModel(BaseModel):
 
         The option 'direction' can be used to swap domain A and domain B.
         """
-        #torch.cuda.empty_cache()
+        # torch.cuda.empty_cache()
         AtoB = self.opt.direction == 'AtoB'
         if self.opt.dataset_mode == "ParallelSentences":
             self.real_A = input['A' if AtoB else 'B']
             self.real_B = input['B' if AtoB else 'A']
         else:
-            self.real_A = {'input_ids': input['A' if AtoB else 'B'].to(self.device), 'attention_mask': (input['A' if AtoB else 'B'] > 0).to(self.device)}
-            self.real_B = {'input_ids': input['B' if AtoB else 'A'].to(self.device), 'attention_mask': (input['B' if AtoB else 'A'] > 0).to(self.device)}
+            self.real_A = {'input_ids': input['A' if AtoB else 'B'].to(self.device),
+                           'attention_mask': (input['A' if AtoB else 'B'] > 0).to(self.device)}
+            self.real_B = {'input_ids': input['B' if AtoB else 'A'].to(self.device),
+                           'attention_mask': (input['B' if AtoB else 'A'] > 0).to(self.device)}
 
         self.sentence_paths = input['A_paths' if AtoB else 'B_paths']
 
@@ -150,9 +157,9 @@ class CycleGANModel(BaseModel):
 
         """Run forward pass; called by both functions <optimize_parameters> and <test>."""
         self.fake_B, self.fake_B_embeddings = self.netG_A(self.real_A, True)  # G_A(A)
-        self.rec_A, self.rec_A_embeddings = self.netG_B(self.fake_B, True)   # G_B(G_A(A))
+        self.rec_A, self.rec_A_embeddings = self.netG_B(self.fake_B, True)  # G_B(G_A(A))
         self.fake_A, self.fake_A_embeddings = self.netG_B(self.real_B, True)  # G_B(B)
-        self.rec_B, self.rec_B_embeddings = self.netG_A(self.fake_A, True)   # G_A(G_B(B))
+        self.rec_B, self.rec_B_embeddings = self.netG_A(self.fake_A, True)  # G_A(G_B(B))
 
     def backward_D_basic(self, netD, real_sent, fake_sent):
         """Calculate GAN loss for the discriminator
@@ -186,12 +193,12 @@ class CycleGANModel(BaseModel):
 
     def backward_D_A(self):
         """Calculate GAN loss for discriminator D_A"""
-        #fake_B = self.fake_B_pool.query(self.fake_B)
+        # fake_B = self.fake_B_pool.query(self.fake_B)
         self.loss_D_A = self.backward_D_basic(self.netD_A, self.real_B, self.fake_B)
 
     def backward_D_B(self):
         """Calculate GAN loss for discriminator D_B"""
-        #fake_A = self.fake_A_pool.query(self.fake_A)
+        # fake_A = self.fake_A_pool.query(self.fake_A)
         self.loss_D_B = self.backward_D_basic(self.netD_B, self.real_A, self.fake_A)
 
     def backward_G(self):
@@ -203,7 +210,6 @@ class CycleGANModel(BaseModel):
         #lambda_C_2 = self.opt.lambda_C_2
         #lambda_C_3 = self.opt.lambda_C_3
 
-
         fake_A = self.netD_B.module.batch_encode_plus(self.fake_A, verbose=False).to(self.device)
         fake_B = self.netD_A.module.batch_encode_plus(self.fake_B, verbose=False).to(self.device)
 
@@ -211,8 +217,6 @@ class CycleGANModel(BaseModel):
         self.loss_G_A = self.criterionGAN(self.netD_A(fake_B), True)
         # GAN loss D_B(G_B(B))
         self.loss_G_B = self.criterionGAN(self.netD_B(fake_A), True)
-
-
 
         # Forward cycle loss || G_B(G_A(A)) - A||
         size_vector = torch.ones(
@@ -225,8 +229,6 @@ class CycleGANModel(BaseModel):
                                                 rec_A_tokens,
                                                 size_vector) * lambda_A
 
-
-
         # Backward cycle loss || G_A(G_B(B)) - B||
         real_B_tokens = self.netG_B.module.batch_encode_plus(self.real_B, verbose=False)["input_ids"].to(self.device,
                                                                                                          dtype=torch.float32)
@@ -236,7 +238,6 @@ class CycleGANModel(BaseModel):
         self.loss_cycle_B = self.criterionCycle(real_B_tokens,
                                                 rec_B_tokens,
                                                 size_vector) * lambda_B
-
 
         size_vector = torch.ones(self.fake_A_embeddings.size()[-1]).to(self.device)
 
@@ -266,10 +267,10 @@ class CycleGANModel(BaseModel):
         # 'weight for embedding loss (recA -> recB)')  # mixed loss (dubbio translation)
 
         # combined loss and calculate gradients
-        self.loss_cycle_A = self.loss_cycle_A + loss_cycle_C_1 #+ loss_cycle_C_2_2 + loss_cycle_C_3
-        self.loss_cycle_B = self.loss_cycle_B + loss_cycle_C_1 #+ loss_cycle_C_2_1 + loss_cycle_C_3
-        self.loss_G = self.loss_G_A + self.loss_G_B + self.loss_cycle_A + self.loss_cycle_B + loss_cycle_C_1 #+ self.loss_idt_A.item() + self.loss_idt_B.item()
-        # self.loss_G.requires_grad = True
+        self.loss_cycle_A = self.loss_cycle_A + loss_cycle_C_1  # + loss_cycle_C_2_2 + loss_cycle_C_3
+        self.loss_cycle_B = self.loss_cycle_B + loss_cycle_C_1  # + loss_cycle_C_2_1 + loss_cycle_C_3
+        self.loss_G = self.loss_G_A + self.loss_G_B + self.loss_cycle_A + self.loss_cycle_B + loss_cycle_C_1  # + self.loss_idt_A.item() + self.loss_idt_B.item()
+        #self.loss_G.requires_grad = True
 
         self.loss_G.retain_grad()
         self.loss_G.backward()
@@ -289,32 +290,31 @@ class CycleGANModel(BaseModel):
         del self.loss_G
         torch.cuda.empty_cache()
 
-
-
     def optimize_parameters(self):
         """Calculate losses, gradients, and update network weights; called in every training iteration"""
         # forward
-        torch.enable_grad()
         self.netG_A.module.eval()
         self.netG_B.module.eval()
 
-        self.forward()      # compute fake images and reconstruction images.
+        self.forward()  # compute fake images and reconstruction images.
 
         # G_A and G_B
+        torch.enable_grad()
+
         self.netG_A.module.train()
         self.netG_B.module.train()
         self.set_requires_grad([self.netD_A, self.netD_B], False)  # Ds require no gradients when optimizing Gs
         self.optimizer_G.zero_grad()  # set G_A and G_B's gradients to zero
 
-        self.backward_G()             # calculate gradients for G_A and G_B
+        self.backward_G()  # calculate gradients for G_A and G_B
 
-        self.optimizer_G.step()       # update G_A and G_B's weights
+        self.optimizer_G.step()  # update G_A and G_B's weights
 
         # D_A and D_B
         self.set_requires_grad([self.netD_A, self.netD_B], True)
-        self.optimizer_D.zero_grad()   # set D_A and D_B's gradients to zero
-        self.backward_D_A()      # calculate gradients for D_A
-        self.backward_D_B()      # calculate graidents for D_B
+        self.optimizer_D.zero_grad()  # set D_A and D_B's gradients to zero
+        self.backward_D_A()  # calculate gradients for D_A
+        self.backward_D_B()  # calculate graidents for D_B
         self.optimizer_D.step()  # update D_A and D_B's weights
 
         del self.fake_A_embeddings
@@ -328,14 +328,13 @@ class CycleGANModel(BaseModel):
         torch.no_grad()
         torch.cuda.empty_cache()
 
-
     def evaluate(self, sentences_file="eval_sentences.txt", distance_file="distances.txt", top_k_file="top_k.txt"):
         logging.info("\n\nEvaluating...")
 
         self.netG_A.module.eval()
         self.netG_B.module.eval()
-        self.netD_A.eval()
-        self.netD_B.eval()
+        self.netD_A.module.eval()
+        self.netD_B.module.eval()
         self.forward()  # calculate loss functions, get gradients, update network weights
         with open(sentences_file, "a") as sentences_file:
             for j in range(len(self.real_A)):
@@ -356,7 +355,7 @@ class CycleGANModel(BaseModel):
                 distances_file.write(str(distances[i][i]) + '\n')
 
         #with open(distance_file, "a") as distances_file:
-        #    distances_file.write(distances+"\n")
+        #   distances_file.write(distances+"\n")
 
         dim = len(distances)
         top_k = np.zeros(dim, dtype=np.float)
@@ -371,15 +370,14 @@ class CycleGANModel(BaseModel):
         with open(top_k_file, "a") as top_file:
             tot = 0
             for i in range(dim):
-                top_k[i] = top_k[i]/dim*100
+                top_k[i] = top_k[i] / dim * 100
                 tot += top_k[i]
-                top_file.write('Top '+str(i+1)+': '+str(tot)+'%\n')
-        #mi salvo in un dict per ogni frase quanto lontano è l'embedding reale (quanti ce ne sono più vicini) e faccio una classifica
-            #per vedere quanti hanno l'embedding reale nella top 1, top 2 e cosi via (cumulativo)
-            #salvo info in un file, per ogni epoca
-
+                top_file.write('Top ' + str(i + 1) + ': ' + str(tot) + '%\n')
+        # mi salvo in un dict per ogni frase quanto lontano è l'embedding reale (quanti ce ne sono più vicini) e faccio una classifica
+        # per vedere quanti hanno l'embedding reale nella top 1, top 2 e cosi via (cumulativo)
+        # salvo info in un file, per ogni epoca
 
         self.netG_A.module.train()
         self.netG_B.module.train()
-        self.netD_A.train()
-        self.netD_B.train()
+        self.netD_A.module.train()
+        self.netD_B.module.train()
