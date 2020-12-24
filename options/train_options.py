@@ -10,6 +10,7 @@ class TrainOptions(BaseOptions):
     def initialize(self, parser):
         parser = BaseOptions.initialize(self, parser)
         # visdom and HTML visualization parameters
+        parser.add_argument('--freeze_GB_encoder', type=bool, default=False, help="Freezes endoder from B to A (english encoder)")
         parser.add_argument('--on_colab', type=bool, default=False, help='runna su Colab o no')
         parser.add_argument('--display_freq', type=int, default=64, help='frequency of showing training results on screen')
         parser.add_argument('--display_ncols', type=int, default=4, help='if positive, display all images in a single visdom web panel with certain number of images per row.')

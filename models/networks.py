@@ -143,13 +143,15 @@ def define_name(model_name,language):
         complete_name = complete_name +"-cased"
     return complete_name
 
-def define_Gs(task, net_encoder, net_decoder,  source='de', dest='en', norm='batch', use_dropout=False, init_type='normal', init_gain=0.02, gpu_ids=[]):
+def define_Gs(task, net_encoder, net_decoder, source='de', dest='en', norm='batch', use_dropout=False, init_type='normal', init_gain=0.02, gpu_ids=[], freeze_GB_encoder=False):
 
-    netA = define_G("encoder-decoder", net_decoder, source, dest, norm, use_dropout, init_type, init_gain, gpu_ids, False)
-    netB = define_G("encoder-decoder", net_decoder, dest, source, norm, use_dropout, init_type, init_gain, gpu_ids, False)
+    netA = define_G("encoder-decoder", net_decoder, source, dest, norm, use_dropout, init_type, init_gain, gpu_ids, use_init_net=False, freeze_encoder=False)
+    netB = define_G("encoder-decoder", net_decoder, dest, source, norm, use_dropout, init_type, init_gain, gpu_ids, use_init_net=False, freeze_encoder=freeze_GB_encoder)
     netA.model.base_model.train()
     netB.model.base_model.train()
 
+    if freeze_GB_encoder is True:
+        netB.model.base_model.encoder.eval()
     if task == "translation":
 
         '''
@@ -204,7 +206,7 @@ def define_Gs(task, net_encoder, net_decoder,  source='de', dest='en', norm='bat
     return netA, netB
 
 
-def define_G(model, netG, source='en', dest='de', norm='batch', use_dropout=False, init_type='normal', init_gain=0.02, gpu_ids=[], use_init_net= True, out_dimension=None):
+def define_G(model, netG, source='en', dest='de', norm='batch', use_dropout=False, init_type='normal', init_gain=0.02, gpu_ids=[], use_init_net= True, out_dimension=None, freeze_encoder=False):
     """Create a generator
 
     Parameters:
@@ -247,13 +249,13 @@ def define_G(model, netG, source='en', dest='de', norm='batch', use_dropout=Fals
 
     if model == 'encoder':
         if out_dimension is None:
-            net = Transformer(netG)
+            net = Transformer(netG) #TODO freeze_encoder parameter
         else:
-            net = PooledEncoder(netG, out_dimension=out_dimension)
+            net = PooledEncoder(netG, out_dimension=out_dimension) #TODO freeze_encoder parameter
     elif model == 'encoder-decoder':
         if netG == 'marianMT':
             model_name = 'Helsinki-NLP/opus-mt-'+source+'-'+dest
-            net = EncDecModel(model_name)
+            net = EncDecModel(model_name, freeze_encoder=freeze_encoder)
         else:
             net = EncoderDecoderModel.from_encoder_decoder_pretrained('bert-base-cased', 'bert-base-german-cased')    #net=SentenceTransformer(netG)
 

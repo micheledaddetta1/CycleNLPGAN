@@ -16,7 +16,7 @@ class EncDecModel(nn.Module):
     """Huggingface AutoModel to generate token embeddings.
     Loads the correct class, e.g. BERT / RoBERTa etc.
     """
-    def __init__(self, model_name_or_path: str, max_seq_length: int = 128, model_args: Dict = {}, cache_dir: Optional[str] = None ):
+    def __init__(self, model_name_or_path: str, max_seq_length: int = 128, model_args: Dict = {}, cache_dir: Optional[str] = None, freeze_encoder=False):
         super(EncDecModel, self).__init__()
         self.config_keys = ['max_seq_length']
         self.max_seq_length = max_seq_length
@@ -34,6 +34,8 @@ class EncDecModel(nn.Module):
         self.output_hidden_states = True
         self.config.output_attentions = True
         self.config.output_hidden_states = True
+
+        self.freeze_encoder = freeze_encoder
 
 
     def forward(self, sentences, partial_value=False):
@@ -131,10 +133,23 @@ class EncDecModel(nn.Module):
 
 
     def train(self):
+        self.training = True
+        self.model.training = True
+        self.model.base_model.training = True
+        self.model.base_model.encoder.training = True
+        self.model.base_model.decoder.training = True
         self.model.train()
+        if self.freeze_encoder is True:
+            self.model.base_model.decoder.training = False
+            self.model.base_model.encoder.train()
 
 
     def eval(self):
+        self.training = False
+        self.model.training = False
+        self.model.base_model.training = False
+        self.model.base_model.encoder.training = False
+        self.model.base_model.decoder.training = False
         self.model.eval()
 
 

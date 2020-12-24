@@ -158,10 +158,11 @@ class BaseModel(ABC):
                 for save_path in save_paths:
 
                     if len(self.gpu_ids) > 0 and torch.cuda.is_available():
-                        torch.save(net.module.cpu().state_dict(), save_path)
-                        net.cuda(self.gpu_ids[0])
+                        torch.save(net, os.path.join(self.save_dir, save_filename))
+                        #torch.save(net.module.cpu().state_dict(), save_path)
+                        #net.cuda(self.gpu_ids[0])
                     else:
-                        torch.save(net.cpu().state_dict(), save_path)
+                        torch.save(net.module.cpu().state_dict(), save_path)
 
     def delete_networks(self, epoch):
         """Save all the networks to the disk.
@@ -211,14 +212,16 @@ class BaseModel(ABC):
                 print('loading the model from %s' % load_path)
                 # if you are using PyTorch newer than 0.4 (e.g., built from
                 # GitHub source), you can remove str() on self.device
-                state_dict = torch.load(load_path, map_location=self.device)
-                if hasattr(state_dict, '_metadata'):
-                    del state_dict._metadata
+                #state_dict = torch.load(load_path)#, map_location=self.device)
+                #if hasattr(state_dict, '_metadata'):
+                    #del state_dict._metadata
 
                 # patch InstanceNorm checkpoints prior to 0.4
-                for key in list(state_dict.keys()):  # need to copy keys here because we mutate in loop
-                    self.__patch_instance_norm_state_dict(state_dict, net.module, key.split('.'))
-                net.module.load_state_dict(state_dict)
+                #for key in list(state_dict.keys()):  # need to copy keys here because we mutate in loop
+                #    self.__patch_instance_norm_state_dict(state_dict, net.module, key.split('.'))
+                #net.module.load_state_dict(state_dict)
+                net = torch.load(load_path)
+                net = net.to(self.device)
 
     def print_networks(self, verbose):
         """Print the total number of parameters in the network and (if verbose) network architecture

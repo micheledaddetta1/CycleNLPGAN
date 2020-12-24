@@ -96,7 +96,7 @@ class CycleGANModel(BaseModel):
         # Code (vs. paper): G_A (G), G_B (F), D_A (D_Y), D_B (D_X)
 
         self.netG_A, self.netG_B = networks.define_Gs(opt.task, opt.encoder, opt.decoder, opt.language, 'en', opt.norm,
-                                                      not opt.no_dropout, opt.init_type, opt.init_gain, self.gpu_ids)
+                                                      not opt.no_dropout, opt.init_type, opt.init_gain, self.gpu_ids, opt.freeze_GB_encoder)
 
         if self.isTrain:  # define discriminators
             in_dim = self.netG_A.module.get_word_embedding_dimension()
@@ -269,7 +269,7 @@ class CycleGANModel(BaseModel):
         # combined loss and calculate gradients
         self.loss_cycle_A = self.loss_cycle_A + loss_cycle_C_1  # + loss_cycle_C_2_2 + loss_cycle_C_3
         self.loss_cycle_B = self.loss_cycle_B + loss_cycle_C_1  # + loss_cycle_C_2_1 + loss_cycle_C_3
-        self.loss_G = self.loss_G_A + self.loss_G_B + self.loss_cycle_A + self.loss_cycle_B + loss_cycle_C_1  # + self.loss_idt_A.item() + self.loss_idt_B.item()
+        self.loss_G = self.loss_G_A + self.loss_G_B + self.loss_cycle_A + self.loss_cycle_B  # + self.loss_idt_A.item() + self.loss_idt_B.item()
         #self.loss_G.requires_grad = True
 
         self.loss_G.retain_grad()
@@ -303,6 +303,8 @@ class CycleGANModel(BaseModel):
 
         self.netG_A.module.train()
         self.netG_B.module.train()
+        #if self.opt.freeze_GB_encoder:
+        #    self.set_requires_grad([self.netG_B.encoder], False)
         self.set_requires_grad([self.netD_A, self.netD_B], False)  # Ds require no gradients when optimizing Gs
         self.optimizer_G.zero_grad()  # set G_A and G_B's gradients to zero
 
