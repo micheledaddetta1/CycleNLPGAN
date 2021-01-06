@@ -57,7 +57,7 @@ class CycleGANModel(BaseModel):
         if is_train:
             parser.add_argument('--lambda_A', type=float, default=10.0, help='weight for cycle loss (A -> B -> A)')
             parser.add_argument('--lambda_B', type=float, default=10.0, help='weight for cycle loss (B -> A -> B)')
-            parser.add_argument('--lambda_C_1', type=float, default=20.0,
+            parser.add_argument('--lambda_C_1', type=float, default=5.0,
                                 help='weight for embedding loss (fakeA -> fakeB)')  # aligment loss
             parser.add_argument('--lambda_C_2', type=float, default=5.0,
                                 help='weight for embedding loss (fakeA -> recB, fakeB -> recA)')  # mixed loss
