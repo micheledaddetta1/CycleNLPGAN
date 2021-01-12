@@ -73,7 +73,7 @@ if __name__ == '__main__':
 
             total_iters += opt.batch_size
             model.set_input(data)         # unpack data from dataset and apply preprocessing
-            '''
+
             model.optimize_parameters()   # calculate loss functions, get gradients, update network weights
 
             if total_iters % opt.print_freq == 0:    # print training losses and save logging information to the disk
@@ -91,7 +91,7 @@ if __name__ == '__main__':
                     model.delete_networks(previous_suffix)
                 previous_suffix = save_suffix
                 model.save_networks('latest')
-            '''
+            
             if opt.eval_freq is not None and total_iters % opt.eval_freq == 0:
                 sentences_filename = str(epoch)+"_"+str(total_iters)+"_eval_sentences.txt"
                 distance_filename = str(epoch)+"_"+str(total_iters)+"_distances.txt"
