@@ -55,6 +55,8 @@ class CycleGANModel(BaseModel):
 
         parser.set_defaults(no_dropout=True)  # default CycleGAN did not use dropout
         if is_train:
+            parser.add_argument('--lambda_G', type=float, default=10.0, help='scaling factor for generator loss')
+            parser.add_argument('--lambda_D', type=float, default=10.0, help='scaling factor for discriminator loss')
             parser.add_argument('--lambda_A', type=float, default=10.0, help='weight for cycle loss (A -> B -> A)')
             parser.add_argument('--lambda_B', type=float, default=10.0, help='weight for cycle loss (B -> A -> B)')
             parser.add_argument('--lambda_C_1', type=float, default=5.0,
@@ -183,7 +185,7 @@ class CycleGANModel(BaseModel):
         pred_fake = netD(fake)
         loss_D_fake = self.criterionGAN(pred_fake, False)
         # Combined loss and calculate gradients
-        loss_D = (loss_D_real + loss_D_fake) * 0.5
+        loss_D = (loss_D_real + loss_D_fake) * 0.5 * self.opt.lambda_D
         loss_D.requires_grad = True
         loss_D.retain_grad()
         del real
@@ -203,6 +205,8 @@ class CycleGANModel(BaseModel):
 
     def backward_G(self):
         """Calculate the loss for generators G_A and G_B"""
+
+        lambda_G = self.opt.lambda_G
         lambda_idt = self.opt.lambda_identity
         lambda_A = self.opt.lambda_A
         lambda_B = self.opt.lambda_B
@@ -214,9 +218,10 @@ class CycleGANModel(BaseModel):
         fake_B = self.netD_A.module.batch_encode_plus(self.fake_B, verbose=False).to(self.device)
 
         # GAN loss D_A(G_A(A))
-        self.loss_G_A = self.criterionGAN(self.netD_A(fake_B), True)
+        self.loss_G_A = self.criterionGAN(self.netD_A(fake_B), True) * lambda_G
         # GAN loss D_B(G_B(B))
-        self.loss_G_B = self.criterionGAN(self.netD_B(fake_A), True)
+        self.loss_G_B = self.criterionGAN(self.netD_B(fake_A), True) * lambda_G
+
 
         # Forward cycle loss || G_B(G_A(A)) - A||
         size_vector = torch.ones(
@@ -293,6 +298,10 @@ class CycleGANModel(BaseModel):
     def optimize_parameters(self):
         """Calculate losses, gradients, and update network weights; called in every training iteration"""
         # forward
+
+        self.set_requires_grad([self.netG_A, self.netG_B], False)
+        self.netG_A.training = False
+        self.netG_B.training = False
         self.netG_A.module.eval()
         self.netG_B.module.eval()
 
@@ -301,6 +310,9 @@ class CycleGANModel(BaseModel):
         # G_A and G_B
         torch.enable_grad()
 
+        self.set_requires_grad([self.netG_A, self.netG_B], True)
+        self.netG_A.training = True
+        self.netG_B.training = True
         self.netG_A.module.train()
         self.netG_B.module.train()
         #if self.opt.freeze_GB_encoder:

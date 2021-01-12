@@ -73,7 +73,7 @@ if __name__ == '__main__':
 
             total_iters += opt.batch_size
             model.set_input(data)         # unpack data from dataset and apply preprocessing
-
+            '''
             model.optimize_parameters()   # calculate loss functions, get gradients, update network weights
 
             if total_iters % opt.print_freq == 0:    # print training losses and save logging information to the disk
@@ -91,7 +91,31 @@ if __name__ == '__main__':
                     model.delete_networks(previous_suffix)
                 previous_suffix = save_suffix
                 model.save_networks('latest')
+            '''
+            if opt.eval_freq is not None and total_iters % opt.eval_freq == 0:
+                sentences_filename = str(epoch)+"_"+str(total_iters)+"_eval_sentences.txt"
+                distance_filename = str(epoch)+"_"+str(total_iters)+"_distances.txt"
+                top_k_filename = str(epoch)+"_"+str(total_iters)+"_top_k.txt"
+                with open(distance_filename, "a") as distance_file:
+                    distance_file.write("NEW EPOCH:\n")
+                with open(top_k_filename, "a") as top_file:
+                    top_file.write("NEW EPOCH:\n")
+                with open(sentences_filename, "a") as sentences_file:
+                    sentences_file.write("NEW EPOCH:\n")
 
+                for i, data in enumerate(eval_dataset):  # inner loop within one epoch
+                    if i > 10:
+                        break
+                    model.set_input(data)  # unpack data from dataset and apply preprocessing
+                    model.evaluate(sentences_file=sentences_filename, distance_file=distance_filename,
+                                   top_k_file=top_k_filename)
+
+                with open(distance_filename, "a") as distance_file:
+                    distance_file.write("\n\n\n\n")
+                with open(top_k_filename, "a") as top_file:
+                    top_file.write("\n\n\n\n")
+                with open(sentences_filename, "a") as sentences_file:
+                    sentences_file.write("\n\n\n\n")
             iter_data_time = time.time()
         logging.info('saving the model at the end of epoch %d, iters %d' % (epoch, total_iters))
         model.save_networks('latest')

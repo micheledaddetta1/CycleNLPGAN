@@ -140,8 +140,8 @@ class EncDecModel(nn.Module):
         self.model.base_model.decoder.training = True
         self.model.train()
         if self.freeze_encoder is True:
-            self.model.base_model.decoder.training = False
-            self.model.base_model.encoder.train()
+            self.model.base_model.encoder.training = False
+            self.model.base_model.decoder.train()
 
 
     def eval(self):
