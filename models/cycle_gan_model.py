@@ -277,6 +277,8 @@ class CycleGANModel(BaseModel):
         self.loss_G = self.loss_G_A + self.loss_G_B + self.loss_cycle_A + self.loss_cycle_B  # + self.loss_idt_A.item() + self.loss_idt_B.item()
         #self.loss_G.requires_grad = True
 
+
+        self.loss_G.requires_grad = True
         self.loss_G.retain_grad()
         self.loss_G.backward()
 
@@ -310,11 +312,12 @@ class CycleGANModel(BaseModel):
         # G_A and G_B
         torch.enable_grad()
 
-        self.set_requires_grad([self.netG_A, self.netG_B], True)
         self.netG_A.training = True
         self.netG_B.training = True
         self.netG_A.module.train()
         self.netG_B.module.train()
+        self.set_requires_grad([self.netG_A, self.netG_B], True)
+
         #if self.opt.freeze_GB_encoder:
         #    self.set_requires_grad([self.netG_B.encoder], False)
         self.set_requires_grad([self.netD_A, self.netD_B], False)  # Ds require no gradients when optimizing Gs

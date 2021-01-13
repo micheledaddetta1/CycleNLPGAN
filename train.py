@@ -91,7 +91,7 @@ if __name__ == '__main__':
                     model.delete_networks(previous_suffix)
                 previous_suffix = save_suffix
                 model.save_networks('latest')
-            
+
             if opt.eval_freq is not None and total_iters % opt.eval_freq == 0:
                 sentences_filename = str(epoch)+"_"+str(total_iters)+"_eval_sentences.txt"
                 distance_filename = str(epoch)+"_"+str(total_iters)+"_distances.txt"
