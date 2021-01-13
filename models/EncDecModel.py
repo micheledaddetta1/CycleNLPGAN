@@ -131,17 +131,18 @@ class EncDecModel(nn.Module):
         #return self.dest_tokenizer.batch_decode(tokens, skip_special_tokens=True)
 
 
-
-    def train(self):
-        self.training = True
-        self.model.training = True
-        self.model.base_model.training = True
-        self.model.base_model.encoder.training = True
-        self.model.base_model.decoder.training = True
-        self.model.train()
+    def train(self, mode=True):
+        self.training = mode
+        self.model.training = mode
+        self.model.base_model.training = mode
+        self.model.base_model.encoder.training = mode
+        self.model.base_model.decoder.training = mode
+        self.model.train(mode)
+        self.model.base_model.train(mode)
         if self.freeze_encoder is True:
             self.model.base_model.encoder.training = False
-            self.model.base_model.decoder.train()
+            self.model.base_model.encoder.eval()
+            self.model.base_model.decoder.train(mode)
 
 
     def eval(self):

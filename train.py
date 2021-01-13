@@ -61,6 +61,8 @@ if __name__ == '__main__':
         visualizer.reset()              # reset the visualizer: make sure it saves the results to HTML at least once every epoch
 
         for i, data in enumerate(train_dataset):  # inner loop within one epoch
+            if i>1:
+                continue
             epoch_iter += opt.batch_size
 
             if epoch == opt.epoch_count:
@@ -96,17 +98,11 @@ if __name__ == '__main__':
                 sentences_filename = str(epoch)+"_"+str(total_iters)+"_eval_sentences.txt"
                 distance_filename = str(epoch)+"_"+str(total_iters)+"_distances.txt"
                 top_k_filename = str(epoch)+"_"+str(total_iters)+"_top_k.txt"
-                with open(distance_filename, "a") as distance_file:
-                    distance_file.write("NEW EPOCH:\n")
-                with open(top_k_filename, "a") as top_file:
-                    top_file.write("NEW EPOCH:\n")
-                with open(sentences_filename, "a") as sentences_file:
-                    sentences_file.write("NEW EPOCH:\n")
 
-                for i, data in enumerate(eval_dataset):  # inner loop within one epoch
-                    if i > 10:
+                for j, eval_data in enumerate(eval_dataset):  # inner loop within one epoch
+                    if j > 10:
                         break
-                    model.set_input(data)  # unpack data from dataset and apply preprocessing
+                    model.set_input(eval_data)  # unpack data from dataset and apply preprocessing
                     model.evaluate(sentences_file=sentences_filename, distance_file=distance_filename,
                                    top_k_file=top_k_filename)
 
@@ -131,8 +127,8 @@ if __name__ == '__main__':
         with open(sentences_filename, "a") as sentences_file:
             sentences_file.write("NEW EPOCH:\n")
 
-        for i, data in enumerate(eval_dataset):  # inner loop within one epoch
-            model.set_input(data)  # unpack data from dataset and apply preprocessing
+        for j, eval_data in enumerate(eval_dataset):  # inner loop within one epoch
+            model.set_input(eval_data)  # unpack data from dataset and apply preprocessing
             model.evaluate(sentences_file=sentences_filename, distance_file=distance_filename, top_k_file=top_k_filename)
 
         with open(distance_filename, "a") as distance_file:

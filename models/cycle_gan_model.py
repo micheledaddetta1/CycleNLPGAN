@@ -180,17 +180,17 @@ class CycleGANModel(BaseModel):
 
         # Real
         pred_real = netD(real)
-        loss_D_real = self.criterionGAN(pred_real, True)
+        loss_D_real = torch.tensor([self.criterionGAN(pred_real, True)], requires_grad=True)
         # Fake
         pred_fake = netD(fake)
-        loss_D_fake = self.criterionGAN(pred_fake, False)
+        loss_D_fake = torch.tensor([self.criterionGAN(pred_fake, False)], requires_grad=True)
         # Combined loss and calculate gradients
         loss_D = (loss_D_real + loss_D_fake) * 0.5 * self.opt.lambda_D
-        loss_D.requires_grad = True
-        loss_D.retain_grad()
+
+        loss_D.backward()
         del real
         del fake
-        loss_D.backward()
+
         return loss_D.item()
 
     def backward_D_A(self):
@@ -275,11 +275,7 @@ class CycleGANModel(BaseModel):
         self.loss_cycle_A = self.loss_cycle_A + loss_cycle_C_1  # + loss_cycle_C_2_2 + loss_cycle_C_3
         self.loss_cycle_B = self.loss_cycle_B + loss_cycle_C_1  # + loss_cycle_C_2_1 + loss_cycle_C_3
         self.loss_G = self.loss_G_A + self.loss_G_B + self.loss_cycle_A + self.loss_cycle_B  # + self.loss_idt_A.item() + self.loss_idt_B.item()
-        #self.loss_G.requires_grad = True
 
-
-        self.loss_G.requires_grad = True
-        self.loss_G.retain_grad()
         self.loss_G.backward()
 
         self.loss_G_A = self.loss_G_A.item()
@@ -301,34 +297,31 @@ class CycleGANModel(BaseModel):
         """Calculate losses, gradients, and update network weights; called in every training iteration"""
         # forward
 
-        self.set_requires_grad([self.netG_A, self.netG_B], False)
-        self.netG_A.training = False
-        self.netG_B.training = False
-        self.netG_A.module.eval()
-        self.netG_B.module.eval()
+        self.netG_A.eval()
+        self.netG_B.eval()
+        self.netD_A.eval()
+        self.netD_B.eval()
 
         self.forward()  # compute fake images and reconstruction images.
 
-        # G_A and G_B
+
+        #self.set_requires_grad([self.netD_A, self.netD_B], False)
         torch.enable_grad()
+        self.netG_A.train()
+        self.netG_B.train()
+        self.netD_A.eval()
+        self.netD_B.eval()
 
-        self.netG_A.training = True
-        self.netG_B.training = True
-        self.netG_A.module.train()
-        self.netG_B.module.train()
-        self.set_requires_grad([self.netG_A, self.netG_B], True)
-
-        #if self.opt.freeze_GB_encoder:
-        #    self.set_requires_grad([self.netG_B.encoder], False)
-        self.set_requires_grad([self.netD_A, self.netD_B], False)  # Ds require no gradients when optimizing Gs
         self.optimizer_G.zero_grad()  # set G_A and G_B's gradients to zero
-
         self.backward_G()  # calculate gradients for G_A and G_B
-
         self.optimizer_G.step()  # update G_A and G_B's weights
 
         # D_A and D_B
-        self.set_requires_grad([self.netD_A, self.netD_B], True)
+        self.netD_A.train()
+        self.netD_B.train()
+        self.netG_A.eval()
+        self.netG_B.eval()
+
         self.optimizer_D.zero_grad()  # set D_A and D_B's gradients to zero
         self.backward_D_A()  # calculate gradients for D_A
         self.backward_D_B()  # calculate graidents for D_B
