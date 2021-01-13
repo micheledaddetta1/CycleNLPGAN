@@ -61,8 +61,6 @@ if __name__ == '__main__':
         visualizer.reset()              # reset the visualizer: make sure it saves the results to HTML at least once every epoch
 
         for i, data in enumerate(train_dataset):  # inner loop within one epoch
-            if i>1:
-                continue
             epoch_iter += opt.batch_size
 
             if epoch == opt.epoch_count:
@@ -105,13 +103,6 @@ if __name__ == '__main__':
                     model.set_input(eval_data)  # unpack data from dataset and apply preprocessing
                     model.evaluate(sentences_file=sentences_filename, distance_file=distance_filename,
                                    top_k_file=top_k_filename)
-
-                with open(distance_filename, "a") as distance_file:
-                    distance_file.write("\n\n\n\n")
-                with open(top_k_filename, "a") as top_file:
-                    top_file.write("\n\n\n\n")
-                with open(sentences_filename, "a") as sentences_file:
-                    sentences_file.write("\n\n\n\n")
             iter_data_time = time.time()
         logging.info('saving the model at the end of epoch %d, iters %d' % (epoch, total_iters))
         model.save_networks('latest')
