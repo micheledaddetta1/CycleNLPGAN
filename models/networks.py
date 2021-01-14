@@ -372,7 +372,8 @@ class GANLoss(nn.Module):
             loss = self.loss(prediction, target_tensor)
         elif self.gan_mode == 'crossentropy':
             target_tensor = self.get_target_tensor(prediction, target_is_real)#.type(torch.LongTensor)
-            loss = self.loss(prediction.type(torch.float32), target_tensor)/100.0 #done because BCELoss returns a value between 0 and 100
+            loss = self.loss(prediction.type(torch.float32), target_tensor)
+            loss = loss/100.0 #done because BCELoss returns a value between 0 and 100
         elif self.gan_mode == 'wgangp':
             if target_is_real:
                 loss = -prediction.mean()
