@@ -26,6 +26,7 @@ class DiscriminatorTransformer(Transformer):
         features = self.layers(features['sentence_embedding'])
         features = self.softmax(features)
         _, features = torch.max(features, 1)
+        #features = torch.tensor(features, dtype=torch.float32, requires_grad=True)
         return features
 
     def get_word_embedding_dimension(self) -> int:
@@ -90,4 +91,5 @@ class DiscriminatorTransformer(Transformer):
                 return_tensors='pt',
                 truncation=True
             )
+
         return train_input_ids

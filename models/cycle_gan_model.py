@@ -315,7 +315,7 @@ class CycleGANModel(BaseModel):
 
         self.optimizer_G.zero_grad()  # set G_A and G_B's gradients to zero
         self.backward_G()  # calculate gradients for G_A and G_B
-        #self.optimizer_G.step()  # update G_A and G_B's weights
+        self.optimizer_G.step()  # update G_A and G_B's weights
 
         # D_A and D_B
         self.netD_AB.train()
@@ -326,7 +326,7 @@ class CycleGANModel(BaseModel):
         self.optimizer_D.zero_grad()  # set D_A and D_B's gradients to zero
         self.backward_D_AB()  # calculate gradients for D_A
         self.backward_D_BA()  # calculate graidents for D_B
-        #self.optimizer_D.step()  # update D_A and D_B's weights
+        self.optimizer_D.step()  # update D_A and D_B's weights
 
         del self.fake_A_embeddings
         del self.fake_B_embeddings
