@@ -306,7 +306,7 @@ class CycleGANModel(BaseModel):
         self.forward()  # compute fake images and reconstruction images.
 
 
-        #self.set_requires_grad([self.netD_A, self.netD_B], False)
+        self.set_requires_grad([self.netD_AB, self.netD_BA], False)
         torch.enable_grad()
         self.netG_AB.train()
         self.netG_BA.train()
@@ -318,6 +318,7 @@ class CycleGANModel(BaseModel):
         self.optimizer_G.step()  # update G_A and G_B's weights
 
         # D_A and D_B
+        self.set_requires_grad([self.netD_AB, self.netD_BA], True)
         self.netD_AB.train()
         self.netD_BA.train()
         self.netG_AB.eval()
