@@ -14,3 +14,4 @@ pip install -U sentence-transformers
 pip install -e .
 pip install torch torchvision
 
+CMD python ./CycleNLPGAN/train.py --dataroot data --on_colab True --batch_size 32 --task translation --name translation --checkpoints_dir .CycleNLPGAN/checkpoints --freeze_GB_encoder True --eval_freq 4096
