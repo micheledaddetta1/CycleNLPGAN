@@ -174,24 +174,22 @@ class CycleGANModel(BaseModel):
         Return the discriminator loss.
         We also call loss_D.backward() to calculate the gradients.
         """
-        real = netD.module.batch_encode_plus(real_sent, verbose=False).to(self.device)
+        #real = netD.module.batch_encode_plus(real_sent, verbose=False).to(self.device)
 
-        fake = netD.module.batch_encode_plus(fake_sent, verbose=False).to(self.device)
+        #fake = netD.module.batch_encode_plus(fake_sent, verbose=False).to(self.device)
 
         # Real
-        pred_real = netD(real)
-        loss_D_real = torch.tensor([self.criterionGAN(pred_real, True)], requires_grad=True)
+        #pred_real = netD(real)
+        loss_D_real = netD(real_sent, 1).loss
         # Fake
-        pred_fake = netD(fake)
-        loss_D_fake = torch.tensor([self.criterionGAN(pred_fake, False)], requires_grad=True)
+        loss_D_fake = netD(fake_sent, 0).loss
         # Combined loss and calculate gradients
         loss_D = (loss_D_real + loss_D_fake) * 0.5 * self.opt.lambda_D
-        print(loss_D)
+        #print(loss_D)
         loss_D.backward()
-        del real
-        del fake
 
-        return loss_D.item()
+
+        return loss_D#.item()
 
     def backward_D_AB(self):
         """Calculate GAN loss for discriminator D_A"""
@@ -214,15 +212,11 @@ class CycleGANModel(BaseModel):
         #lambda_C_2 = self.opt.lambda_C_2
         #lambda_C_3 = self.opt.lambda_C_3
 
-        fake_A = self.netD_BA.module.batch_encode_plus(self.fake_A, verbose=False).to(self.device)
-        fake_B = self.netD_AB.module.batch_encode_plus(self.fake_B, verbose=False).to(self.device)
 
-        # GAN loss D_A(G_A(A))
-        self.loss_G_AB = self.criterionGAN(self.netD_AB(fake_B), True) * lambda_G
-        print("GA"+str(self.loss_G_AB))
-        # GAN loss D_B(G_B(B))
-        self.loss_G_BA = self.criterionGAN(self.netD_BA(fake_A), True) * lambda_G
-        print("GB"+str(self.loss_G_BA))
+        self.loss_G_AB = self.netD_AB(self.fake_B, 1).loss * lambda_G
+
+        self.loss_G_BA = self.netD_BA(self.fake_A, 1).loss * lambda_G
+
 
         # Forward cycle loss || G_B(G_A(A)) - A||
         size_vector = torch.ones(
@@ -279,50 +273,42 @@ class CycleGANModel(BaseModel):
 
         self.loss_G.backward()
 
-        self.loss_G_AB = self.loss_G_AB.item()
-        self.loss_G_BA = self.loss_G_BA.item()
-        self.loss_cycle_ABA = self.loss_cycle_ABA.item() + loss_cycle_C_1.item()
-        self.loss_cycle_BAB = self.loss_cycle_BAB.item() + loss_cycle_C_1.item()
+        #self.loss_G_AB = self.loss_G_AB.item()
+        #self.loss_G_BA = self.loss_G_BA.item()
+        #self.loss_cycle_ABA = self.loss_cycle_ABA.item() + loss_cycle_C_1.item()
+        #self.loss_cycle_BAB = self.loss_cycle_BAB.item() + loss_cycle_C_1.item()
 
-        del real_A_tokens
-        del rec_A_tokens
-        del fake_A
-        del fake_B
-        del real_B_tokens
-        del rec_B_tokens
-        del size_vector
-        del self.loss_G
-        torch.cuda.empty_cache()
+        #del real_A_tokens
+        #del rec_A_tokens
+        #del real_B_tokens
+        #del rec_B_tokens
+        #del size_vector
+        #del self.loss_G
+        #torch.cuda.empty_cache()
+
+
 
     def optimize_parameters(self):
         """Calculate losses, gradients, and update network weights; called in every training iteration"""
         # forward
 
-        self.netG_AB.eval()
-        self.netG_BA.eval()
-        self.netD_AB.eval()
-        self.netD_BA.eval()
+        self.netG_AB.train()
+        self.netG_BA.train()
+        self.netD_AB.train()
+        self.netD_BA.train()
 
         self.forward()  # compute fake images and reconstruction images.
 
 
-        self.set_requires_grad([self.netD_AB, self.netD_BA], False)
+        #self.set_requires_grad([self.netD_AB, self.netD_BA], False)
         torch.enable_grad()
-        self.netG_AB.train()
-        self.netG_BA.train()
-        self.netD_AB.eval()
-        self.netD_BA.eval()
 
         self.optimizer_G.zero_grad()  # set G_A and G_B's gradients to zero
         self.backward_G()  # calculate gradients for G_A and G_B
         self.optimizer_G.step()  # update G_A and G_B's weights
 
         # D_A and D_B
-        self.set_requires_grad([self.netD_AB, self.netD_BA], True)
-        self.netD_AB.train()
-        self.netD_BA.train()
-        self.netG_AB.eval()
-        self.netG_BA.eval()
+        #self.set_requires_grad([self.netD_AB, self.netD_BA], True)
 
         self.optimizer_D.zero_grad()  # set D_A and D_B's gradients to zero
         self.backward_D_AB()  # calculate gradients for D_A
@@ -339,6 +325,8 @@ class CycleGANModel(BaseModel):
         del self.rec_B
         torch.no_grad()
         torch.cuda.empty_cache()
+
+
 
     def evaluate(self, sentences_file="eval_sentences.txt", distance_file="distances.txt", top_k_file="top_k.txt"):
         logging.info("\n\nEvaluating...")

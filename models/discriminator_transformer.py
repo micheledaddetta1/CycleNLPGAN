@@ -1,7 +1,8 @@
 import torch
 from torch import nn
 from tqdm import tqdm
-from transformers import AutoModel, AutoTokenizer, AutoConfig, AutoModelWithLMHead
+from transformers import AutoModel, AutoTokenizer, AutoConfig, AutoModelWithLMHead, BertTokenizer, BertConfig, \
+    BertLMHeadModel, BertForSequenceClassification
 import json
 from typing import List, Dict, Optional
 import os
@@ -16,17 +17,22 @@ class DiscriminatorTransformer(Transformer):
     Loads the correct class, e.g. BERT / RoBERTa etc.
     """
     def __init__(self, model_name_or_path: str, max_seq_length: int = 128, model_args: Dict = {}, cache_dir: Optional[str] = None, out_dim=2):
-        super(DiscriminatorTransformer, self).__init__(model_name_or_path)
-        self.layers = nn.Linear(self.get_word_embedding_dimension(), out_dim)
-        self.softmax = nn.Softmax(dim=1)
+        #super(DiscriminatorTransformer, self).__init__(model_name_or_path)
+        super(Transformer, self).__init__()
 
-    def forward(self, features):
+        self.tokenizer = BertTokenizer.from_pretrained(model_name_or_path)
+        self.model = BertForSequenceClassification.from_pretrained (model_name_or_path, num_labels=2, return_dict=True)
+
+        self.config_class = self.model.config_class
+        self.max_seq_length = max_seq_length
+
+    def forward(self, features, label):
         """Returns token_embeddings, cls_token"""
-        features = super(DiscriminatorTransformer, self).forward(features)
-        features = self.layers(features['sentence_embedding'])
-        features = self.softmax(features)
-        _, features = torch.max(features, 1)
-        #features = torch.tensor(features, dtype=torch.float32, requires_grad=True)
+        embedding = self.tokenizer(features, return_tensors='pt',add_special_tokens=True,
+                max_length=self.max_seq_length,
+                padding=True,).to(self.model.device)
+        labels = self.get_target_tensor(torch.zeros(embedding["input_ids"].size()[0]), label)
+        features = self.model(**embedding, labels=labels)
         return features
 
     def get_word_embedding_dimension(self) -> int:
@@ -93,3 +99,19 @@ class DiscriminatorTransformer(Transformer):
             )
 
         return train_input_ids
+
+
+    def get_target_tensor(self, prediction, label):
+        """Create label tensors with the same size as the input.
+
+        Parameters:
+            prediction (tensor) - - tpyically the prediction from a discriminator
+            target_is_real (bool) - - if the ground truth label is for real images or fake images
+
+        Returns:
+            A label tensor filled with ground truth label, and with the size of the input
+        """
+
+
+        target_tensor = torch.tensor(label).to(self.model.device)
+        return target_tensor.expand_as(prediction)

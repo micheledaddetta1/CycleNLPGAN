@@ -23,6 +23,7 @@ class EncDecModel(nn.Module):
 
         config = AutoConfig.from_pretrained(model_name_or_path, **model_args, cache_dir=cache_dir)
         self.model = MarianMTModel.from_pretrained(model_name_or_path, config=config, cache_dir=cache_dir)
+
         self.tokenizer = MarianTokenizer.from_pretrained(model_name_or_path, cache_dir=cache_dir)
 
         self.config = self.model.config
@@ -42,6 +43,7 @@ class EncDecModel(nn.Module):
         embeddings = self.batch_encode_plus(sentences, padding=True, verbose=False)
         embeddings = embeddings.to(self.model.device)
         if self.task == "translation":
+            #output2 = self.model(**embeddings)
             output = self.model.generate(**embeddings)
             output = self.decode(output)
         else:
@@ -143,7 +145,8 @@ class EncDecModel(nn.Module):
             self.model.base_model.encoder.training = False
             self.model.base_model.encoder.eval()
             self.model.base_model.decoder.train(mode)
-
+            for param in self.model.base_model.encoder.parameters():
+                param.requires_grad = False
 
     def eval(self):
         self.training = False
