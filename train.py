@@ -54,6 +54,7 @@ if __name__ == '__main__':
     n -= (opt.epoch_count-1)*(round(len(train_dataset)/opt.batch_size))
     previous_suffix = None
 
+
     for epoch in range(opt.epoch_count, opt.n_epochs + opt.n_epochs_decay + 1):    # outer loop for different epochs; we save the model by <epoch_count>, <epoch_count>+<save_latest_freq>
         epoch_start_time = time.time()  # timer for entire epoch
         iter_data_time = time.time()    # timer for data loading per iteration

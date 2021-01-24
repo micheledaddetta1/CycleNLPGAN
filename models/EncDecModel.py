@@ -38,21 +38,24 @@ class EncDecModel(nn.Module):
 
         self.freeze_encoder = freeze_encoder
 
+        self.add_pooling_layer()
 
-    def forward(self, sentences, partial_value=False):
+    def forward(self, sentences, target_sentences, partial_value=False):
         embeddings = self.batch_encode_plus(sentences, padding=True, verbose=False)
         embeddings = embeddings.to(self.model.device)
         if self.task == "translation":
-            #output2 = self.model(**embeddings)
-            output = self.model.generate(**embeddings)
-            output = self.decode(output)
+            decoder_input_ids = self.batch_encode_plus(target_sentences,  padding=True, verbose=False).input_ids.to(self.model.device)  # Batch size 1
+            outputs = self.model(input_ids=embeddings.input_ids, labels=decoder_input_ids, return_dict=True, training=True)
+
+            output_sentences = self.model.generate(**embeddings)
+            output_sentences = self.decode(output_sentences)
         else:
-            output = self.generate(sentences)
-            output = self.decode(output)
+            output_sentences = self.generate(sentences)
+            output_sentences = self.decode(output_sentences)
 
 
         if partial_value:
-
+            '''
             embeddings.update({'output_hidden_states': True})
             partial = self.model.base_model.encoder(**embeddings)
             partial = partial[0][:, 0, :]  # CLS token is first token
@@ -62,11 +65,16 @@ class EncDecModel(nn.Module):
                 embeddings.update({'cls_token_embeddings': cls_tokens})
                 partial = self.embedding_pooling(embeddings)
             del embeddings
-            return output, partial
+            '''
+            sentence_embedding = torch.empty([len(sentences), self.get_word_embedding_dimension()], dtype=torch.float32).to(self.model.device)
+            for i in range(len(sentences)):
+                a = outputs.encoder_last_hidden_state[i]
+                sentence_embedding[i] = self.embedding_pooling(outputs.encoder_last_hidden_state[i])["sentence_embedding"]
+            return output_sentences, sentence_embedding, outputs.loss
         else:
             del embeddings
 
-            return output
+            return output_sentences, outputs.loss
 
     def get_word_embedding_dimension(self) -> int:
         return self.config.hidden_size
@@ -206,7 +214,7 @@ class EncDecModel(nn.Module):
         return train_input_ids
 
     def add_pooling_layer(self):
-        if not hasattr(self, 'embedding_pooling') and self.task == "reconstruction":
+        if not hasattr(self, 'embedding_pooling'):# and self.task == "reconstruction":
             self.embedding_pooling = Pooling(self.get_word_embedding_dimension(),
                                      pooling_mode_mean_tokens=True,
                                      pooling_mode_cls_token=False,

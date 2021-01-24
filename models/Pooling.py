@@ -33,28 +33,19 @@ class Pooling(nn.Module):
         self.pooling_output_dimension = (pooling_mode_multiplier * word_embedding_dimension)
 
     def forward(self, features: Dict[str, Tensor]):
-        token_embeddings = features['token_embeddings']
-        cls_token = features['cls_token_embeddings']
-        attention_mask = features['attention_mask']
+        token_embeddings = features#['token_embeddings']
+        #cls_token = features['cls_token_embeddings']
+        attention_mask = torch.ones(features.size()[0])
 
         ## Pooling strategy
         output_vectors = []
-        if self.pooling_mode_cls_token:
-            output_vectors.append(cls_token)
-        if self.pooling_mode_max_tokens:
-            input_mask_expanded = attention_mask.unsqueeze(-1).expand(token_embeddings.size()).float()
-            token_embeddings[input_mask_expanded == 0] = -1e9  # Set padding tokens to large negative value
-            max_over_time = torch.max(token_embeddings, 1)[0]
-            output_vectors.append(max_over_time)
+
         if self.pooling_mode_mean_tokens or self.pooling_mode_mean_sqrt_len_tokens:
-            input_mask_expanded = attention_mask.unsqueeze(-1).expand(token_embeddings.size()).float()
-            sum_embeddings = torch.sum(token_embeddings * input_mask_expanded, 1)
+            input_mask_expanded = attention_mask.unsqueeze(-1).expand(token_embeddings.size()).float().to(token_embeddings.device)
+            sum_embeddings = torch.sum(token_embeddings * input_mask_expanded, 0)
 
             #If tokens are weighted (by WordWeights layer), feature 'token_weights_sum' will be present
-            if 'token_weights_sum' in features:
-                sum_mask = features['token_weights_sum'].unsqueeze(-1).expand(sum_embeddings.size())
-            else:
-                sum_mask = input_mask_expanded.sum(1)
+            sum_mask = input_mask_expanded.sum(0)
 
             sum_mask = torch.clamp(sum_mask, min=1e-9)
 
@@ -63,8 +54,9 @@ class Pooling(nn.Module):
             if self.pooling_mode_mean_sqrt_len_tokens:
                 output_vectors.append(sum_embeddings / torch.sqrt(sum_mask))
 
-        output_vector = torch.cat(output_vectors, 1)
-        features.update({'sentence_embedding': output_vector})
+        output_vector = torch.cat(output_vectors, 0)
+        features = {'sentence_embedding': output_vector}
+        print(features["sentence_embedding"].size())
         return features
 
     def get_sentence_embedding_dimension(self):

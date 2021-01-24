@@ -158,10 +158,11 @@ class CycleGANModel(BaseModel):
     def forward(self):
 
         """Run forward pass; called by both functions <optimize_parameters> and <test>."""
-        self.fake_B, self.fake_B_embeddings = self.netG_AB(self.real_A, True)  # G_A(A)
-        self.rec_A, self.rec_A_embeddings = self.netG_BA(self.fake_B, True)  # G_B(G_A(A))
-        self.fake_A, self.fake_A_embeddings = self.netG_BA(self.real_B, True)  # G_B(B)
-        self.rec_B, self.rec_B_embeddings = self.netG_AB(self.fake_A, True)  # G_A(G_B(B))
+        self.fake_B, self.fake_B_embeddings, self.loss_G_AB_1 = self.netG_AB(self.real_A, self.real_B, True)  # G_A(A)
+        self.rec_A, self.rec_A_embeddings, self.loss_G_BA_1 = self.netG_BA(self.fake_B, self.real_A, True)  # G_B(G_A(A))
+        self.fake_A, self.fake_A_embeddings, self.loss_G_BA_2 = self.netG_BA(self.real_B, self.real_A, True)  # G_B(B)
+        self.rec_B, self.rec_B_embeddings, self.loss_G_AB_2 = self.netG_AB(self.fake_A, self.real_B, True)  # G_A(G_B(B))
+
 
     def backward_D_basic(self, netD, real_sent, fake_sent):
         """Calculate GAN loss for the discriminator
@@ -213,14 +214,17 @@ class CycleGANModel(BaseModel):
         #lambda_C_3 = self.opt.lambda_C_3
 
 
-        self.loss_G_AB = self.netD_AB(self.fake_B, 1).loss * lambda_G
+        self.loss_G_AB = self.netD_AB(self.fake_B, 1).loss
 
-        self.loss_G_BA = self.netD_BA(self.fake_A, 1).loss * lambda_G
+        self.loss_G_AB = (self.loss_G_AB + ((self.loss_G_AB_1 + self.loss_G_AB_2) * 0.5)) * lambda_G
 
+        self.loss_G_BA = self.netD_BA(self.fake_A, 1).loss
+
+        self.loss_G_BA = (self.loss_G_BA + ((self.loss_G_BA_1 + self.loss_G_BA_2) * 0.5)) * lambda_G
 
         # Forward cycle loss || G_B(G_A(A)) - A||
         size_vector = torch.ones(
-            self.netG_AB.module.batch_encode_plus(self.real_A, verbose=False)["input_ids"].size()[-1]).to(self.device)
+            self.netG_AB.module.batch_encode_plus(self.real_A, verbose=False)["input_ids"].size()).to(self.device)
         real_A_tokens = self.netG_AB.module.batch_encode_plus(self.real_A, verbose=False)["input_ids"].to(self.device,
                                                                                                          dtype=torch.float32)
         rec_A_tokens = self.netG_AB.module.batch_encode_plus(self.rec_A, verbose=False)["input_ids"].to(self.device,
@@ -239,7 +243,7 @@ class CycleGANModel(BaseModel):
                                                 rec_B_tokens,
                                                 size_vector) * lambda_B
 
-        size_vector = torch.ones(self.fake_A_embeddings.size()[-1]).to(self.device)
+        size_vector = torch.ones(self.fake_A_embeddings.size()).to(self.device)
 
         # Backward cycle loss || G_B(B) - G_A(A)||
 
@@ -300,7 +304,7 @@ class CycleGANModel(BaseModel):
         self.forward()  # compute fake images and reconstruction images.
 
 
-        #self.set_requires_grad([self.netD_AB, self.netD_BA], False)
+        self.set_requires_grad([self.netD_AB, self.netD_BA], False)
         torch.enable_grad()
 
         self.optimizer_G.zero_grad()  # set G_A and G_B's gradients to zero
@@ -308,7 +312,7 @@ class CycleGANModel(BaseModel):
         self.optimizer_G.step()  # update G_A and G_B's weights
 
         # D_A and D_B
-        #self.set_requires_grad([self.netD_AB, self.netD_BA], True)
+        self.set_requires_grad([self.netD_AB, self.netD_BA], True)
 
         self.optimizer_D.zero_grad()  # set D_A and D_B's gradients to zero
         self.backward_D_AB()  # calculate gradients for D_A
