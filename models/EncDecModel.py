@@ -45,7 +45,7 @@ class EncDecModel(nn.Module):
         embeddings = embeddings.to(self.model.device)
         if self.task == "translation":
             decoder_input_ids = self.batch_encode_plus(target_sentences,  padding=True, verbose=False).input_ids.to(self.model.device)  # Batch size 1
-            outputs = self.model(input_ids=embeddings.input_ids, labels=decoder_input_ids, return_dict=True, training=True)
+            outputs = self.model(input_ids=embeddings.input_ids, labels=decoder_input_ids, return_dict=True)
 
             output_sentences = self.model.generate(**embeddings)
             output_sentences = self.decode(output_sentences)

@@ -56,7 +56,6 @@ class Pooling(nn.Module):
 
         output_vector = torch.cat(output_vectors, 0)
         features = {'sentence_embedding': output_vector}
-        print(features["sentence_embedding"].size())
         return features
 
     def get_sentence_embedding_dimension(self):
