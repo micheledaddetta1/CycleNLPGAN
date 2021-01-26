@@ -45,7 +45,7 @@ class Pooling(nn.Module):
             sum_embeddings = torch.sum(token_embeddings * input_mask_expanded, 0)
 
             #If tokens are weighted (by WordWeights layer), feature 'token_weights_sum' will be present
-            sum_mask = input_mask_expanded.sum(0)
+            sum_mask = input_mask_expanded.sum(0)       #somma sulla colonna
 
             sum_mask = torch.clamp(sum_mask, min=1e-9)
 

@@ -160,6 +160,7 @@ class CycleGANModel(BaseModel):
         """Run forward pass; called by both functions <optimize_parameters> and <test>."""
         self.fake_B, self.fake_B_embeddings, self.loss_G_AB_1 = self.netG_AB(self.real_A, self.real_B, True)  # G_A(A)
         self.rec_A, self.rec_A_embeddings, self.loss_G_BA_1 = self.netG_BA(self.fake_B, self.real_A, True)  # G_B(G_A(A))
+
         self.fake_A, self.fake_A_embeddings, self.loss_G_BA_2 = self.netG_BA(self.real_B, self.real_A, True)  # G_B(B)
         self.rec_B, self.rec_B_embeddings, self.loss_G_AB_2 = self.netG_AB(self.fake_A, self.real_B, True)  # G_A(G_B(B))
 
@@ -216,11 +217,11 @@ class CycleGANModel(BaseModel):
 
         self.loss_G_AB = self.netD_AB(self.fake_B, 1).loss
 
-        self.loss_G_AB = (self.loss_G_AB + ((self.loss_G_AB_1 + self.loss_G_AB_2) * 0.5)) * lambda_G
+        self.loss_G_AB = (self.loss_G_AB + ((self.loss_G_AB_1 + self.loss_G_AB_2) * 0.5)) * 0.5 * lambda_G
 
         self.loss_G_BA = self.netD_BA(self.fake_A, 1).loss
 
-        self.loss_G_BA = (self.loss_G_BA + ((self.loss_G_BA_1 + self.loss_G_BA_2) * 0.5)) * lambda_G
+        self.loss_G_BA = (self.loss_G_BA + ((self.loss_G_BA_1 + self.loss_G_BA_2) * 0.5)) * 0.5 * lambda_G
 
         # Forward cycle loss || G_B(G_A(A)) - A||
         size_vector = torch.ones(
@@ -332,7 +333,7 @@ class CycleGANModel(BaseModel):
 
 
 
-    def evaluate(self, sentences_file="eval_sentences.txt", distance_file="distances.txt", top_k_file="top_k.txt"):
+    def evaluate(self, sentences_file="eval_sentences.txt", distance_file="distances.txt", top_k_file="top_k.txt", epoch = None, iters = None):
         logging.info("\n\nEvaluating...")
 
         self.netG_AB.module.eval()
@@ -380,6 +381,21 @@ class CycleGANModel(BaseModel):
         # mi salvo in un dict per ogni frase quanto lontano è l'embedding reale (quanti ce ne sono più vicini) e faccio una classifica
         # per vedere quanti hanno l'embedding reale nella top 1, top 2 e cosi via (cumulativo)
         # salvo info in un file, per ogni epoca
+
+        avg = 0.0
+        avg = open(distance_file,"r").read().split("\n")
+        avg = [float(e) for e in avg if e != ""]
+        avg = sum(avg)/len(avg)
+        fw = open(distance_file, "a")
+        fw.write("\nAverage: " + str(avg))
+        fw.close()
+        logging.info("Average distance:" + str(avg))
+
+        if epoch is not None and iters is not None:
+            fw = open("average_distance.tsv", "a")
+            fw.write(str(epoch) + "\t" + str(iters) + "\t" + str(avg) + "\n")
+            fw.close()
+
 
         self.netG_AB.module.train()
         self.netG_BA.module.train()

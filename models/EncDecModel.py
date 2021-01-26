@@ -41,6 +41,7 @@ class EncDecModel(nn.Module):
         self.add_pooling_layer()
 
     def forward(self, sentences, target_sentences, partial_value=False):
+
         embeddings = self.batch_encode_plus(sentences, padding=True, verbose=False)
         embeddings = embeddings.to(self.model.device)
         if self.task == "translation":
@@ -66,7 +67,7 @@ class EncDecModel(nn.Module):
                 partial = self.embedding_pooling(embeddings)
             del embeddings
             '''
-            sentence_embedding = torch.empty([len(sentences), self.get_word_embedding_dimension()], dtype=torch.float32).to(self.model.device)
+            sentence_embedding = torch.zeros([len(sentences), self.get_word_embedding_dimension()], dtype=torch.float32).to(self.model.device)
             for i in range(len(sentences)):
                 a = outputs.encoder_last_hidden_state[i]
                 sentence_embedding[i] = self.embedding_pooling(outputs.encoder_last_hidden_state[i])["sentence_embedding"]

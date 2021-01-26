@@ -55,6 +55,19 @@ if __name__ == '__main__':
     previous_suffix = None
 
 
+
+
+    for j, eval_data in enumerate(eval_dataset):  # inner loop within one epoch
+        if j > 10:
+            break
+        model.set_input(eval_data)  # unpack data from dataset and apply preprocessing
+        model.evaluate(sentences_file="start_sentence.txt", distance_file="start_distance.txt",
+                       top_k_file="start_top_k.txt")
+
+
+
+
+
     for epoch in range(opt.epoch_count, opt.n_epochs + opt.n_epochs_decay + 1):    # outer loop for different epochs; we save the model by <epoch_count>, <epoch_count>+<save_latest_freq>
         epoch_start_time = time.time()  # timer for entire epoch
         iter_data_time = time.time()    # timer for data loading per iteration
@@ -103,7 +116,7 @@ if __name__ == '__main__':
                         break
                     model.set_input(eval_data)  # unpack data from dataset and apply preprocessing
                     model.evaluate(sentences_file=sentences_filename, distance_file=distance_filename,
-                                   top_k_file=top_k_filename)
+                                   top_k_file=top_k_filename, epoch=epoch, iters=total_iters)
             iter_data_time = time.time()
         logging.info('saving the model at the end of epoch %d, iters %d' % (epoch, total_iters))
         model.save_networks('latest')
