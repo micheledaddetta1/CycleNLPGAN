@@ -64,10 +64,11 @@ if __name__ == '__main__':
         model.evaluate(sentences_file="0_0_sentence.txt", distance_file="0_0_distance.txt",
                        top_k_file="0_0_top_k.txt")
 
-    with open("0_0_distance.txt", "a") as distance_file:
+    with open("0_0_distance.txt", "r") as distance_file:
         avg = distance_file.read().split("\n")
         avg = [float(e) for e in avg if e != ""]
         avg = sum(avg)/len(avg)
+    with open("0_0_distance.txt", "a") as distance_file:
         distance_file.write("\nAverage: " + str(avg))
         distance_file.close()
     logging.info("Average distance:" + str(avg))
@@ -125,10 +126,11 @@ if __name__ == '__main__':
                     model.set_input(eval_data)  # unpack data from dataset and apply preprocessing
                     model.evaluate(sentences_file=sentences_filename, distance_file=distance_filename,
                                    top_k_file=top_k_filename, epoch=epoch, iters=total_iters)
-                with open(distance_filename, "a") as distance_file:
+                with open(distance_filename, "r") as distance_file:
                     avg = distance_file.read().split("\n")
                     avg = [float(e) for e in avg if e != ""]
                     avg = sum(avg) / len(avg)
+                with open(distance_filename, "a") as distance_file:
                     distance_file.write("\nAverage: " + str(avg))
                     distance_file.close()
                 logging.info("Average distance:" + str(avg))
