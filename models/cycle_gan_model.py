@@ -382,20 +382,6 @@ class CycleGANModel(BaseModel):
         # per vedere quanti hanno l'embedding reale nella top 1, top 2 e cosi via (cumulativo)
         # salvo info in un file, per ogni epoca
 
-        avg = 0.0
-        avg = open(distance_file,"r").read().split("\n")
-        avg = [float(e) for e in avg if e != ""]
-        avg = sum(avg)/len(avg)
-        fw = open(distance_file, "a")
-        fw.write("\nAverage: " + str(avg))
-        fw.close()
-        logging.info("Average distance:" + str(avg))
-
-        if epoch is not None and iters is not None:
-            fw = open("average_distance.tsv", "a")
-            fw.write(str(epoch) + "\t" + str(iters) + "\t" + str(avg) + "\n")
-            fw.close()
-
 
         self.netG_AB.module.train()
         self.netG_BA.module.train()

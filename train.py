@@ -61,12 +61,18 @@ if __name__ == '__main__':
         if j > 10:
             break
         model.set_input(eval_data)  # unpack data from dataset and apply preprocessing
-        model.evaluate(sentences_file="start_sentence.txt", distance_file="start_distance.txt",
-                       top_k_file="start_top_k.txt")
-
-
-
-
+        model.evaluate(sentences_file="0_0_sentence.txt", distance_file="0_0_distance.txt",
+                       top_k_file="0_0_top_k.txt")
+    with open("0_0_distance.txt", "a") as distance_file:
+        avg = open(distance_file, "r").read().split("\n")
+        avg = [float(e) for e in avg if e != ""]
+        avg = sum(avg)/len(avg)
+        distance_file.write("\nAverage: " + str(avg))
+        distance_file.close()
+    logging.info("Average distance:" + str(avg))
+    fw = open("average_distance.tsv", "a")
+    fw.write("0\t0\t" + str(avg) + "\n")
+    fw.close()
 
     for epoch in range(opt.epoch_count, opt.n_epochs + opt.n_epochs_decay + 1):    # outer loop for different epochs; we save the model by <epoch_count>, <epoch_count>+<save_latest_freq>
         epoch_start_time = time.time()  # timer for entire epoch
@@ -117,6 +123,16 @@ if __name__ == '__main__':
                     model.set_input(eval_data)  # unpack data from dataset and apply preprocessing
                     model.evaluate(sentences_file=sentences_filename, distance_file=distance_filename,
                                    top_k_file=top_k_filename, epoch=epoch, iters=total_iters)
+                with open(distance_filename, "a") as distance_file:
+                    avg = open(distance_file, "r").read().split("\n")
+                    avg = [float(e) for e in avg if e != ""]
+                    avg = sum(avg) / len(avg)
+                    distance_file.write("\nAverage: " + str(avg))
+                    distance_file.close()
+                logging.info("Average distance:" + str(avg))
+                fw = open("average_distance.tsv", "a")
+                fw.write(str(epoch)+"\t"+str(total_iters)+"\t" + str(avg) + "\n")
+                fw.close()
             iter_data_time = time.time()
         logging.info('saving the model at the end of epoch %d, iters %d' % (epoch, total_iters))
         model.save_networks('latest')
