@@ -283,13 +283,13 @@ class CycleGANModel(BaseModel):
         #self.loss_cycle_ABA = self.loss_cycle_ABA.item() + loss_cycle_C_1.item()
         #self.loss_cycle_BAB = self.loss_cycle_BAB.item() + loss_cycle_C_1.item()
 
-        #del real_A_tokens
-        #del rec_A_tokens
-        #del real_B_tokens
-        #del rec_B_tokens
-        #del size_vector
+        del real_A_tokens
+        del rec_A_tokens
+        del real_B_tokens
+        del rec_B_tokens
+        del size_vector
         #del self.loss_G
-        #torch.cuda.empty_cache()
+        torch.cuda.empty_cache()
 
 
 
@@ -328,6 +328,7 @@ class CycleGANModel(BaseModel):
         del self.fake_B
         del self.rec_A
         del self.rec_B
+        del self.loss_G
         torch.no_grad()
         torch.cuda.empty_cache()
 
