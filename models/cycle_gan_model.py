@@ -278,16 +278,21 @@ class CycleGANModel(BaseModel):
 
         self.loss_G.backward()
 
-        #self.loss_G_AB = self.loss_G_AB.item()
-        #self.loss_G_BA = self.loss_G_BA.item()
-        #self.loss_cycle_ABA = self.loss_cycle_ABA.item() + loss_cycle_C_1.item()
-        #self.loss_cycle_BAB = self.loss_cycle_BAB.item() + loss_cycle_C_1.item()
+        self.loss_G_AB = self.loss_G_AB.item()
+        self.loss_G_BA = self.loss_G_BA.item()
+        self.loss_cycle_ABA = self.loss_cycle_ABA.item()
+        self.loss_cycle_BAB = self.loss_cycle_BAB.item()
 
         del real_A_tokens
         del rec_A_tokens
         del real_B_tokens
         del rec_B_tokens
         del size_vector
+        del loss_cycle_C_1
+        del self.loss_G_AB_1
+        del self.loss_G_AB_2
+        del self.loss_G_BA_1
+        del self.loss_G_BA_2
         #del self.loss_G
         torch.cuda.empty_cache()
 
@@ -312,6 +317,7 @@ class CycleGANModel(BaseModel):
         self.backward_G()  # calculate gradients for G_A and G_B
         self.optimizer_G.step()  # update G_A and G_B's weights
 
+        del self.loss_G
         # D_A and D_B
         self.set_requires_grad([self.netD_AB, self.netD_BA], True)
 
@@ -320,6 +326,8 @@ class CycleGANModel(BaseModel):
         self.backward_D_BA()  # calculate graidents for D_B
         self.optimizer_D.step()  # update D_A and D_B's weights
 
+        del self.loss_D_AB
+        del self.loss_D_BA
         del self.fake_A_embeddings
         del self.fake_B_embeddings
         del self.rec_A_embeddings
