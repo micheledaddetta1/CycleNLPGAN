@@ -197,11 +197,13 @@ class CycleGANModel(BaseModel):
         """Calculate GAN loss for discriminator D_A"""
         # fake_B = self.fake_B_pool.query(self.fake_B)
         self.loss_D_AB = self.backward_D_basic(self.netD_AB, self.real_B, self.fake_B)
+        self.loss_D_AB = self.loss_D_AB.item()
 
     def backward_D_BA(self):
         """Calculate GAN loss for discriminator D_B"""
         # fake_A = self.fake_A_pool.query(self.fake_A)
         self.loss_D_BA = self.backward_D_basic(self.netD_BA, self.real_A, self.fake_A)
+        self.loss_D_BA = self.loss_D_BA.item()
 
     def backward_G(self):
         """Calculate the loss for generators G_A and G_B"""
@@ -326,8 +328,6 @@ class CycleGANModel(BaseModel):
         self.backward_D_BA()  # calculate graidents for D_B
         self.optimizer_D.step()  # update D_A and D_B's weights
 
-        del self.loss_D_AB
-        del self.loss_D_BA
         del self.fake_A_embeddings
         del self.fake_B_embeddings
         del self.rec_A_embeddings
