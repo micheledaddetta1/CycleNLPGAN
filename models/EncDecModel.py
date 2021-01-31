@@ -105,17 +105,18 @@ class EncDecModel(nn.Module):
 
     def save(self, output_path: str):
         self.model.save_pretrained(output_path)
+        #self.embedding_pooling.save_pretrained(output_path)
         self.tokenizer.save_pretrained(output_path)
 
-        with open(os.path.join(output_path, 'sentence_bert_config.json'), 'w') as fOut:
-            json.dump(self.get_config_dict(), fOut, indent=2)
+        #with open(os.path.join(output_path, 'sentence_bert_config.json'), 'w') as fOut:
+        #    json.dump(self.get_config_dict(), fOut, indent=2)
 
 
     @staticmethod
     def load(input_path: str):
-        with open(os.path.join(input_path, 'sentence_bert_config.json')) as fIn:
-            config = json.load(fIn)
-        return EncDecModel(model_name_or_path=input_path, **config)
+        #with open(os.path.join(input_path, 'sentence_bert_config.json')) as fIn:
+        #    config = json.load(fIn)
+        return EncDecModel(model_name_or_path=input_path) #, **config)
 
 
     def encodeSentence(self, sentence):

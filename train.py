@@ -45,6 +45,9 @@ if __name__ == '__main__':
     logging.info('The number of training sentences = %d' % dataset_size)
     logging.info('The number of evaluation sentences = %d' % len(eval_dataset))
     logging.info('The number of test sentences = %d' % len(test_dataset))
+    logging.info('The number of training batches = %d' % len(train_dataset.dataloader))
+    logging.info('The number of evaluation batches = %d' % len(eval_dataset.dataloader))
+    logging.info('The number of test batches = %d' % len(test_dataset.dataloader))
 
     visualizer = Visualizer(opt)   # create a visualizer that display/save images and plots
     total_iters = opt.iter_count                # the total number of training iterations
@@ -56,8 +59,8 @@ if __name__ == '__main__':
 
 
 
-
-    for j, eval_data in enumerate(eval_dataset):  # inner loop within one epoch
+    '''
+    for j, eval_data in enumerate(eval_dataset.dataloader):  # inner loop within one epoch
         if j > 10:
             break
         model.set_input(eval_data)  # unpack data from dataset and apply preprocessing
@@ -75,7 +78,7 @@ if __name__ == '__main__':
     fw = open("average_distance.tsv", "a")
     fw.write("0\t0\t" + str(avg) + "\n")
     fw.close()
-
+    '''
 
     for epoch in range(opt.epoch_count, opt.n_epochs + opt.n_epochs_decay + 1):    # outer loop for different epochs; we save the model by <epoch_count>, <epoch_count>+<save_latest_freq>
         epoch_start_time = time.time()  # timer for entire epoch
@@ -83,7 +86,8 @@ if __name__ == '__main__':
         epoch_iter = 0                  # the number of training iterations in current epoch, reset to 0 every epoch
         visualizer.reset()              # reset the visualizer: make sure it saves the results to HTML at least once every epoch
 
-        for i, data in enumerate(train_dataset):  # inner loop within one epoch
+        for i, data in enumerate(train_dataset.dataloader):  # inner loop within one epoch
+            print(len(data["A"]))
             epoch_iter += opt.batch_size
 
             if epoch == opt.epoch_count:
@@ -97,7 +101,7 @@ if __name__ == '__main__':
             total_iters += opt.batch_size
             model.set_input(data)         # unpack data from dataset and apply preprocessing
 
-            model.optimize_parameters()   # calculate loss functions, get gradients, update network weights
+            #model.optimize_parameters()   # calculate loss functions, get gradients, update network weights
 
             if total_iters % opt.print_freq == 0:    # print training losses and save logging information to the disk
                 losses = model.get_current_losses()
@@ -120,7 +124,7 @@ if __name__ == '__main__':
                 distance_filename = str(epoch)+"_"+str(total_iters)+"_distances.txt"
                 top_k_filename = str(epoch)+"_"+str(total_iters)+"_top_k.txt"
 
-                for j, eval_data in enumerate(eval_dataset):  # inner loop within one epoch
+                for j, eval_data in enumerate(eval_dataset.dataloader):  # inner loop within one epoch
                     if j > 10:
                         break
                     model.set_input(eval_data)  # unpack data from dataset and apply preprocessing
@@ -152,7 +156,7 @@ if __name__ == '__main__':
         with open(sentences_filename, "a") as sentences_file:
             sentences_file.write("NEW EPOCH:\n")
 
-        for j, eval_data in enumerate(eval_dataset):  # inner loop within one epoch
+        for j, eval_data in enumerate(eval_dataset.dataloader):  # inner loop within one epoch
             model.set_input(eval_data)  # unpack data from dataset and apply preprocessing
             model.evaluate(sentences_file=sentences_filename, distance_file=distance_filename, top_k_file=top_k_filename)
 

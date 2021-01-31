@@ -104,9 +104,9 @@ class ParallelSentencesDataset(BaseDataset):
 
                 eng_sentence = line['en']
 
-                eng_sentence = eng_sentence.replace("(Mock sob)", "...")
-                eng_sentence = eng_sentence.replace("(Laughter)", "")
-                eng_sentence = eng_sentence.replace("(Applause)", "")
+                #eng_sentence = eng_sentence.replace("(Mock sob)", "...")
+                #eng_sentence = eng_sentence.replace("(Laughter)", "")
+                #eng_sentence = eng_sentence.replace("(Applause)", "")
 
                 if eng_sentence not in sentences_map:
                     if line[self.opt.language] != "":

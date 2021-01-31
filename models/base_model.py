@@ -172,9 +172,8 @@ class BaseModel(ABC):
                             print (os.path.join(self.save_dir, save_filename))
                             for filename in files:
                                 os.remove(filename)
-                        net.module.save(os.path.join(self.save_dir, save_filename))
-                    else:
-                        torch.save(net.module.cpu().state_dict(), save_path)
+                    net.module.save(os.path.join(self.save_dir, save_filename))
+
 
     def delete_networks(self, epoch):
         """Save all the networks to the disk.
