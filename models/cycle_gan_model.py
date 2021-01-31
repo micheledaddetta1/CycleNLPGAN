@@ -312,7 +312,7 @@ class CycleGANModel(BaseModel):
         self.netD_BA.train()
 
         self.forward()  # compute fake images and reconstruction images.
-
+        gc.collect()
 
         self.set_requires_grad([self.netD_AB, self.netD_BA], False)
         torch.enable_grad()
@@ -320,8 +320,8 @@ class CycleGANModel(BaseModel):
         self.optimizer_G.zero_grad()  # set G_A and G_B's gradients to zero
         self.backward_G()  # calculate gradients for G_A and G_B
         self.optimizer_G.step()  # update G_A and G_B's weights
-
         del self.loss_G
+        gc.collect()
         # D_A and D_B
         self.set_requires_grad([self.netD_AB, self.netD_BA], True)
 
@@ -352,6 +352,7 @@ class CycleGANModel(BaseModel):
         self.netD_AB.module.eval()
         self.netD_BA.module.eval()
         self.forward()  # calculate loss functions, get gradients, update network weights
+        gc.collect()
         with open(sentences_file, "w") as sentences_file:
             for j in range(len(self.real_A)):
                 str1 = " A->B->A : " + self.real_A[j] + " -> " + self.fake_B[j] + " -> " + self.rec_A[j]
@@ -398,3 +399,4 @@ class CycleGANModel(BaseModel):
         self.netG_BA.module.train()
         self.netD_AB.module.train()
         self.netD_BA.module.train()
+        gc.collect()

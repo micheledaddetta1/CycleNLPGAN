@@ -21,7 +21,7 @@ See frequently asked questions at: https://github.com/junyanz/pytorch-CycleGAN-a
 import logging
 import time
 import os
-
+import gc
 from tqdm import tqdm
 
 from options.train_options import TrainOptions
@@ -66,7 +66,7 @@ if __name__ == '__main__':
             model.set_input(eval_data)  # unpack data from dataset and apply preprocessing
             model.evaluate(sentences_file="0_0_sentence.txt", distance_file="0_0_distance.txt",
                            top_k_file="0_0_top_k.txt")
-
+            gc.collect()
         with open("0_0_distance.txt", "r") as distance_file:
             avg = distance_file.read().split("\n")
             avg = [float(e) for e in avg if e != ""]
