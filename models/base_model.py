@@ -152,7 +152,7 @@ class BaseModel(ABC):
         for name in self.model_names:
             if isinstance(name, str):
                 save_filename = '%s_net_%s' % (epoch, name)
-                save_paths = [os.path.join(self.save_dir, save_filename)]
+                save_paths = [self.save_dir]
                 if self.on_colab:
                     save_paths.append(os.path.join("/content/gdrive/My Drive/", self.opt.name, save_filename))
 
@@ -163,16 +163,17 @@ class BaseModel(ABC):
                         #torch.save(net, os.path.join(self.save_dir, save_filename))
                         #torch.save(net.module.cpu().state_dict(), save_path)
                         #net.cuda(self.gpu_ids[0])
-                        if not os.path.exists(os.path.join(self.save_dir, save_filename)):
-                            os.makedirs(os.path.join(self.save_dir, save_filename))
+                        if not os.path.exists(os.path.join(save_path, save_filename)):
+                            pass
+                            #os.makedirs(os.path.join(self.save_dir, save_filename))
                         else:
                             #os.chdir(os.path.join(self.save_dir, save_filename))
-                            files = glob.glob(os.path.join(self.save_dir, save_filename) + "/*")
-                            print (files)
-                            print (os.path.join(self.save_dir, save_filename))
+                            files = glob.glob(os.path.join(save_path, save_filename) + "/*")
                             for filename in files:
                                 os.remove(filename)
-                    net.module.save(os.path.join(self.save_dir, save_filename))
+
+                            os.path.rmdir(os.path.join(save_path, save_filename))
+                    net.module.save(os.path.join(save_path, save_filename))
 
 
     def delete_networks(self, epoch):
