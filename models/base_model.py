@@ -172,7 +172,7 @@ class BaseModel(ABC):
                             for filename in files:
                                 os.remove(filename)
 
-                            os.path.rmdir(os.path.join(save_path, save_filename))
+                            os.rmdir(os.path.join(save_path, save_filename))
                     net.module.save(os.path.join(save_path, save_filename))
 
 
