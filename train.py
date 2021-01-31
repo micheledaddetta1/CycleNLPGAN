@@ -87,7 +87,6 @@ if __name__ == '__main__':
         visualizer.reset()              # reset the visualizer: make sure it saves the results to HTML at least once every epoch
 
         for i, data in enumerate(train_dataset.dataloader):  # inner loop within one epoch
-            print(len(data["A"]))
             epoch_iter += opt.batch_size
 
             if epoch == opt.epoch_count:
@@ -101,7 +100,7 @@ if __name__ == '__main__':
             total_iters += opt.batch_size
             model.set_input(data)         # unpack data from dataset and apply preprocessing
 
-            #model.optimize_parameters()   # calculate loss functions, get gradients, update network weights
+            model.optimize_parameters()   # calculate loss functions, get gradients, update network weights
 
             if total_iters % opt.print_freq == 0:    # print training losses and save logging information to the disk
                 losses = model.get_current_losses()

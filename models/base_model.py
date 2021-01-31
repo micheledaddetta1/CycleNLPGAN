@@ -160,20 +160,7 @@ class BaseModel(ABC):
                 for save_path in save_paths:
 
                     if len(self.gpu_ids) > 0 and torch.cuda.is_available():
-                        #torch.save(net, os.path.join(self.save_dir, save_filename))
-                        #torch.save(net.module.cpu().state_dict(), save_path)
-                        #net.cuda(self.gpu_ids[0])
-                        if not os.path.exists(os.path.join(save_path, save_filename)):
-                            pass
-                            #os.makedirs(os.path.join(self.save_dir, save_filename))
-                        else:
-                            #os.chdir(os.path.join(self.save_dir, save_filename))
-                            files = glob.glob(os.path.join(save_path, save_filename) + "/*")
-                            for filename in files:
-                                os.remove(filename)
-
-                            os.rmdir(os.path.join(save_path, save_filename))
-                    net.module.save(os.path.join(save_path, save_filename))
+                        net.module.save(os.path.join(save_path, save_filename))
 
 
     def delete_networks(self, epoch):
