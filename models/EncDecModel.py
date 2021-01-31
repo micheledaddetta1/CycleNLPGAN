@@ -40,8 +40,6 @@ class EncDecModel(nn.Module):
         self.freeze_encoder = freeze_encoder
 
         self.add_pooling_layer()
-        if os.path.exists(model_name_or_path+"/embedding_layer"):
-            self.embedding_pooling = Pooling.load(model_name_or_path+"/embedding_layer")
 
     def forward(self, sentences, target_sentences, partial_value=False):
 
@@ -107,7 +105,6 @@ class EncDecModel(nn.Module):
 
     def save(self, output_path: str):
         self.model.save_pretrained(output_path)
-        self.embedding_pooling.save_pretrained(output_path+"/embedding_pooling")
         self.tokenizer.save_pretrained(output_path)
 
         #with open(os.path.join(output_path, 'sentence_bert_config.json'), 'w') as fOut:
