@@ -16,7 +16,7 @@ class EncDecModel(nn.Module):
     """Huggingface AutoModel to generate token embeddings.
     Loads the correct class, e.g. BERT / RoBERTa etc.
     """
-    def __init__(self, model_name_or_path: str, max_seq_length: int = 128, task="traslation", model_args: Dict = {}, cache_dir: Optional[str] = None, freeze_encoder=False):
+    def __init__(self, model_name_or_path: str, max_seq_length: int = 128, task="translation", model_args: Dict = {}, cache_dir: Optional[str] = None, freeze_encoder=False):
         super(EncDecModel, self).__init__()
         self.config_keys = ['max_seq_length']
         self.max_seq_length = max_seq_length
@@ -129,7 +129,7 @@ class EncDecModel(nn.Module):
 
 
     def generate(self, text):
-        encod = self.tokenizer.prepare_seq2seq_batch(text).to(self.model.device)
+        encod = self.tokenizer.prepare_translation_batch(text).to(self.model.device)
         output = self.model.generate(**encod)
         return output
 
