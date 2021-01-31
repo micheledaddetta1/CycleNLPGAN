@@ -16,7 +16,7 @@ class EncDecModel(nn.Module):
     """Huggingface AutoModel to generate token embeddings.
     Loads the correct class, e.g. BERT / RoBERTa etc.
     """
-    def __init__(self, model_name_or_path: str, max_seq_length: int = 128, model_args: Dict = {}, cache_dir: Optional[str] = None, freeze_encoder=False):
+    def __init__(self, model_name_or_path: str, max_seq_length: int = 128, task="traslation", model_args: Dict = {}, cache_dir: Optional[str] = None, freeze_encoder=False):
         super(EncDecModel, self).__init__()
         self.config_keys = ['max_seq_length']
         self.max_seq_length = max_seq_length
@@ -30,11 +30,12 @@ class EncDecModel(nn.Module):
         self.config_class = self.model.config_class
         #self.device = self.model.device
         self.dtype = self.model.dtype
+        self.task = task
 
-        self.output_attentions = True
-        self.output_hidden_states = True
-        self.config.output_attentions = True
-        self.config.output_hidden_states = True
+        #self.output_attentions = True
+        #self.output_hidden_states = True
+        #self.config.output_attentions = True
+        #self.config.output_hidden_states = True
 
         self.freeze_encoder = freeze_encoder
 
@@ -103,7 +104,7 @@ class EncDecModel(nn.Module):
         return {key: self.__dict__[key] for key in self.config_keys}
 
     def save(self, output_path: str):
-        self.auto_model.save_pretrained(output_path)
+        self.model.save_pretrained(output_path)
         self.tokenizer.save_pretrained(output_path)
 
         with open(os.path.join(output_path, 'sentence_bert_config.json'), 'w') as fOut:
@@ -128,7 +129,7 @@ class EncDecModel(nn.Module):
 
 
     def generate(self, text):
-        encod = self.tokenizer.prepare_translation_batch(text).to(self.model.device)
+        encod = self.tokenizer.prepare_seq2seq_batch(text).to(self.model.device)
         output = self.model.generate(**encod)
         return output
 

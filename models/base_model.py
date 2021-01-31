@@ -3,7 +3,8 @@ import torch
 from collections import OrderedDict
 from abc import ABC, abstractmethod
 from . import networks
-
+import glob
+from transformers import AutoModel
 
 class BaseModel(ABC):
     """This class is an abstract base class (ABC) for models.
@@ -86,6 +87,7 @@ class BaseModel(ABC):
             self.schedulers = [networks.get_scheduler(optimizer, opt) for optimizer in self.optimizers]
         if not self.isTrain or opt.continue_train:
             load_suffix = 'iter_%d' % opt.load_iter if opt.load_iter > 0 else opt.epoch
+            print("\n\n\n\n\n" , load_suffix)
             self.load_networks(load_suffix)
         self.print_networks(opt.verbose)
 
@@ -149,7 +151,7 @@ class BaseModel(ABC):
         """
         for name in self.model_names:
             if isinstance(name, str):
-                save_filename = '%s_net_%s.pth' % (epoch, name)
+                save_filename = '%s_net_%s' % (epoch, name)
                 save_paths = [os.path.join(self.save_dir, save_filename)]
                 if self.on_colab:
                     save_paths.append(os.path.join("/content/gdrive/My Drive/", self.opt.name, save_filename))
@@ -158,9 +160,19 @@ class BaseModel(ABC):
                 for save_path in save_paths:
 
                     if len(self.gpu_ids) > 0 and torch.cuda.is_available():
-                        torch.save(net, os.path.join(self.save_dir, save_filename))
+                        #torch.save(net, os.path.join(self.save_dir, save_filename))
                         #torch.save(net.module.cpu().state_dict(), save_path)
                         #net.cuda(self.gpu_ids[0])
+                        if not os.path.exists(os.path.join(self.save_dir, save_filename)):
+                            os.makedirs(os.path.join(self.save_dir, save_filename))
+                        else:
+                            #os.chdir(os.path.join(self.save_dir, save_filename))
+                            files = glob.glob(os.path.join(self.save_dir, save_filename) + "/*")
+                            print (files)
+                            print (os.path.join(self.save_dir, save_filename))
+                            for filename in files:
+                                os.remove(filename)
+                        net.module.save(os.path.join(self.save_dir, save_filename))
                     else:
                         torch.save(net.module.cpu().state_dict(), save_path)
 
@@ -204,7 +216,7 @@ class BaseModel(ABC):
         """
         for name in self.model_names:
             if isinstance(name, str):
-                load_filename = '%s_net_%s.pth' % (epoch, name)
+                load_filename = '%s_net_%s' % (epoch, name)
                 load_path = os.path.join(self.save_dir, load_filename)
                 net = getattr(self, 'net' + name)
                 #if isinstance(net, torch.nn.DataParallel):
@@ -220,7 +232,7 @@ class BaseModel(ABC):
                 #for key in list(state_dict.keys()):  # need to copy keys here because we mutate in loop
                 #    self.__patch_instance_norm_state_dict(state_dict, net.module, key.split('.'))
                 #net.module.load_state_dict(state_dict)
-                net = torch.load(load_path)
+                net.module = net.module.load(load_path)
                 net = net.to(self.device)
 
     def print_networks(self, verbose):

@@ -12,6 +12,7 @@ from .base_model import BaseModel
 from . import networks
 import numpy as np
 import time
+import gc
 
 class CycleGANModel(BaseModel):
     """
@@ -297,6 +298,7 @@ class CycleGANModel(BaseModel):
         del self.loss_G_BA_2
         #del self.loss_G
         torch.cuda.empty_cache()
+        gc.collect()
 
 
 
@@ -336,10 +338,10 @@ class CycleGANModel(BaseModel):
         del self.fake_B
         del self.rec_A
         del self.rec_B
-        del self.loss_G
+        #del self.loss_G
         torch.no_grad()
         torch.cuda.empty_cache()
-
+        gc.collect()
 
 
     def evaluate(self, sentences_file="eval_sentences.txt", distance_file="distances.txt", top_k_file="top_k.txt", epoch = None, iters = None):
@@ -350,7 +352,7 @@ class CycleGANModel(BaseModel):
         self.netD_AB.module.eval()
         self.netD_BA.module.eval()
         self.forward()  # calculate loss functions, get gradients, update network weights
-        with open(sentences_file, "a") as sentences_file:
+        with open(sentences_file, "w") as sentences_file:
             for j in range(len(self.real_A)):
                 str1 = " A->B->A : " + self.real_A[j] + " -> " + self.fake_B[j] + " -> " + self.rec_A[j]
                 str2 = " B->A->B : " + self.real_B[j] + " -> " + self.fake_A[j] + " -> " + self.rec_B[j]
@@ -364,7 +366,7 @@ class CycleGANModel(BaseModel):
                                                        metric='cosine',
                                                        n_jobs=-1)
 
-        with open(distance_file, "a") as distances_file:
+        with open(distance_file, "w") as distances_file:
             for i in range(len(distances)):
                 distances_file.write(str(distances[i][i]) + '\n')
 
@@ -381,7 +383,7 @@ class CycleGANModel(BaseModel):
                     lower += 1
             top_k[lower] += 1
 
-        with open(top_k_file, "a") as top_file:
+        with open(top_k_file, "w") as top_file:
             tot = 0
             for i in range(dim):
                 top_k[i] = top_k[i] / dim * 100

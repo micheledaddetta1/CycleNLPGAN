@@ -22,7 +22,10 @@ class DiscriminatorTransformer(Transformer):
 
         self.tokenizer = BertTokenizer.from_pretrained(model_name_or_path)
         self.model = BertForSequenceClassification.from_pretrained (model_name_or_path, num_labels=2, return_dict=True)
-
+        self.config = self.model.config
+        #self.config_class = self.model.config_class
+        self.config_keys = ['max_seq_length']
+        self.dtype = self.model.dtype
         self.config_class = self.model.config_class
         self.max_seq_length = max_seq_length
 
@@ -67,7 +70,7 @@ class DiscriminatorTransformer(Transformer):
         return {key: self.__dict__[key] for key in self.config_keys}
 
     def save(self, output_path: str):
-        self.auto_model.save_pretrained(output_path)
+        self.model.save_pretrained(output_path)
         self.tokenizer.save_pretrained(output_path)
 
         with open(os.path.join(output_path, 'sentence_bert_config.json'), 'w') as fOut:
@@ -77,7 +80,7 @@ class DiscriminatorTransformer(Transformer):
     def load(input_path: str):
         with open(os.path.join(input_path, 'sentence_bert_config.json')) as fIn:
             config = json.load(fIn)
-        return Transformer(model_name_or_path=input_path, **config)
+        return DiscriminatorTransformer(model_name_or_path=input_path, **config)
 
 
     def encodeSentence(self,sentence):
