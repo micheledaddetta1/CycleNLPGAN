@@ -127,20 +127,29 @@ def init_net(net, init_type='normal', init_gain=0.02, gpu_ids=[]):
 def define_name(model_name,language):
     if model_name == 'mpl':
         return model_name
-    if language == 'it' and model_name == 'bert-base':
-        complete_name = "dbmdz/bert-base-italian-cased"
-    else:
+    elif model_name == 'bert-base':
         complete_name = model_name
         if language == 'en':
             complete_name = complete_name
         elif language == 'de':
-            complete_name = complete_name+"-german"
+            complete_name = complete_name + "-german"
         elif language == 'it':
-            complete_name = complete_name+"-italian"
+            complete_name = "dbmdz/bert-base-italian"
         else:
-            raise NotImplementedError('Language [%s] is not implemented',language)
+            raise NotImplementedError('Language [%s] is not implemented', language)
 
-        complete_name = complete_name +"-cased"
+        complete_name = complete_name + "-cased"
+    elif model_name == 'distilbert-base':
+        complete_name = model_name
+        if language == 'en':
+            complete_name = complete_name
+        elif language == 'de':
+            complete_name = complete_name + "-german"
+        else:
+            complete_name = complete_name + "-multilingual"
+
+        complete_name = complete_name + "-cased"
+
     return complete_name
 
 def define_Gs(task, net_encoder, net_decoder, source='de', dest='en', norm='batch', use_dropout=False, init_type='normal', init_gain=0.02, gpu_ids=[], freeze_GB_encoder=False):

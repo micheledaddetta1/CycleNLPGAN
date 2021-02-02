@@ -30,7 +30,7 @@ class BaseOptions():
         parser.add_argument('--output_dim', type=int, default=2, help='# of output values: 2 for binary')
         #parser.add_argument('--ngf', type=int, default=64, help='# of gen filters in the last conv layer')
         #parser.add_argument('--ndf', type=int, default=64, help='# of discrim filters in the first conv layer')
-        parser.add_argument('--netD', type=str, default='bert-base', help='specify discriminator architecture [mlp|n_layers]. The basic model is a Multi Layer Perceptron. n_layers allows you to specify the layers in the discriminator')
+        parser.add_argument('--netD', type=str, default='distilbert-base', help='specify discriminator architecture [mlp|bert-base|distilbert-base]. The basic model is a Multi Layer Perceptron. n_layers allows you to specify the layers in the discriminator')
         parser.add_argument('--n_layers_D', type=int, default=3, help='only used if netD==mlp')
         parser.add_argument('--norm', type=str, default='instance', help='instance normalization or batch normalization [instance | batch | none]')
         parser.add_argument('--init_type', type=str, default='normal', help='network initialization [normal | xavier | kaiming | orthogonal]')

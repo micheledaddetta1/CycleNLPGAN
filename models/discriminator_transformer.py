@@ -1,8 +1,7 @@
 import torch
 from torch import nn
 from tqdm import tqdm
-from transformers import AutoModel, AutoTokenizer, AutoConfig, AutoModelWithLMHead, BertTokenizer, BertConfig, \
-    BertLMHeadModel, BertForSequenceClassification
+from transformers import DistilBertForSequenceClassification, DistilBertTokenizer
 import json
 from typing import List, Dict, Optional
 import os
@@ -20,8 +19,8 @@ class DiscriminatorTransformer(Transformer):
         #super(DiscriminatorTransformer, self).__init__(model_name_or_path)
         super(Transformer, self).__init__()
 
-        self.tokenizer = BertTokenizer.from_pretrained(model_name_or_path)
-        self.model = BertForSequenceClassification.from_pretrained (model_name_or_path, num_labels=2, return_dict=True)
+        self.tokenizer = DistilBertTokenizer.from_pretrained(model_name_or_path)
+        self.model = DistilBertForSequenceClassification.from_pretrained (model_name_or_path, num_labels=2, return_dict=True)
         self.config = self.model.config
         #self.config_class = self.model.config_class
         self.config_keys = ['max_seq_length']

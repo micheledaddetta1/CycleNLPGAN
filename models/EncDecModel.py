@@ -57,17 +57,7 @@ class EncDecModel(nn.Module):
 
 
         if partial_value:
-            '''
-            embeddings.update({'output_hidden_states': True})
-            partial = self.model.base_model.encoder(**embeddings)
-            partial = partial[0][:, 0, :]  # CLS token is first token
 
-            if self.task == "reconstruction":
-                cls_tokens = partial[0][:, 0, :]  # CLS token is first token
-                embeddings.update({'cls_token_embeddings': cls_tokens})
-                partial = self.embedding_pooling(embeddings)
-            del embeddings
-            '''
             sentence_embedding = torch.zeros([len(sentences), self.get_word_embedding_dimension()], dtype=torch.float32).to(self.model.device)
             for i in range(len(sentences)):
                 a = outputs.encoder_last_hidden_state[i]
