@@ -400,3 +400,17 @@ class CycleGANModel(BaseModel):
         self.netD_AB.module.train()
         self.netD_BA.module.train()
         gc.collect()
+
+
+
+    def load_networks(self, epoch):
+        BaseModel.load_networks(self, epoch)
+        if self.isTrain:
+            self.optimizers = []
+            # initialize optimizers; schedulers will be automatically created by function <BaseModel.setup>.
+            self.optimizer_G = torch.optim.Adam(itertools.chain(self.netG_AB.parameters(), self.netG_BA.parameters()),
+                                                lr=self.opt.lr, betas=(self.opt.beta1, 0.999))
+            self.optimizer_D = torch.optim.Adam(itertools.chain(self.netD_AB.parameters(), self.netD_BA.parameters()),
+                                                lr=self.opt.lr, betas=(self.opt.beta1, 0.999))
+            self.optimizers.append(self.optimizer_G)
+            self.optimizers.append(self.optimizer_D)
