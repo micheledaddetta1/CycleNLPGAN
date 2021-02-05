@@ -20,7 +20,7 @@ class DiscriminatorTransformer(Transformer):
         super(Transformer, self).__init__()
 
         self.tokenizer = DistilBertTokenizer.from_pretrained(model_name_or_path)
-        self.model = DistilBertForSequenceClassification.from_pretrained (model_name_or_path, num_labels=2, return_dict=True)
+        self.model = DistilBertForSequenceClassification.from_pretrained(model_name_or_path, num_labels=2, return_dict=True)
         self.config = self.model.config
         #self.config_class = self.model.config_class
         self.config_keys = ['max_seq_length']

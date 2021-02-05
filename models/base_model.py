@@ -154,7 +154,7 @@ class BaseModel(ABC):
                 save_filename = '%s_net_%s' % (epoch, name)
                 save_paths = [self.save_dir]
                 if self.on_colab:
-                    save_paths.append(os.path.join("/content/gdrive/My Drive/", self.opt.name, save_filename))
+                    save_paths.append(os.path.join("/content/gdrive/My Drive/", self.opt.name))
 
                 net = getattr(self, 'net' + name)
                 for save_path in save_paths:
@@ -219,7 +219,14 @@ class BaseModel(ABC):
                 #for key in list(state_dict.keys()):  # need to copy keys here because we mutate in loop
                 #    self.__patch_instance_norm_state_dict(state_dict, net.module, key.split('.'))
                 #net.module.load_state_dict(state_dict)
-                net.module = net.module.load(load_path)
+                if hasattr(net.module, 'freeze_encoder'):
+                    if name == 'G_BA' and self.opt.freeze_GB_encoder:
+                        freeze_encoder = True
+                    else:
+                        freeze_encoder = False
+                    net.module = net.module.load(load_path, task=self.opt.task, freeze_encoder=freeze_encoder)
+                else:
+                    net.module = net.module.load(load_path)
                 net = net.to(self.device)
 
     def print_networks(self, verbose):

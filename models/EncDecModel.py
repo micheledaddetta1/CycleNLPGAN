@@ -102,11 +102,11 @@ class EncDecModel(nn.Module):
 
 
     @staticmethod
-    def load(input_path: str):
+    def load(input_path: str, task, freeze_encoder):
         #with open(os.path.join(input_path, 'sentence_bert_config.json')) as fIn:
         #    config = json.load(fIn)
 
-        return EncDecModel(model_name_or_path=input_path) #, **config)
+        return EncDecModel(model_name_or_path=input_path, task=task, freeze_encoder=freeze_encoder) #, **config)
 
 
     def encodeSentence(self, sentence):
