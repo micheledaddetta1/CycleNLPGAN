@@ -143,8 +143,6 @@ def define_name(model_name,language):
         complete_name = model_name
         if language == 'en':
             complete_name = complete_name
-        elif language == 'de':
-            complete_name = complete_name + "-german"
         else:
             complete_name = complete_name + "-multilingual"
 
