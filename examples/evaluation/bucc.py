@@ -16,7 +16,7 @@ import os
 import pickle
 from sklearn.decomposition import PCA
 import torch
-#from bitext_mining_utils import *
+from bitext_mining_utils import *
 import numpy as np
 
 #Model we want to use for bitext mining. LaBSE achieves state-of-the-art performance
@@ -94,7 +94,7 @@ source_sentences = [source[id] for id in source_ids]
 
 if not os.path.exists(source_embedding_file):
     print("Encode source sentences")
-    source_embeddings = model.encode(source_sentences, show_progress_bar=True, convert_to_numpy=True)
+    source_embeddings = model.encode(source_sentences[:10], show_progress_bar=True, convert_to_numpy=True)
     with open(source_embedding_file, 'wb') as fOut:
         pickle.dump(source_embeddings, fOut)
 else:
@@ -107,7 +107,7 @@ target_sentences = [target[id] for id in target_ids]
 
 if not os.path.exists(target_embedding_file):
     print("Encode target sentences")
-    target_embeddings = model.encode(target_sentences, show_progress_bar=True, convert_to_numpy=True)
+    target_embeddings = model.encode(target_sentences[:10], show_progress_bar=True, convert_to_numpy=True)
     with open(target_embedding_file, 'wb') as fOut:
         pickle.dump(target_embeddings, fOut)
 else:
