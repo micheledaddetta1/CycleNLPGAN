@@ -20,9 +20,11 @@ from bitext_mining_utils import *
 import numpy as np
 
 #Model we want to use for bitext mining. LaBSE achieves state-of-the-art performance
-model_name = 'latest_net_G_AB'
+modelA_name = 'latest_net_G_AB'
+modelB_name = 'latest_net_G_BA'
 model_dir = "../../checkpoints/translation"
-model = EncDecModel(os.path.join(model_dir, model_name))
+modelA = EncDecModel(os.path.join(model_dir, modelA_name))
+modelB = EncDecModel(os.path.join(model_dir, modelB_name))
 
 #Intput files for BUCC2018 shared task
 source_file = "bucc2018/de-en/de-en.training.de"
@@ -54,8 +56,8 @@ use_pca = False
 pca_dimensions = 128
 
 #We store the embeddings on disc, so that they can later be loaded from disc
-source_embedding_file = '{}_{}_{}.emb'.format(model_name, os.path.basename(source_file), pca_dimensions if use_pca else model.get_sentence_embedding_dimension())
-target_embedding_file = '{}_{}_{}.emb'.format(model_name, os.path.basename(target_file), pca_dimensions if use_pca else model.get_sentence_embedding_dimension())
+source_embedding_file = '{}_{}_{}.emb'.format(modelA_name, os.path.basename(source_file), pca_dimensions if use_pca else modelA.get_sentence_embedding_dimension())
+target_embedding_file = '{}_{}_{}.emb'.format(modelB_name, os.path.basename(target_file), pca_dimensions if use_pca else modelB.get_sentence_embedding_dimension())
 
 
 #Use PCA to reduce the dimensionality of the sentence embedding model
@@ -94,7 +96,7 @@ source_sentences = [source[id] for id in source_ids]
 
 if not os.path.exists(source_embedding_file):
     print("Encode source sentences")
-    source_embeddings = model.encode(source_sentences, show_progress_bar=True, convert_to_numpy=True)
+    source_embeddings = modelA.encode(source_sentences, show_progress_bar=True, convert_to_numpy=True)
     with open(source_embedding_file, 'wb') as fOut:
         pickle.dump(source_embeddings, fOut)
 else:
@@ -107,7 +109,7 @@ target_sentences = [target[id] for id in target_ids]
 
 if not os.path.exists(target_embedding_file):
     print("Encode target sentences")
-    target_embeddings = model.encode(target_sentences, show_progress_bar=True, convert_to_numpy=True)
+    target_embeddings = modelB.encode(target_sentences, show_progress_bar=True, convert_to_numpy=True)
     with open(target_embedding_file, 'wb') as fOut:
         pickle.dump(target_embeddings, fOut)
 else:
