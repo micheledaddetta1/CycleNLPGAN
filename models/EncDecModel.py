@@ -1,9 +1,9 @@
 import torch
-from torch import nn
-from tqdm import tqdm
+from torch import nn, Tensor
+from tqdm import tqdm, trange
 from transformers import AutoModel, AutoTokenizer, AutoConfig, MarianTokenizer, MarianMTModel
 import json
-from typing import List, Dict, Optional, Tuple
+from typing import List, Dict, Optional, Tuple, Union
 import os
 import numpy as np
 import logging
@@ -41,7 +41,7 @@ class EncDecModel(nn.Module):
 
         self.add_pooling_layer()
 
-    def forward(self, sentences, target_sentences=None, partial_value=False):
+    def forward(self, sentences, target_sentences=None, partial_value=False, generate_sentences=True):
 
         embeddings = self.batch_encode_plus(sentences, padding=True, verbose=False)
         embeddings = embeddings.to(self.model.device)
@@ -51,8 +51,11 @@ class EncDecModel(nn.Module):
                 outputs = self.model(input_ids=embeddings.input_ids, labels=decoder_input_ids, return_dict=True)
             else:
                 outputs = self.model(input_ids=embeddings.input_ids, return_dict=True)
-            output_sentences = self.model.generate(**embeddings)
-            output_sentences = self.decode(output_sentences)
+            if generate_sentences:
+                output_sentences = self.model.generate(**embeddings)
+                output_sentences = self.decode(output_sentences)
+            else:
+                output_sentences = []
         else:
             output_sentences = self.generate(sentences)
             output_sentences = self.decode(output_sentences)
@@ -176,66 +179,56 @@ class EncDecModel(nn.Module):
         #self.config.hidden_size = self.model.base_model.encoder.config.hidden_size
         self.config.encoder_layers = self.model.base_model.encoder.config.num_hidden_layers
 
-    def encode(self, sentences: List[str], batch_size: int = 8, show_progress_bar: bool = None,
-               output_value: str = 'sentence_embedding', convert_to_numpy: bool = True) -> List[np.ndarray]:
-        """
-        Computes sentence embeddings
+    def encode(self, sentences: Union[str, List[str], List[int]],
+               batch_size: int = 32,
+               show_progress_bar: bool = None,
+               output_value: str = 'sentence_embedding',
+               convert_to_numpy: bool = True,
+               convert_to_tensor: bool = False,
+               is_pretokenized: bool = False,
+               num_workers: int = 0) -> Union[List[Tensor], np.ndarray, Tensor]:
 
-        :param sentences:
-           the sentences to embed
-        :param batch_size:
-           the batch size used for the computation
-        :param show_progress_bar:
-            Output a progress bar when encode sentences
-        :param output_value:
-            Default sentence_embedding, to get sentence embeddings. Can be set to token_embeddings
-            to get wordpiece token embeddings.
-        :param convert_to_numpy:
-            If true, the output is a list of numpy vectors. Else, it is a list of pytorch tensors.
-        :return:
-           Depending on convert_to_numpy, either a list of numpy vectors or a list of pytorch tensors
         """
+                Computes sentence embeddings
+                :param sentences: the sentences to embed
+                :param batch_size: the batch size used for the computation
+                :param show_progress_bar: Output a progress bar when encode sentences
+                :param output_value:  Default sentence_embedding, to get sentence embeddings. Can be set to token_embeddings to get wordpiece token embeddings.
+                :param convert_to_numpy: If true, the output is a list of numpy vectors. Else, it is a list of pytorch tensors.
+                :param convert_to_tensor: If true, you get one large tensor as return. Overwrites any setting from convert_to_numpy
+                :param is_pretokenized: DEPRECATED - No longer used, will be removed in the future
+                :param device: Which torch.device to use for the computation
+                :param num_workers: DEPRECATED - No longer used, will be removed in the future
+                :return:
+                   By default, a list of tensors is returned. If convert_to_tensor, a stacked tensor is returned. If convert_to_numpy, a numpy matrix is returned.
+                """
+
+        device = "cuda:0"
         self.eval()
         if show_progress_bar is None:
             show_progress_bar = (
-                        logging.getLogger().getEffectiveLevel() == logging.INFO or logging.getLogger().getEffectiveLevel() == logging.DEBUG)
+                    logging.getLogger().getEffectiveLevel() == logging.INFO or logging.getLogger().getEffectiveLevel() == logging.DEBUG)
+
+        if convert_to_tensor:
+            convert_to_numpy = False
+
+        input_was_string = False
+        if isinstance(sentences, str):  # Cast an individual sentence to a list with length 1
+            sentences = [sentences]
+            input_was_string = True
+
+
+        self.to(device)
 
         all_embeddings = []
         length_sorted_idx = np.argsort([len(sen) for sen in sentences])
+        sentences_sorted = [sentences[idx] for idx in length_sorted_idx]
 
-        iterator = range(0, len(sentences), batch_size)
-        if show_progress_bar:
-            iterator = tqdm(iterator, desc="Batches")
-
-        for batch_idx in iterator:
-            batch_tokens = []
-
-            batch_start = batch_idx
-            batch_end = min(batch_start + batch_size, len(sentences))
-
-            longest_seq = 0
-
-            for idx in length_sorted_idx[batch_start: batch_end]:
-                sentence = sentences[idx]
-                tokens = self.tokenize(sentence)
-                longest_seq = max(longest_seq, len(tokens))
-                batch_tokens.append(tokens)
-
-            features = {}
-            for text in batch_tokens:
-                sentence_features = self.get_sentence_features(text, longest_seq)
-
-                for feature_name in sentence_features:
-                    if feature_name not in features:
-                        features[feature_name] = []
-                    features[feature_name].append(sentence_features[feature_name])
-
-            for feature_name in features:
-                # features[feature_name] = torch.tensor(np.asarray(features[feature_name])).to(self.device)
-                features[feature_name] = torch.cat(features[feature_name]).to(self.model.device)
+        for start_index in trange(0, len(sentences), batch_size, desc="Batches", disable=not show_progress_bar):
 
             with torch.no_grad():
-                _, out_features = self.forward(features, partial_value=True)
+                sentences_batch = sentences_sorted[start_index:start_index + batch_size]
+                _, out_features = self.forward(sentences_batch, partial_value=True, generate_sentences=False)
                 embeddings = out_features
 
                 if output_value == 'token_embeddings':
@@ -244,13 +237,23 @@ class EncDecModel(nn.Module):
                     input_mask_expanded = input_mask.unsqueeze(-1).expand(embeddings.size()).float()
                     embeddings = embeddings * input_mask_expanded
 
+                embeddings = embeddings.detach()
+
+                # fixes for #522 and #487 to avoid oom problems on gpu with large datasets
                 if convert_to_numpy:
-                    embeddings = embeddings.to('cpu').numpy()
+                    embeddings = embeddings.cpu()
 
                 all_embeddings.extend(embeddings)
 
-        reverting_order = np.argsort(length_sorted_idx)
-        all_embeddings = [all_embeddings[idx] for idx in reverting_order]
+        all_embeddings = [all_embeddings[idx] for idx in np.argsort(length_sorted_idx)]
+
+        if convert_to_tensor:
+            all_embeddings = torch.stack(all_embeddings)
+        elif convert_to_numpy:
+            all_embeddings = np.asarray([emb.numpy() for emb in all_embeddings])
+
+        if input_was_string:
+            all_embeddings = all_embeddings[0]
 
         return all_embeddings
 
