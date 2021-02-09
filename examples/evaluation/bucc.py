@@ -166,19 +166,19 @@ for i in np.argsort(-scores):
 # that leads to the best F1 score performance
 bitext_list = sorted(bitext_list, key=lambda x: x[0], reverse=True)
 
-n_extract = n_correct = 0
-threshold = 0
-best_f1 = best_recall = best_precision = 0
-average_precision = 0
+n_extract = n_correct = 0.0
+threshold = 0.0
+best_f1 = best_recall = best_precision = 0.0
+average_precision = 0.0
 
 for idx in range(len(bitext_list)):
     score, id1, id2 = bitext_list[idx]
     n_extract += 1
     if labels[id1][id2] or labels[id2][id1]:
         n_correct += 1
-        precision = n_correct / n_extract
-        recall = n_correct / num_total_parallel
-        f1 = 2 * precision * recall / (precision + recall)
+        precision = (float)(n_correct) / n_extract
+        recall = (float)(n_correct) / num_total_parallel
+        f1 = 2.0 * precision * recall / (precision + recall)
         average_precision += precision
         if f1 > best_f1:
             best_f1 = f1
