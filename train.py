@@ -40,14 +40,15 @@ if __name__ == '__main__':
     model.setup(opt)  # regular setup: load and print networks; create schedulers
 
 
-    train_dataset, eval_dataset, test_dataset = create_dataset(opt, model)  # create a dataset given opt.dataset_mode and other options
+    #train_dataset, eval_dataset, test_dataset = create_dataset(opt, model)  # create a dataset given opt.dataset_mode and other options
+    train_dataset, eval_dataset = create_dataset(opt, model)
     dataset_size = len(train_dataset)    # get the number of images in the dataset.
     logging.info('The number of training sentences = %d' % dataset_size)
     logging.info('The number of evaluation sentences = %d' % len(eval_dataset))
-    logging.info('The number of test sentences = %d' % len(test_dataset))
+   # logging.info('The number of test sentences = %d' % len(test_dataset))
     logging.info('The number of training batches = %d' % len(train_dataset.dataloader))
     logging.info('The number of evaluation batches = %d' % len(eval_dataset.dataloader))
-    logging.info('The number of test batches = %d' % len(test_dataset.dataloader))
+    #logging.info('The number of test batches = %d' % len(test_dataset.dataloader))
 
     visualizer = Visualizer(opt)   # create a visualizer that display/save images and plots
     total_iters = opt.iter_count                # the total number of training iterations

@@ -154,7 +154,7 @@ class CycleGANModel(BaseModel):
             self.real_B = {'input_ids': input['B' if AtoB else 'A'].to(self.device),
                            'attention_mask': (input['B' if AtoB else 'A'] > 0).to(self.device)}
 
-        self.sentence_paths = input['A_paths' if AtoB else 'B_paths']
+        #self.sentence_paths = input['A_paths' if AtoB else 'B_paths']
 
     def forward(self):
 

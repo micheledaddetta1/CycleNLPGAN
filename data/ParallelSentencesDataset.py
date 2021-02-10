@@ -1,4 +1,5 @@
 import csv
+from typing import List
 
 from torch.utils.data import Dataset
 import torch
@@ -50,16 +51,21 @@ class ParallelSentencesDataset(BaseDataset):
         :param opt: options used to create and read the dataset
         """
         BaseDataset.__init__(self, opt)
-        self.filepaths = ["ted2020.tsv.gz"]#, "STS2017.en-de.txt.gz", "xnli-en-de.txt.gz"]
-        self.cachedfiles = ["ted2020_", "ted2020_", "ted2020_"]#, "STS2017.en-de.txt.gz", "xnli-en-de.txt.gz"]
+        self.filepaths_train = ["Tatoeba-en-{}-train.tsv.gz".format(opt.language), "WikiMatrix-en-{}-train.tsv.gz".format(opt.language), "TED2020-en-{}-train.tsv.gz".format(opt.language), "JW300-en-{}.tsv.gz".format(opt.language),]#, "STS2017.en-de.txt.gz", "xnli-en-de.txt.gz"]
+        self.filepaths_eval = ["Tatoeba-en-{}-eval.tsv.gz".format(opt.language), "TED2020-en-{}-eval.tsv.gz".format(opt.language), "WikiMatrix-en-{}-eval.tsv.gz".format(opt.language),]#, "STS2017.en-de.txt.gz", "xnli-en-de.txt.gz"]
+        #self.cachedfiles = ["ted2020_", "ted2020_", "ted2020_"]#, "STS2017.en-de.txt.gz", "xnli-en-de.txt.gz"]
         self.datasets = []
         self.dataset_indices = []
         self.copy_dataset_indices = []
+        self.num_sentences = 0
         self.server = "https://public.ukp.informatik.tu-darmstadt.de/reimers/sentence-transformers/datasets/"
-        self.train_perc = train_perc
-        self.eval_perc = eval_perc
-        self.test_perc = test_perc
 
+        self.datasets_iterator = []
+        #self.train_perc = train_perc
+        #self.eval_perc = eval_perc
+        #self.test_perc = test_perc
+
+        '''
         for dataset in self.filepaths:
             print("Download", dataset)
             url = self.server+dataset
@@ -67,7 +73,7 @@ class ParallelSentencesDataset(BaseDataset):
 
             if not os.path.exists(dataset_path):
                 urllib.request.urlretrieve(url, dataset_path)
-
+        '''
         self.dir_AB = os.path.join(opt.dataroot, opt.phase)  # get the sentences directory
 
 
@@ -82,54 +88,101 @@ class ParallelSentencesDataset(BaseDataset):
         :param max_sentence_length: Skip the example if one of the sentences is has more characters than max_sentence_length
         :return:
         """
-        data = []
-        filepath = os.path.join(self.root, self.filepaths[0])
         weight = self.opt.param_weight
         max_sentences = self.opt.max_sentences
         if max_sentences == 0:
             max_sentences = None
         max_sentence_length = self.opt.max_sentence_length
 
+        if dataset_type == "train":
+            filepaths = self.filepaths_train
+        elif dataset_type == "eval":
+            filepaths = self.filepaths_eval
+
+        for filepath in filepaths:
+            filepath = os.path.join(self.root, filepath)
+            with gzip.open(filepath, 'rt', encoding='utf8') if filepath.endswith('.gz') else open(filepath,
+                                                                                                  encoding='utf8') as fIn:
+
+                logging.info("Load " + filepath)
+                parallel_sentences = []
+
+                count = 0
+                for line in fIn:
+                    sentences = line.strip().split("\t")
+                    if max_sentence_length is not None and max_sentence_length > 0 and max(
+                            [len(sent) for sent in sentences]) > max_sentence_length:
+                        continue
+
+                    parallel_sentences.append(sentences)
+                    count += 1
+                    if max_sentences is not None and max_sentences > 0 and count >= max_sentences:
+                        break
+            self.add_dataset(parallel_sentences, weight=weight, max_sentences=max_sentences,
+                             max_sentence_length=max_sentence_length)
+
+    def add_dataset(self, parallel_sentences: List[List[str]], weight: int = 100, max_sentences: int = None,
+                    max_sentence_length: int = 128):
+
+        data = []
         sentences_map = {}
-        with gzip.open(filepath, 'rt', encoding='utf8') as fIn:
-            reader = csv.DictReader(fIn, delimiter='\t', quoting=csv.QUOTE_NONE)
-                #print(line['en']+" -> "+line['it'])
+        for sentences in parallel_sentences:
+            if max_sentence_length is not None and max_sentence_length > 0 and max(
+                    [len(sent) for sent in sentences]) > max_sentence_length:
+                continue
 
-            count = 0
-            for line in reader:
+            source_sentence = sentences[0]
+            if source_sentence not in sentences_map:
+                sentences_map[source_sentence] = set()
 
-                sentence_lengths = [len(sent) for sent in line.values()]
-                if max(sentence_lengths) > max_sentence_length:
-                    continue
+            for sent in sentences:
+                sentences_map[source_sentence].add(sent)
+                data.append([sent, source_sentence])
 
-                eng_sentence = line['en']
+            if max_sentences is not None and max_sentences > 0 and len(sentences_map) >= max_sentences:
+                break
 
-                #eng_sentence = eng_sentence.replace("(Mock sob)", "...")
-                #eng_sentence = eng_sentence.replace("(Laughter)", "")
-                #eng_sentence = eng_sentence.replace("(Applause)", "")
-
-                if eng_sentence not in sentences_map:
-                    if line[self.opt.language] != "":
-                        sentences_map[eng_sentence] = line[self.opt.language]
-                        data.append([line[self.opt.language], eng_sentence])
-
-                '''
-                if eng_sentence not in sentences_map:
-                    sentences_map[eng_sentence] = set()
-
-                for sent in sentences:
-                    if sent != eng_sentence:
-                        sentences_map[eng_sentence].add(sent)
-                        data.append([sent, eng_sentence])
-                '''
-
-                count += 1
-                if max_sentences is not None and count >= max_sentences:
-                    break
+        if len(sentences_map) == 0:
+            return
 
 
-        eng_sentences = list(sentences_map.keys())
+        self.num_sentences += len(data)
+        #self.num_sentences += sum([len(sentences_map[sent]) for sent in sentences_map])
 
+        a = list(sentences_map.items())
+        dataset_id = len(self.datasets)
+        self.datasets.append(data)#list(sentences_map.items()))
+        #self.datasets_iterator.append(0)
+        self.dataset_indices.extend([dataset_id] * weight)
+        '''
+        reader = csv.DictReader(fIn, delimiter='\t', quoting=csv.QUOTE_NONE)
+            #print(line['en']+" -> "+line['it'])
+
+        count = 0
+        for line in reader:
+
+            sentence_lengths = [len(sent) for sent in line.values()]
+            if max(sentence_lengths) > max_sentence_length:
+                continue
+
+            eng_sentence = line[0]
+
+            #eng_sentence = eng_sentence.replace("(Mock sob)", "...")
+            #eng_sentence = eng_sentence.replace("(Laughter)", "")
+            #eng_sentence = eng_sentence.replace("(Applause)", "")
+
+            if eng_sentence not in sentences_map:
+                if line[self.opt.language] != "":
+                    sentences_map[eng_sentence] = line[1]
+                    data.append([line[1], eng_sentence])
+
+            count += 1
+            if max_sentences is not None and count >= max_sentences:
+                break
+        '''
+
+        #eng_sentences = list(sentences_map.keys())
+        '''
         random.seed(seed)
         random.shuffle(eng_sentences)
 
@@ -145,7 +198,7 @@ class ParallelSentencesDataset(BaseDataset):
             data = eng_sentences[n_train+n_eval:]
         else:
             data = []
-
+        
         data = [[sentences_map[sentence], sentence] for sentence in data]
 
         self.dir_AB = os.path.join(self.opt.dataroot, self.opt.phase)  # get the sentences directory
@@ -153,7 +206,7 @@ class ParallelSentencesDataset(BaseDataset):
         dataset_id = len(self.datasets)
         self.datasets.append(data)
         self.dataset_indices.extend([dataset_id] * weight)
-
+        '''
 
 
     def __len__(self):
@@ -172,4 +225,4 @@ class ParallelSentencesDataset(BaseDataset):
 
 
 
-        return {'A': A, 'B': B, 'A_paths': self.filepaths[dataset_idx], 'B_paths': self.filepaths[dataset_idx]}
+        return {'A': A, 'B': B}
