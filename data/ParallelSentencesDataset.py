@@ -144,7 +144,7 @@ class ParallelSentencesDataset(BaseDataset):
                 sentences_map[source_sentence] = set()
 
             for sent in sentences:
-                if source_sentence != sent:
+                if sent != source_sentence:
                     sentences_map[source_sentence].add(sent)
                     data.append([sent, source_sentence])
 
@@ -208,7 +208,7 @@ class ParallelSentencesDataset(BaseDataset):
             data = eng_sentences[n_train+n_eval:]
         else:
             data = []
-        
+
         data = [[sentences_map[sentence], sentence] for sentence in data]
 
         self.dir_AB = os.path.join(self.opt.dataroot, self.opt.phase)  # get the sentences directory
