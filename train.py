@@ -61,6 +61,13 @@ if __name__ == '__main__':
 
 
     if not opt.continue_train:
+
+        fw = open("0_0_distance.txt", "w")
+        fw.close()
+        fw = open("0_0_sentence.txt", "w")
+        fw.close()
+        fw = open("0_0_top_k.txt", "w")
+        fw.close()
         for j, eval_data in enumerate(eval_dataset.dataloader):  # inner loop within one epoch
             if j > 20:
                 break
@@ -72,9 +79,6 @@ if __name__ == '__main__':
             avg = distance_file.read().split("\n")
             avg = [float(e) for e in avg if e != ""]
             avg = sum(avg)/len(avg)
-        with open("0_0_distance.txt", "a") as distance_file:
-            distance_file.write("\nAverage: " + str(avg))
-            distance_file.close()
         logging.info("Average distance:" + str(avg))
         fw = open("average_distance.tsv", "a")
         fw.write("0\t0\t" + str(avg) + "\n")
@@ -124,6 +128,12 @@ if __name__ == '__main__':
                 distance_filename = str(epoch)+"_"+str(total_iters)+"_distances.txt"
                 top_k_filename = str(epoch)+"_"+str(total_iters)+"_top_k.txt"
 
+                fw = open(distance_filename, "w")
+                fw.close()
+                fw = open(sentences_filename, "w")
+                fw.close()
+                fw = open(top_k_filename, "w")
+                fw.close()
                 for j, eval_data in enumerate(eval_dataset.dataloader):  # inner loop within one epoch
                     if j > 20:
                         break
@@ -134,9 +144,6 @@ if __name__ == '__main__':
                     avg = distance_file.read().split("\n")
                     avg = [float(e) for e in avg if e != ""]
                     avg = sum(avg) / len(avg)
-                with open(distance_filename, "a") as distance_file:
-                    distance_file.write("\nAverage: " + str(avg))
-                    distance_file.close()
                 logging.info("Average distance:" + str(avg))
                 fw = open("average_distance.tsv", "a")
                 fw.write(str(epoch)+"\t"+str(total_iters)+"\t" + str(avg) + "\n")
