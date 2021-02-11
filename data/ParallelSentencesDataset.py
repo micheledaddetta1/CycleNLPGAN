@@ -136,8 +136,9 @@ class ParallelSentencesDataset(BaseDataset):
                 sentences_map[source_sentence] = set()
 
             for sent in sentences:
-                sentences_map[source_sentence].add(sent)
-                data.append([sent, source_sentence])
+                if sent != source_sentence:
+                    sentences_map[source_sentence].add(sent)
+                    data.append([sent, source_sentence])
 
             if max_sentences is not None and max_sentences > 0 and len(sentences_map) >= max_sentences:
                 break
