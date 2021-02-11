@@ -62,8 +62,8 @@ if __name__ == '__main__':
 
     if not opt.continue_train:
         for j, eval_data in enumerate(eval_dataset.dataloader):  # inner loop within one epoch
-            #if j > 10:
-            #    break
+            if j > 20:
+                break
             model.set_input(eval_data)  # unpack data from dataset and apply preprocessing
             model.evaluate(sentences_file="0_0_sentence.txt", distance_file="0_0_distance.txt",
                            top_k_file="0_0_top_k.txt")
@@ -125,8 +125,8 @@ if __name__ == '__main__':
                 top_k_filename = str(epoch)+"_"+str(total_iters)+"_top_k.txt"
 
                 for j, eval_data in enumerate(eval_dataset.dataloader):  # inner loop within one epoch
-                    #if j > 10:
-                    #    break
+                    if j > 20:
+                        break
                     model.set_input(eval_data)  # unpack data from dataset and apply preprocessing
                     model.evaluate(sentences_file=sentences_filename, distance_file=distance_filename,
                                    top_k_file=top_k_filename, epoch=epoch, iters=total_iters)

@@ -368,7 +368,7 @@ class CycleGANModel(BaseModel):
 
 
     def evaluate(self, sentences_file="eval_sentences.txt", distance_file="distances.txt", top_k_file="top_k.txt", epoch = None, iters = None):
-        logging.info("\n\nEvaluating...")
+        #logging.info("\n\nEvaluating...")
 
         self.netG_AB.module.eval()
         self.netG_BA.module.eval()
