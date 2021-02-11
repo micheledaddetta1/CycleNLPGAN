@@ -121,6 +121,14 @@ class ParallelSentencesDataset(BaseDataset):
             self.add_dataset(parallel_sentences, weight=weight, max_sentences=max_sentences,
                              max_sentence_length=max_sentence_length)
 
+
+        random.seed(seed)
+        random.shuffle(self.datasets)
+
+        dataset_id = 0
+        self.datasets = [self.datasets]
+        self.dataset_indices.extend([dataset_id] * weight)
+
     def add_dataset(self, parallel_sentences: List[List[str]], weight: int = 100, max_sentences: int = None,
                     max_sentence_length: int = 128):
 
@@ -136,8 +144,9 @@ class ParallelSentencesDataset(BaseDataset):
                 sentences_map[source_sentence] = set()
 
             for sent in sentences:
-                sentences_map[source_sentence].add(sent)
-                data.append([sent, source_sentence])
+                if source_sentence != sent:
+                    sentences_map[source_sentence].add(sent)
+                    data.append([sent, source_sentence])
 
             if max_sentences is not None and max_sentences > 0 and len(sentences_map) >= max_sentences:
                 break
@@ -149,11 +158,12 @@ class ParallelSentencesDataset(BaseDataset):
         self.num_sentences += len(data)
         #self.num_sentences += sum([len(sentences_map[sent]) for sent in sentences_map])
 
-        a = list(sentences_map.items())
-        dataset_id = len(self.datasets)
-        self.datasets.append(data)#list(sentences_map.items()))
-        #self.datasets_iterator.append(0)
-        self.dataset_indices.extend([dataset_id] * weight)
+
+
+        #dataset_id = len(self.datasets)
+        self.datasets.extend(data)
+        #self.datasets.append(data)#list(sentences_map.items()))
+        #self.dataset_indices.extend([dataset_id] * weight)
         '''
         reader = csv.DictReader(fIn, delimiter='\t', quoting=csv.QUOTE_NONE)
             #print(line['en']+" -> "+line['it'])

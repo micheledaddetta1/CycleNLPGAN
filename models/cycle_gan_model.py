@@ -122,8 +122,11 @@ class CycleGANModel(BaseModel):
                                                 lr=opt.lr, betas=(opt.beta1, 0.999))
             self.optimizer_D = torch.optim.Adam(itertools.chain(self.netD_AB.parameters(), self.netD_BA.parameters()),
                                                 lr=opt.lr, betas=(opt.beta1, 0.999))
+            self.optimizer_Embeddings = torch.optim.Adam(self.netG_AB.module.model.base_model.encoder.parameters(),
+                                                lr=opt.lr, betas=(opt.beta1, 0.999))
             self.optimizers.append(self.optimizer_G)
             self.optimizers.append(self.optimizer_D)
+            self.optimizers.append(self.optimizer_Embeddings)
         self.tempo_medio = 0
         self.n_iter = 0
 
@@ -214,8 +217,8 @@ class CycleGANModel(BaseModel):
         lambda_A = self.opt.lambda_A
         lambda_B = self.opt.lambda_B
         lambda_C_1 = self.opt.lambda_C_1
-        #lambda_C_2 = self.opt.lambda_C_2
-        #lambda_C_3 = self.opt.lambda_C_3
+        lambda_C_2 = self.opt.lambda_C_2
+        lambda_C_3 = self.opt.lambda_C_3
 
 
         self.loss_G_AB = self.netD_AB(self.fake_B, 1).loss
@@ -251,51 +254,51 @@ class CycleGANModel(BaseModel):
 
         # Backward cycle loss || G_B(B) - G_A(A)||
 
-        loss_cycle_C_1 = self.criterionCycle(self.fake_A_embeddings,
+        self.loss_cycle_C_1 = self.criterionCycle(self.fake_A_embeddings,
                                              self.fake_B_embeddings,
                                              size_vector) * lambda_C_1
 
-        '''
+
         # Backward cycle loss || G_B(B) - G_A(A)||
-        loss_cycle_C_2_1 = self.criterionCycle(self.fake_A_embeddings,
+        self.loss_cycle_C_2_1 = self.criterionCycle(self.fake_A_embeddings,
                                                self.rec_B_embeddings,
                                                size_vector) * lambda_C_2
 
         # Backward cycle loss || G_B(B) - G_A(A)||
-        loss_cycle_C_2_2 = self.criterionCycle(self.fake_B_embeddings,
+        self.loss_cycle_C_2_2 = self.criterionCycle(self.fake_B_embeddings,
                                                self.rec_A_embeddings,
                                                size_vector) * lambda_C_2
 
         # Backward cycle loss || G_B(B) - G_A(A)||
-        loss_cycle_C_3 = self.criterionCycle(self.rec_A_embeddings,
+        self.loss_cycle_C_3 = self.criterionCycle(self.rec_A_embeddings,
                                              self.rec_B_embeddings,
                                              size_vector) * lambda_C_3
-        '''
+
         # 'weight for embedding loss (fakeA -> recB, fakeB -> recA)')  # mixed loss
         # 'weight for embedding loss (recA -> recB)')  # mixed loss (dubbio translation)
 
         # combined loss and calculate gradients
-        self.loss_cycle_ABA = self.loss_cycle_ABA + loss_cycle_C_1  # + loss_cycle_C_2_2 + loss_cycle_C_3
-        self.loss_cycle_BAB = self.loss_cycle_BAB + loss_cycle_C_1  # + loss_cycle_C_2_1 + loss_cycle_C_3
+        #self.loss_cycle_ABA = self.loss_cycle_ABA + loss_cycle_C_1 + loss_cycle_C_2_2 + loss_cycle_C_3
+        #self.loss_cycle_BAB = self.loss_cycle_BAB + loss_cycle_C_1 + loss_cycle_C_2_1 + loss_cycle_C_3
+
         self.loss_G = self.loss_G_AB + self.loss_G_BA + self.loss_cycle_ABA + self.loss_cycle_BAB  # + self.loss_idt_A.item() + self.loss_idt_B.item()
 
         self.loss_G.backward()
+        self.loss_cycle.backward()
 
-        self.loss_G_AB = self.loss_G_AB.item()
-        self.loss_G_BA = self.loss_G_BA.item()
-        self.loss_cycle_ABA = self.loss_cycle_ABA.item()
-        self.loss_cycle_BAB = self.loss_cycle_BAB.item()
+        #self.loss_G_AB = self.loss_G_AB.item()
+        #self.loss_G_BA = self.loss_G_BA.item()
+        #self.loss_cycle_ABA = self.loss_cycle_ABA.item()
+        #self.loss_cycle_BAB = self.loss_cycle_BAB.item()
 
         del real_A_tokens
         del rec_A_tokens
         del real_B_tokens
         del rec_B_tokens
         del size_vector
-        del loss_cycle_C_1
-        del self.loss_G_AB_1
-        del self.loss_G_AB_2
-        del self.loss_G_BA_1
-        del self.loss_G_BA_2
+
+
+
         #del self.loss_G
         torch.cuda.empty_cache()
         gc.collect()
@@ -320,8 +323,28 @@ class CycleGANModel(BaseModel):
         self.optimizer_G.zero_grad()  # set G_A and G_B's gradients to zero
         self.backward_G()  # calculate gradients for G_A and G_B
         self.optimizer_G.step()  # update G_A and G_B's weights
+        del self.loss_G_AB_1
+        del self.loss_G_AB_2
+        del self.loss_G_BA_1
+        del self.loss_G_BA_2
         del self.loss_G
         gc.collect()
+
+        self.optimizer_Embeddings.zero_grad()  # set G_A and G_B's gradients to zero
+        #calcolo loss totale cycle e backward delle embedding cycle
+        self.loss_cycle_ABA = self.loss_cycle_ABA + self.loss_cycle_C_1 + self.loss_cycle_C_2_2 + self.loss_cycle_C_3
+        self.loss_cycle_BAB = self.loss_cycle_BAB + self.loss_cycle_C_1 + self.loss_cycle_C_2_1 + self.loss_cycle_C_3
+        self.loss_cycle = 2*self.loss_cycle_C_1 + self.loss_cycle_C_2_1 + self.loss_cycle_C_2_2 + 2*self.loss_cycle_C_3
+        self.loss_cycle.backward()
+        self.optimizer_Embeddings.step()  # update G_A and G_B's weights
+        del self.loss_cycle_C_1
+        del self.loss_cycle_C_2_1
+        del self.loss_cycle_C_2_2
+        del self.loss_cycle_C_3
+        del self.loss_cycle
+        gc.collect()
+
+        
         # D_A and D_B
         self.set_requires_grad([self.netD_AB, self.netD_BA], True)
 
@@ -357,8 +380,8 @@ class CycleGANModel(BaseModel):
             for j in range(len(self.real_A)):
                 str1 = " A->B->A : " + self.real_A[j] + " -> " + self.fake_B[j] + " -> " + self.rec_A[j]
                 str2 = " B->A->B : " + self.real_B[j] + " -> " + self.fake_A[j] + " -> " + self.rec_B[j]
-                logging.info(str1)
-                logging.info(str2)
+                #logging.info(str1)
+                #logging.info(str2)
                 sentences_file.write('%s\n' % str1)  # save the message
                 sentences_file.write('%s\n\n' % str2)  # save the message
 
