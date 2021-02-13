@@ -348,13 +348,14 @@ class CycleGANModel(BaseModel):
         self.netG_BA.to("cpu")
         self.netD_AB.to(self.device)
         self.netD_BA.to("cpu")
-        self.set_requires_grad([self.netD_AB, self.netD_BA], True)
+        self.set_requires_grad([self.netD_AB], True)
 
         self.optimizer_D.zero_grad()  # set D_A and D_B's gradients to zero
 
         self.backward_D_AB()  # calculate gradients for D_A
         self.netD_AB.to("cpu")
         self.netD_BA.to(self.device)
+        self.set_requires_grad([self.netD_BA], True)
         self.backward_D_BA()  # calculate graidents for D_B
         self.optimizer_D.step()  # update D_A and D_B's weights
 
@@ -372,7 +373,7 @@ class CycleGANModel(BaseModel):
         gc.collect()
 
 
-    def evaluate(self, sentences_file="eval_sentences.txt", distance_file="distances.txt", mutual_avg_file="mutual_distances.txt", top_k_file="top_k.txt", epoch=None, iters=None):
+    def evaluate(self, sentences_file="eval_sentences.txt", distance_file="distances.txt", mutual_avg_file_A="mutual_distances_A.txt", mutual_avg_file_B="mutual_distances_B.txt", top_k_file="top_k.txt", epoch=None, iters=None):
         #logging.info("\n\nEvaluating...")
 
         self.netG_AB.module.eval()
@@ -401,17 +402,33 @@ class CycleGANModel(BaseModel):
                                                        self.fake_B_embeddings.cpu().detach().numpy(),
                                                        metric='cosine',
                                                        n_jobs=-1)
-        triang = np.triu(distances)
-        np.fill_diagonal(triang,0)
-        mutual_distances = np.sum(triang) / np.count_nonzero(triang)
-        with open(mutual_avg_file, "a") as mutual_avg_file:
-            mutual_avg_file.write(str(mutual_distances) + '\n')
 
 
         with open(distance_file, "a") as distances_file:
             for i in range(len(distances)):
                 distances_file.write(str(distances[i][i]) + '\n')
 
+        distances_fake_A = sklearn.metrics.pairwise_distances(self.fake_A_embeddings.cpu().detach().numpy(),
+                                                              self.fake_A_embeddings.cpu().detach().numpy(),
+                                                              metric='cosine',
+                                                              n_jobs=-1)
+        triang = np.triu(distances_fake_A)
+        np.fill_diagonal(triang, 0)
+        mutual_distances = np.sum(triang) / np.count_nonzero(triang)
+        with open(mutual_avg_file_A, "a") as mutual_avg_file:
+            mutual_avg_file.write(str(mutual_distances) + '\n')
+
+
+
+        distances_fake_B = sklearn.metrics.pairwise_distances(self.fake_B_embeddings.cpu().detach().numpy(),
+                                                              self.fake_B_embeddings.cpu().detach().numpy(),
+                                                              metric='cosine',
+                                                              n_jobs=-1)
+        triang = np.triu(distances_fake_B)
+        np.fill_diagonal(triang, 0)
+        mutual_distances = np.sum(triang) / np.count_nonzero(triang)
+        with open(mutual_avg_file_B, "a") as mutual_avg_file:
+            mutual_avg_file.write(str(mutual_distances) + '\n')
         #with open(distance_file, "a") as distances_file:
         #   distances_file.write(distances+"\n")
 

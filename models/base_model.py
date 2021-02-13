@@ -151,13 +151,13 @@ class BaseModel(ABC):
         """
         for name in self.model_names:
             if isinstance(name, str):
-                net.eval()
                 save_filename = '%s_net_%s' % (epoch, name)
                 save_paths = [self.save_dir]
                 if self.on_colab:
                     save_paths.append(os.path.join("/content/gdrive/My Drive/", self.opt.name))
 
                 net = getattr(self, 'net' + name)
+                net.eval()
                 for save_path in save_paths:
 
                     #if len(self.gpu_ids) > 0 and torch.cuda.is_available():
@@ -262,5 +262,5 @@ class BaseModel(ABC):
                 for param in net.parameters():
                     param.requires_grad = requires_grad
 
-    def evaluate(self, sentences_file="eval_sentences.txt", distance_file="distances.txt", mutual_avg_file="mutual_distances.txt", top_k_file="top_k.txt"):
+    def evaluate(self, sentences_file="eval_sentences.txt", distance_file="distances.txt", mutual_avg_file_A="mutual_distances_A.txt", mutual_avg_file_B="mutual_distances_B.txt", top_k_file="top_k.txt"):
         pass
