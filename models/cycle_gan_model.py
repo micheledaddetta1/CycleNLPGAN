@@ -218,6 +218,10 @@ class CycleGANModel(BaseModel):
         lambda_C_3 = self.opt.lambda_C_3
 
 
+        self.netG_AB.to("cpu")
+        self.netG_BA.to("cpu")
+        self.netD_AB.to(self.device)
+        self.netD_BA.to(self.device)
         self.loss_G_AB = self.netD_AB(self.fake_B, 1).loss
 
         self.loss_G_AB = (self.loss_G_AB + ((self.loss_G_AB_1 + self.loss_G_AB_2) * 0.5)) * 0.5 * lambda_G
@@ -226,6 +230,11 @@ class CycleGANModel(BaseModel):
 
         self.loss_G_BA = (self.loss_G_BA + ((self.loss_G_BA_1 + self.loss_G_BA_2) * 0.5)) * 0.5 * lambda_G
 
+
+        self.netD_AB.to("cpu")
+        self.netD_BA.to("cpu")
+        self.netG_AB.to(self.device)
+        self.netG_BA.to(self.device)
         # Forward cycle loss || G_B(G_A(A)) - A||
         size_vector = torch.ones(
             self.netG_AB.module.batch_encode_plus(self.real_A, verbose=False)["input_ids"].size()).to(self.device)
@@ -310,6 +319,11 @@ class CycleGANModel(BaseModel):
         self.netD_AB.train()
         self.netD_BA.train()
 
+        self.netG_AB.to(self.device)
+        self.netG_BA.to(self.device)
+        self.netD_AB.to("cpu")
+        self.netD_BA.to("cpu")
+
         self.forward()  # compute fake images and reconstruction images.
         gc.collect()
 
@@ -329,10 +343,18 @@ class CycleGANModel(BaseModel):
 
         
         # D_A and D_B
+
+        self.netG_AB.to("cpu")
+        self.netG_BA.to("cpu")
+        self.netD_AB.to(self.device)
+        self.netD_BA.to("cpu")
         self.set_requires_grad([self.netD_AB, self.netD_BA], True)
 
         self.optimizer_D.zero_grad()  # set D_A and D_B's gradients to zero
+
         self.backward_D_AB()  # calculate gradients for D_A
+        self.netD_AB.to("cpu")
+        self.netD_BA.to(self.device)
         self.backward_D_BA()  # calculate graidents for D_B
         self.optimizer_D.step()  # update D_A and D_B's weights
 
@@ -350,14 +372,21 @@ class CycleGANModel(BaseModel):
         gc.collect()
 
 
-    def evaluate(self, sentences_file="eval_sentences.txt", distance_file="distances.txt", top_k_file="top_k.txt", epoch = None, iters = None):
+    def evaluate(self, sentences_file="eval_sentences.txt", distance_file="distances.txt", mutual_avg_file="mutual_distances.txt", top_k_file="top_k.txt", epoch=None, iters=None):
         #logging.info("\n\nEvaluating...")
 
         self.netG_AB.module.eval()
         self.netG_BA.module.eval()
         self.netD_AB.module.eval()
         self.netD_BA.module.eval()
-        self.forward()  # calculate loss functions, get gradients, update network weights
+
+        self.netG_AB.to(self.device)
+        self.netG_BA.to(self.device)
+        self.netD_AB.to("cpu")
+        self.netD_BA.to("cpu")
+
+        with torch.no_grad():
+            self.forward()  # calculate loss functions, get gradients, update network weights
         gc.collect()
         with open(sentences_file, "a") as sentences_file:
             for j in range(len(self.real_A)):
@@ -372,6 +401,12 @@ class CycleGANModel(BaseModel):
                                                        self.fake_B_embeddings.cpu().detach().numpy(),
                                                        metric='cosine',
                                                        n_jobs=-1)
+        triang = np.triu(distances)
+        np.fill_diagonal(triang,0)
+        mutual_distances = np.sum(triang) / np.count_nonzero(triang)
+        with open(mutual_avg_file, "a") as mutual_avg_file:
+            mutual_avg_file.write(str(mutual_distances) + '\n')
+
 
         with open(distance_file, "a") as distances_file:
             for i in range(len(distances)):

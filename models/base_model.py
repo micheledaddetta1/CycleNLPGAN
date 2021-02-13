@@ -151,6 +151,7 @@ class BaseModel(ABC):
         """
         for name in self.model_names:
             if isinstance(name, str):
+                net.eval()
                 save_filename = '%s_net_%s' % (epoch, name)
                 save_paths = [self.save_dir]
                 if self.on_colab:
@@ -159,8 +160,9 @@ class BaseModel(ABC):
                 net = getattr(self, 'net' + name)
                 for save_path in save_paths:
 
-                    if len(self.gpu_ids) > 0 and torch.cuda.is_available():
-                        net.module.save(os.path.join(save_path, save_filename))
+                    #if len(self.gpu_ids) > 0 and torch.cuda.is_available():
+                    net.module.save(os.path.join(save_path, save_filename))
+                net.train()
 
 
     def delete_networks(self, epoch):
@@ -260,5 +262,5 @@ class BaseModel(ABC):
                 for param in net.parameters():
                     param.requires_grad = requires_grad
 
-    def evaluate(self, sentences_file="eval_sentences.txt", distance_file="distances.txt", top_k_file="top_k.txt"):
+    def evaluate(self, sentences_file="eval_sentences.txt", distance_file="distances.txt", mutual_avg_file="mutual_distances.txt", top_k_file="top_k.txt"):
         pass

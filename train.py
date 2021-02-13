@@ -127,6 +127,7 @@ if __name__ == '__main__':
                 sentences_filename = str(epoch)+"_"+str(total_iters)+"_eval_sentences.txt"
                 distance_filename = str(epoch)+"_"+str(total_iters)+"_distances.txt"
                 top_k_filename = str(epoch)+"_"+str(total_iters)+"_top_k.txt"
+                mutual_filename = str(epoch)+"_"+str(total_iters)+"_mutual_distances.txt"
 
                 fw = open(distance_filename, "w")
                 fw.close()
@@ -138,8 +139,18 @@ if __name__ == '__main__':
                     if j > 20:
                         break
                     model.set_input(eval_data)  # unpack data from dataset and apply preprocessing
-                    model.evaluate(sentences_file=sentences_filename, distance_file=distance_filename,
+                    model.evaluate(sentences_file=sentences_filename, distance_file=distance_filename, mutual_avg_file=mutual_filename,
                                    top_k_file=top_k_filename, epoch=epoch, iters=total_iters)
+                with open(mutual_filename, "r") as mutual_file:
+                    avg = mutual_file.read().split("\n")
+                    avg = [float(e) for e in avg if e != ""]
+                    avg = sum(avg) / len(avg)
+                logging.info("Average mutual distance:" + str(avg))
+                fw = open("average_mutual_distance.tsv", "a")
+                fw.write(str(epoch)+"\t"+str(total_iters)+"\t" + str(avg) + "\n")
+                fw.close()
+
+
                 with open(distance_filename, "r") as distance_file:
                     avg = distance_file.read().split("\n")
                     avg = [float(e) for e in avg if e != ""]
@@ -148,6 +159,7 @@ if __name__ == '__main__':
                 fw = open("average_distance.tsv", "a")
                 fw.write(str(epoch)+"\t"+str(total_iters)+"\t" + str(avg) + "\n")
                 fw.close()
+
             iter_data_time = time.time()
         logging.info('saving the model at the end of epoch %d, iters %d' % (epoch, total_iters))
         model.save_networks('latest')
