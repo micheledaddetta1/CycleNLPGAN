@@ -118,8 +118,13 @@ class CycleGANModel(BaseModel):
             self.criterionCycle = CosineSimilarityLoss().to(self.device)
             self.criterionIdt = torch.nn.CosineEmbeddingLoss()  # CosineSimilarityLoss()
             # initialize optimizers; schedulers will be automatically created by function <BaseModel.setup>.
-            self.optimizer_G = torch.optim.Adam(itertools.chain(self.netG_AB.parameters(), self.netG_BA.parameters()),
-                                                lr=opt.lr, betas=(opt.beta1, 0.999))
+            if opt.freeze_GB_encoder is False:
+                self.optimizer_G = torch.optim.Adam(itertools.chain(self.netG_AB.parameters(), self.netG_BA.parameters()),
+                                                    lr=opt.lr, betas=(opt.beta1, 0.999))
+            else:
+                self.optimizer_G = torch.optim.Adam(itertools.chain(self.netG_AB.parameters(), self.netG_BA.module.model.base_model.decoder.parameters()),
+                                                    lr=opt.lr, betas=(opt.beta1, 0.999))
+
             self.optimizer_D = torch.optim.Adam(itertools.chain(self.netD_AB.parameters(), self.netD_BA.parameters()),
                                                 lr=opt.lr, betas=(opt.beta1, 0.999))
             self.optimizers.append(self.optimizer_G)
@@ -466,8 +471,12 @@ class CycleGANModel(BaseModel):
         if self.isTrain:
             self.optimizers = []
             # initialize optimizers; schedulers will be automatically created by function <BaseModel.setup>.
-            self.optimizer_G = torch.optim.Adam(itertools.chain(self.netG_AB.module.parameters(), self.netG_BA.module.parameters()),
-                                                lr=self.opt.lr, betas=(self.opt.beta1, 0.999))
+            if self.opt.freeze_GB_encoder is False:
+                self.optimizer_G = torch.optim.Adam(itertools.chain(self.netG_AB.parameters(), self.netG_BA.parameters()),
+                                                    lr=self.opt.lr, betas=(self.opt.beta1, 0.999))
+            else:
+                self.optimizer_G = torch.optim.Adam(itertools.chain(self.netG_AB.parameters(), self.netG_BA.module.model.base_model.decoder.parameters()),
+                                                    lr=self.opt.lr, betas=(self.opt.beta1, 0.999))
             self.optimizer_D = torch.optim.Adam(itertools.chain(self.netD_AB.module.parameters(), self.netD_BA.module.parameters()),
                                                 lr=self.opt.lr, betas=(self.opt.beta1, 0.999))
             self.optimizers.append(self.optimizer_G)

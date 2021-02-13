@@ -158,10 +158,11 @@ class EncDecModel(nn.Module):
         self.model.base_model.train(mode)
         if self.freeze_encoder is True:
             self.model.base_model.encoder.training = False
-            self.model.base_model.encoder.eval()
             self.model.base_model.decoder.train(mode)
+            self.model.base_model.encoder.eval()
             for param in self.model.base_model.encoder.parameters():
                 param.requires_grad = False
+        return self
 
     def eval(self):
         self.training = False

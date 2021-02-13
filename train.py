@@ -160,6 +160,10 @@ if __name__ == '__main__':
                 fw.close()
                 fw = open(top_k_filename, "w")
                 fw.close()
+                fw = open(mutual_filename_A, "w")
+                fw.close()
+                fw = open(mutual_filename_A, "w")
+                fw.close()
                 for j, eval_data in enumerate(eval_dataset.dataloader):  # inner loop within one epoch
                     if j > 20:
                         break
