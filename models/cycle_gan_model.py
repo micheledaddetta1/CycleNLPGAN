@@ -229,11 +229,13 @@ class CycleGANModel(BaseModel):
         self.netD_BA.to(self.device)
         self.loss_G_AB = self.netD_AB(self.fake_B, 1).loss
 
-        self.loss_G_AB = (self.loss_G_AB + ((self.loss_G_AB_1 + self.loss_G_AB_2) * 0.5)) * 0.5 * lambda_G
+        self.loss_G_AB = self.loss_G_AB * lambda_G
+        #self.loss_G_AB = (self.loss_G_AB + ((self.loss_G_AB_1 + self.loss_G_AB_2) * 0.5)) * 0.5 * lambda_G
 
         self.loss_G_BA = self.netD_BA(self.fake_A, 1).loss
 
-        self.loss_G_BA = (self.loss_G_BA + ((self.loss_G_BA_1 + self.loss_G_BA_2) * 0.5)) * 0.5 * lambda_G
+        self.loss_G_BA = self.loss_G_BA * lambda_G
+        #self.loss_G_BA = (self.loss_G_BA + ((self.loss_G_BA_1 + self.loss_G_BA_2) * 0.5)) * 0.5 * lambda_G
 
 
         self.netD_AB.to("cpu")
@@ -378,7 +380,7 @@ class CycleGANModel(BaseModel):
         gc.collect()
 
 
-    def evaluate(self, sentences_file="eval_sentences.txt", distance_file="distances.txt", mutual_avg_file_A="mutual_distances_A.txt", mutual_avg_file_B="mutual_distances_B.txt", top_k_file="top_k.txt", epoch=None, iters=None):
+    def evaluate(self, sentences_file="eval_sentences.txt", distance_file="distances.txt", mutual_avg_file="mutual_distances.txt", mutual_avg_file_A="mutual_distances_A.txt", mutual_avg_file_B="mutual_distances_B.txt", top_k_file="top_k.txt", epoch=None, iters=None):
         #logging.info("\n\nEvaluating...")
 
         self.netG_AB.module.eval()
@@ -408,6 +410,11 @@ class CycleGANModel(BaseModel):
                                                        metric='cosine',
                                                        n_jobs=-1)
 
+        triang = np.triu(distances)
+        np.fill_diagonal(triang, 0)
+        mutual_distances = np.sum(triang) / np.count_nonzero(triang)
+        with open(mutual_avg_file, "a") as mutual_avg_f:
+            mutual_avg_f.write(str(mutual_distances) + '\n')
 
         with open(distance_file, "a") as distances_file:
             for i in range(len(distances)):
@@ -420,8 +427,8 @@ class CycleGANModel(BaseModel):
         triang = np.triu(distances_fake_A)
         np.fill_diagonal(triang, 0)
         mutual_distances = np.sum(triang) / np.count_nonzero(triang)
-        with open(mutual_avg_file_A, "a") as mutual_avg_file:
-            mutual_avg_file.write(str(mutual_distances) + '\n')
+        with open(mutual_avg_file_A, "a") as mutual_avg_f:
+            mutual_avg_f.write(str(mutual_distances) + '\n')
 
 
 
@@ -432,8 +439,8 @@ class CycleGANModel(BaseModel):
         triang = np.triu(distances_fake_B)
         np.fill_diagonal(triang, 0)
         mutual_distances = np.sum(triang) / np.count_nonzero(triang)
-        with open(mutual_avg_file_B, "a") as mutual_avg_file:
-            mutual_avg_file.write(str(mutual_distances) + '\n')
+        with open(mutual_avg_file_B, "a") as mutual_avg_f:
+            mutual_avg_f.write(str(mutual_distances) + '\n')
         #with open(distance_file, "a") as distances_file:
         #   distances_file.write(distances+"\n")
 

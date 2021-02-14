@@ -43,6 +43,8 @@ class EncDecModel(nn.Module):
 
     def forward(self, sentences, target_sentences=None, partial_value=False, generate_sentences=True):
 
+        #if"t5" in model name :
+        #    sentences = [ "translate "+sentence for sentence in sentences]
         embeddings = self.batch_encode_plus(sentences, padding=True, verbose=False)
         embeddings = embeddings.to(self.model.device)
         if self.task == "translation":

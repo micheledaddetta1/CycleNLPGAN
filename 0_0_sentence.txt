@@ -1,0 +1,63 @@
+ A->B->A : Qualcuno di voi mangerebbe la carne del suo fratello morto? -> Would any of you eat the flesh of your dead brother? -> Qualcuno di voi mangerebbe la carne del vostro fratello morto?
+ B->A->B : Would one of you like to eat the flesh of his dead brother? -> Uno di voi vorrebbe mangiare la carne del fratello morto? -> Would one of you like to eat the dead brother's flesh?
+
+ A->B->A : Le persone che amano non dubitano di niente, o dubitano di tutto. -> People they love don't doubt anything, or they doubt everything. -> Le persone che amano non dubitano di niente, o dubitano di tutto.
+ B->A->B : People who love doubt nothing, or doubt everything. -> Le persone che amano non dubitano di nulla, o dubitano di tutto. -> People who love do not doubt anything, or doubt everything.
+
+ A->B->A : Lei risulta essere la ragazza che salvò Jimmy l'estate precedente. -> She turns out to be the girl who saved Jimmy the previous summer. -> Si e' rivelata la ragazza che ha salvato Jimmy l'estate precedente.
+ B->A->B : She turns out to be the girl who rescued Jimmy the previous summer. -> Si e' rivelata la ragazza che ha salvato Jimmy l'estate precedente. -> She turned out to be the girl who saved Jimmy the previous summer.
+
+ A->B->A : Questa è la più diretta, ovvia, intersezione tra le due cose. -> This is the most direct, obvious, intersection between the two things. -> Questa è la più diretta, ovvia, intersezione tra le due cose.
+ B->A->B : This is the most kind of direct, obvious intersection of the two things. -> Questo è il tipo di intersezione diretta e ovvia delle due cose. -> This is the type of direct and obvious intersection of the two things.
+
+ A->B->A : Tutto ciò che è inventato è vero. -> Everything that is invented is true. -> Tutto ciò che viene inventato è vero.
+ B->A->B : All that which is invented, is true. -> Tutto ciò che è stato inventato è vero. -> Everything that has been invented is true.
+
+ A->B->A : È stato il giorno più bello della mia vita. -> It was the best day of my life. -> E' stato il giorno piu' bello della mia vita.
+ B->A->B : That was the best day of my life. -> E' stato il giorno piu' bello della mia vita. -> It was the best day of my life.
+
+ A->B->A : Ho detto loro di mandarmi un altro biglietto. -> I told them to send me another ticket. -> Ho detto loro di mandarmi un altro biglietto.
+ B->A->B : I told them to send me another ticket. -> Ho detto loro di mandarmi un altro biglietto. -> I told them to send me another ticket.
+
+ A->B->A : Com'è andato il tuo colloquio? -> How was your interview? -> Com'e' andato il colloquio?
+ B->A->B : How did your interview go? -> Com'e' andato il colloquio? -> How was your interview?
+
+ A->B->A : Sembra interessante. Che cosa le hai detto? -> What did you say to her? -> Cosa le hai detto?
+ B->A->B : That sounds interesting. What did you tell her? -> Sembra interessante, cosa le hai detto? -> That sounds interesting. What did you tell her?
+
+ A->B->A : Quindi lo scopo è arrivare a far sedere tutti i membri della tua squadra sul pneumatico e la tua squadra vince. -> So the point is to get all the members of your team to sit on the tire and your team wins. -> Quindi il punto è quello di convincere tutti i membri della vostra squadra a sedersi sulla gomma e la vostra squadra vince.
+ B->A->B : So the goal is to have all of your teammates sitting on the tires and then your team wins. -> Quindi l'obiettivo è quello di avere tutti i tuoi compagni di squadra seduti sulle gomme e poi la tua squadra vince. -> So the goal is to have all your teammates sitting on the tires and then your team wins.
+
+ A->B->A : Ha creato cielo e terra e con entrambe le mani ne regge il corso. -> He created heaven and earth and holds the course with both hands. -> Egli ha creato il cielo e la terra e tiene la rotta con entrambe le mani.
+ B->A->B : He then created Heaven and Earth. -> Poi creò il Cielo e la Terra. -> Then He created Heaven and Earth.
+
+ A->B->A : Notes: † — Le competizioni si sono tenute solo per 24 ore. -> Notes: The competitions were held only for 24 hours. -> Note: I concorsi si sono svolti solo per 24 ore.
+ B->A->B : Notes: † — Competitions were held for only 24 hours. -> Note: I concorsi si sono svolti solo per 24 ore. -> Notes: The competitions took place only for 24 hours.
+
+ A->B->A : Io odio quando c'è molta gente. -> I hate it when there's a lot of people. -> Odio quando c'e' un sacco di gente.
+ B->A->B : I hate it when there are a lot of people. -> Odio quando ci sono un sacco di persone. -> I hate it when there's a lot of people.
+
+ A->B->A : L'hai incontrata? -> Did you meet her? -> L'hai conosciuta?
+ B->A->B : Did you meet her? -> L'hai conosciuta? -> Have you met her?
+
+ A->B->A : Sia benedetto Iddio, il Signor del Creato!". -> Blessed be God, the Lord of Creation!" -> Sia benedetto Dio, Signore della Creazione!"
+ B->A->B : And all praise is due to God the Lord of the Worlds. -> E ogni lode è dovuta a Dio, il Signore dei mondi. -> And all praise is due to God, the Lord of the worlds.
+
+ A->B->A : Chi sono le due sorelle?" -> Who are the two sisters?" -> Chi sono le due sorelle?"
+ B->A->B : Who are the two sisters?" -> Chi sono le due sorelle?" -> Who are the two sisters?"
+
+ A->B->A : "I poveri hanno solo Dio nel quale trovar forza. -> "The poor have only God in whom to find strength. -> "I poveri hanno solo Dio in cui trovare forza.
+ B->A->B : "The poor only have God in whom to find strength. -> "I poveri hanno solo Dio in cui trovare forza. -> "The poor have only God to find strength in.
+
+ A->B->A : E pregò quel giorno e ricevette il Signore». -> And he prayed that day, and received the Lord. -> In quel giorno pregò e ricevette il Signore.
+ B->A->B : And he prayed that day and received the Lord." -> E quel giorno pregò e ricevette il Signore." -> And that day he prayed and received the Lord."
+
+ A->B->A : Pare che l'unico tratto che sopravvive alla decapitazione sia la vanita'. -> Apparently, the only trait that survives decapitation is vanity. -> A quanto pare, l'unica caratteristica che sopravvive alla decapitazione e' la vanità.
+ B->A->B : So it seems that the only trait that survives decapitation is vanity. -> Quindi sembra che l'unico tratto che sopravvive alla decapitazione sia la vanità. -> So it seems that the only trait that survives decapitation is vanity.
+
+ A->B->A : Quelli che abitano in case di vetro non dovrebbero lanciare sassi. -> Those living in glass houses shouldn't throw stones. -> Quelli che vivono in case di vetro non dovrebbero lanciare pietre.
+ B->A->B : Those who live in glass houses should not throw stones. -> Coloro che vivono in case di vetro non dovrebbero lanciare pietre. -> Those living in glass houses should not throw stones.
+
+ A->B->A : Siamo andate a Londra l'anno scorso. -> We went to London last year. -> Siamo andati a Londra l'anno scorso.
+ B->A->B : We went to London last year. -> Siamo andati a Londra l'anno scorso. -> We went to London last year.
+

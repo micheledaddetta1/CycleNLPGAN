@@ -68,6 +68,8 @@ if __name__ == '__main__':
         fw.close()
         fw = open("0_0_top_k.txt", "w")
         fw.close()
+        fw = open("0_0_mutual_distance.txt", "w")
+        fw.close()
         fw = open("0_0_mutual_distance_A.txt", "w")
         fw.close()
         fw = open("0_0_mutual_distance_B.txt", "w")
@@ -77,9 +79,18 @@ if __name__ == '__main__':
             if j > 20:
                 break
             model.set_input(eval_data)  # unpack data from dataset and apply preprocessing
-            model.evaluate(sentences_file="0_0_sentence.txt", distance_file="0_0_distance.txt", mutual_avg_file_A="0_0_mutual_distance_A.txt", mutual_avg_file_B="0_0_mutual_distance_B.txt",
+            model.evaluate(sentences_file="0_0_sentence.txt", distance_file="0_0_distance.txt", mutual_avg_file="0_0_mutual_distance.txt", mutual_avg_file_A="0_0_mutual_distance_A.txt", mutual_avg_file_B="0_0_mutual_distance_B.txt",
                            top_k_file="0_0_top_k.txt")
             gc.collect()
+
+        with open("0_0_mutual_distance.txt", "r") as mutual_file:
+            avg = mutual_file.read().split("\n")
+            avg = [float(e) for e in avg if e != ""]
+            avg = sum(avg) / len(avg)
+        logging.info("Average mutual distance:" + str(avg))
+        fw = open("average_mutual_distance.tsv", "a")
+        fw.write("0\t0\t" + str(avg) + "\n")
+        fw.close()
 
         with open("0_0_mutual_distance_A.txt", "r") as mutual_file:
             avg = mutual_file.read().split("\n")
@@ -151,6 +162,7 @@ if __name__ == '__main__':
                 sentences_filename = str(epoch)+"_"+str(total_iters)+"_eval_sentences.txt"
                 distance_filename = str(epoch)+"_"+str(total_iters)+"_distances.txt"
                 top_k_filename = str(epoch)+"_"+str(total_iters)+"_top_k.txt"
+                mutual_filename = str(epoch)+"_"+str(total_iters)+"_mutual_distances.txt"
                 mutual_filename_A = str(epoch)+"_"+str(total_iters)+"_mutual_distances_A.txt"
                 mutual_filename_B = str(epoch)+"_"+str(total_iters)+"_mutual_distances_B.txt"
 
@@ -160,16 +172,28 @@ if __name__ == '__main__':
                 fw.close()
                 fw = open(top_k_filename, "w")
                 fw.close()
-                fw = open(mutual_filename_A, "w")
+                fw = open(mutual_filename, "w")
                 fw.close()
                 fw = open(mutual_filename_A, "w")
+                fw.close()
+                fw = open(mutual_filename_B, "w")
                 fw.close()
                 for j, eval_data in enumerate(eval_dataset.dataloader):  # inner loop within one epoch
                     if j > 20:
                         break
                     model.set_input(eval_data)  # unpack data from dataset and apply preprocessing
-                    model.evaluate(sentences_file=sentences_filename, distance_file=distance_filename, mutual_avg_file_A=mutual_filename_A, mutual_avg_file_B=mutual_filename_B,
+                    model.evaluate(sentences_file=sentences_filename, distance_file=distance_filename, mutual_avg_file=mutual_filename, mutual_avg_file_A=mutual_filename_A, mutual_avg_file_B=mutual_filename_B,
                                    top_k_file=top_k_filename, epoch=epoch, iters=total_iters)
+
+                with open(mutual_filename, "r") as mutual_file:
+                    avg = mutual_file.read().split("\n")
+                    avg = [float(e) for e in avg if e != ""]
+                    avg = sum(avg) / len(avg)
+                logging.info("Average mutual distance:" + str(avg))
+                fw = open("average_mutual_distance.tsv", "a")
+                fw.write(str(epoch) + "\t" + str(total_iters) + "\t" + str(avg) + "\n")
+                fw.close()
+
                 with open(mutual_filename_A, "r") as mutual_file:
                     avg = mutual_file.read().split("\n")
                     avg = [float(e) for e in avg if e != ""]
@@ -206,6 +230,7 @@ if __name__ == '__main__':
         sentences_filename = "eval_sentences.txt"
         distance_filename = "distances.txt"
         top_k_filename = "top_k.txt"
+        mutual_filename = "mutual_distances.txt"
         mutual_filename_A = "mutual_distances_A.txt"
         mutual_filename_B = "mutual_distances_B.txt"
         with open(distance_filename, "a") as distance_file:
@@ -214,6 +239,8 @@ if __name__ == '__main__':
             top_file.write("NEW EPOCH:\n")
         with open(sentences_filename, "a") as sentences_file:
             sentences_file.write("NEW EPOCH:\n")
+        with open(mutual_filename, "a") as mutual_file:
+            mutual_file.write("NEW EPOCH:\n")
         with open(mutual_filename_A, "a") as mutual_file:
             mutual_file.write("NEW EPOCH:\n")
         with open(mutual_filename_B, "a") as mutual_file:
@@ -221,13 +248,15 @@ if __name__ == '__main__':
 
         for j, eval_data in enumerate(eval_dataset.dataloader):  # inner loop within one epoch
             model.set_input(eval_data)  # unpack data from dataset and apply preprocessing
-            model.evaluate(sentences_file=sentences_filename, distance_file=distance_filename, mutual_avg_file_A=mutual_filename_A, mutual_avg_file_B=mutual_filename_B, top_k_file=top_k_filename)
+            model.evaluate(sentences_file=sentences_filename, distance_file=distance_filename, mutual_avg_file=mutual_filename,  mutual_avg_file_A=mutual_filename_A, mutual_avg_file_B=mutual_filename_B, top_k_file=top_k_filename)
 
         with open(distance_filename, "a") as distance_file:
             distance_file.write("\n\n\n\n")
         with open(top_k_filename, "a") as top_file:
             top_file.write("\n\n\n\n")
         with open(sentences_filename, "a") as sentences_file:
+            sentences_file.write("\n\n\n\n")
+        with open(mutual_filename, "a") as mutual_file:
             sentences_file.write("\n\n\n\n")
         with open(mutual_filename_A, "a") as mutual_file:
             sentences_file.write("\n\n\n\n")
