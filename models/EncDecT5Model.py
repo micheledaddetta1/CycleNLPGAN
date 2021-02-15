@@ -50,11 +50,11 @@ class EncDecT5Model(nn.Module):
 
         if hasattr(self, "translation_sentence"):
             sentences = [self.translation_sentence+": "+sentence for sentence in sentences]
-        embeddings = self.tokenizer(sentences, padding='max_length', max_length=self.max_seq_length, truncation=True,)
+        embeddings = self.tokenizer(sentences, padding='max_length', max_length=self.max_seq_length, truncation=True, return_tensors='pt')
         embeddings = embeddings.to(self.model.device)
         if self.task == "translation":
             if target_sentences is not None:
-                decoder_input_ids = self.tokenizer(target_sentences, padding='max_length', max_length=self.max_seq_length, truncation=True,).input_ids.to(self.model.device)  # Batch size 1
+                decoder_input_ids = self.tokenizer(target_sentences, padding='max_length', max_length=self.max_seq_length, truncation=True, return_tensors='pt').input_ids.to(self.model.device)  # Batch size 1
                 outputs = self.model(input_ids=embeddings.input_ids, labels=decoder_input_ids, return_dict=True)
             else:
                 outputs = self.model(input_ids=embeddings.input_ids, return_dict=True)

@@ -30,9 +30,8 @@ class DiscriminatorTransformer(Transformer):
 
     def forward(self, features, label, attach_grad_fn=None):
         """Returns token_embeddings, cls_token"""
-        embedding = self.tokenizer(features, return_tensors='pt', add_special_tokens=True,
-                max_length=self.max_seq_length,
-                padding=True,).to(self.model.device)
+        embedding = self.tokenizer(features, return_tensors='pt', truncation=True,
+                max_length=self.max_seq_length,padding=True,).to(self.model.device)
         #if attach_grad_fn is not None:
         #    t = torch.tensor(0.0, requires_grad=True)
         #    embedding.input_ids = embedding.input_ids.type(torch.float32)

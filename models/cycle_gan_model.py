@@ -47,7 +47,7 @@ class CycleGANModel(BaseModel):
         """
         parser.add_argument('--task', type=str, default='reconstruction',
                             help='specify the task of the CycleGAN [translation|reconstruction]')
-        parser.add_argument('--network_type', type=str, default='t5',
+        parser.add_argument('--network_type', type=str, default='marianMT',
                             help='specify generator architecture and language [marianMT|t5]')
 
         parser.add_argument('--language', type=str, default='it', help='specify destination language')
@@ -228,13 +228,13 @@ class CycleGANModel(BaseModel):
         '''
         self.loss_G_AB = self.netD_AB(self.fake_B, 1).loss
 
-        self.loss_G_AB = self.loss_G_AB * lambda_G
-        #self.loss_G_AB = (self.loss_G_AB + ((self.loss_G_AB_1 + self.loss_G_AB_2) * 0.5)) * 0.5 * lambda_G
+        #self.loss_G_AB = self.loss_G_AB * lambda_G
+        self.loss_G_AB = (self.loss_G_AB + ((self.loss_G_AB_1 + self.loss_G_AB_2) * 0.5)) * 0.5 * lambda_G
 
         self.loss_G_BA = self.netD_BA(self.fake_A, 1).loss
 
-        self.loss_G_BA = self.loss_G_BA * lambda_G
-        #self.loss_G_BA = (self.loss_G_BA + ((self.loss_G_BA_1 + self.loss_G_BA_2) * 0.5)) * 0.5 * lambda_G
+        #self.loss_G_BA = self.loss_G_BA * lambda_G
+        self.loss_G_BA = (self.loss_G_BA + ((self.loss_G_BA_1 + self.loss_G_BA_2) * 0.5)) * 0.5 * lambda_G
 
         '''
         self.netD_AB.to("cpu")

@@ -45,14 +45,14 @@ class EncDecModel(nn.Module):
 
         #if"t5" in model name :
         #    sentences = [ "translate "+sentence for sentence in sentences]
-        embeddings = self.batch_encode_plus(sentences, padding=True, verbose=False)
+        embeddings = self.tokenizer(sentences, padding='max_length', max_length=self.max_seq_length, truncation=True, return_tensors='pt')
         embeddings = embeddings.to(self.model.device)
         if self.task == "translation":
             if target_sentences is not None:
-                decoder_input_ids = self.batch_encode_plus(target_sentences,  padding=True, verbose=False).input_ids.to(self.model.device)  # Batch size 1
-                outputs = self.model(input_ids=embeddings.input_ids, labels=decoder_input_ids, return_dict=True)
+                decoder_input_ids = self.tokenizer(target_sentences, padding='max_length', max_length=self.max_seq_length, truncation=True, return_tensors='pt').input_ids.to(self.model.device)  # Batch size 1
+                outputs = self.model(**embeddings, labels=decoder_input_ids, return_dict=True)
             else:
-                outputs = self.model(input_ids=embeddings.input_ids, decoder_input_ids=embeddings.input_ids, return_dict=True)
+                outputs = self.model(**embeddings.input_ids,return_dict=True)
             if generate_sentences:
                 output_sentences = self.model.generate(**embeddings)
                 output_sentences = self.decode(output_sentences)
