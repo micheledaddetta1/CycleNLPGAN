@@ -10,6 +10,7 @@ from transformers import EncoderDecoderModel, MarianTokenizer, MarianMTModel
 from . import Transformer, EncDecModel, PooledEncoder, Pooling
 from . import SentenceTransformer
 from . import BERT
+from .EncDecT5Model import EncDecT5Model
 from .discriminator_transformer import DiscriminatorTransformer
 from .multi_layer_perceptron import MultiLayerPerceptron
 
@@ -150,10 +151,27 @@ def define_name(model_name,language):
 
     return complete_name
 
-def define_Gs(task, net_encoder, net_decoder, source='de', dest='en', norm='batch', use_dropout=False, init_type='normal', init_gain=0.02, gpu_ids=[], freeze_GB_encoder=False):
+def define_language(language):
+    ret_val = ""
+    if language == "en":
+        ret_val = "English"
+    elif language == "it":
+        ret_val = "Italian"
+    elif language == "es":
+        ret_val = "Spanish"
+    elif language == "de":
+        ret_val = "German"
+    elif language == "fr":
+        ret_val = "French"
+    else:
+        raise NotImplementedError("Language not supported")
 
-    netA = define_G("encoder-decoder", net_decoder, source, dest, norm, use_dropout, init_type, init_gain, gpu_ids, use_init_net=False, freeze_encoder=False)
-    netB = define_G("encoder-decoder", net_decoder, dest, source, norm, use_dropout, init_type, init_gain, gpu_ids, use_init_net=False, freeze_encoder=freeze_GB_encoder)
+    return ret_val
+
+def define_Gs(task, net_type, source='de', dest='en', norm='batch', use_dropout=False, init_type='normal', init_gain=0.02, gpu_ids=[], freeze_GB_encoder=False):
+
+    netA = define_G(net_type, source, dest, norm, use_dropout, init_type, init_gain, gpu_ids, use_init_net=False, freeze_encoder=False)
+    netB = define_G(net_type, dest, source, norm, use_dropout, init_type, init_gain, gpu_ids, use_init_net=False, freeze_encoder=freeze_GB_encoder)
     netA.model.base_model.train()
     netB.model.base_model.train()
 
@@ -213,7 +231,7 @@ def define_Gs(task, net_encoder, net_decoder, source='de', dest='en', norm='batc
     return netA, netB
 
 
-def define_G(model, netG, source='en', dest='de', norm='batch', use_dropout=False, init_type='normal', init_gain=0.02, gpu_ids=[], use_init_net= True, out_dimension=None, freeze_encoder=False):
+def define_G(model, source='en', dest='de', norm='batch', use_dropout=False, init_type='normal', init_gain=0.02, gpu_ids=[], use_init_net= True, out_dimension=None, freeze_encoder=False):
     """Create a generator
 
     Parameters:
@@ -254,17 +272,16 @@ def define_G(model, netG, source='en', dest='de', norm='batch', use_dropout=Fals
         raise NotImplementedError('Generator model name [%s] is not recognized' % netG)
     '''
 
-    if model == 'encoder':
-        if out_dimension is None:
-            net = Transformer(netG) #TODO freeze_encoder parameter
-        else:
-            net = PooledEncoder(netG, out_dimension=out_dimension) #TODO freeze_encoder parameter
-    elif model == 'encoder-decoder':
-        if netG == 'marianMT':
-            model_name = 'Helsinki-NLP/opus-mt-'+source+'-'+dest
-            net = EncDecModel(model_name, freeze_encoder=freeze_encoder)
-        else:
-            net = EncoderDecoderModel.from_encoder_decoder_pretrained('bert-base-cased', 'bert-base-german-cased')    #net=SentenceTransformer(netG)
+    if model == 't5':
+        src_lang = define_language(source)
+        tgt_lang = define_language(dest)
+        model_name = 't5-small'
+        net = EncDecT5Model(model_name, freeze_encoder=freeze_encoder, source_language=src_lang, target_language=tgt_lang)
+    elif model == 'marianMT':
+        model_name = 'Helsinki-NLP/opus-mt-'+source+'-'+dest
+        net = EncDecModel(model_name, freeze_encoder=freeze_encoder)
+    else:
+        net = EncoderDecoderModel.from_encoder_decoder_pretrained('bert-base-cased', 'bert-base-german-cased')    #net=SentenceTransformer(netG)
 
     if use_init_net == True:
         return init_net(net, init_type, init_gain, gpu_ids)

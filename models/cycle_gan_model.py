@@ -47,10 +47,8 @@ class CycleGANModel(BaseModel):
         """
         parser.add_argument('--task', type=str, default='reconstruction',
                             help='specify the task of the CycleGAN [translation|reconstruction]')
-        parser.add_argument('--encoder', type=str, default='bert-base',
-                            help='specify generator architecture and language [marianMT|bert-base-german-cased]')
-        parser.add_argument('--decoder', type=str, default='marianMT',
-                            help='specify generator architecture and language [marianMT|bert-base-german-cased]')
+        parser.add_argument('--network_type', type=str, default='t5',
+                            help='specify generator architecture and language [marianMT|t5]')
 
         parser.add_argument('--language', type=str, default='it', help='specify destination language')
 
@@ -98,7 +96,7 @@ class CycleGANModel(BaseModel):
         # The naming is different from those used in the paper.
         # Code (vs. paper): G_A (G), G_B (F), D_A (D_Y), D_B (D_X)
 
-        self.netG_AB, self.netG_BA = networks.define_Gs(opt.task, opt.encoder, opt.decoder, opt.language, 'en', opt.norm,
+        self.netG_AB, self.netG_BA = networks.define_Gs(opt.task, opt.network_type, opt.language, 'en', opt.norm,
                                                       not opt.no_dropout, opt.init_type, opt.init_gain, self.gpu_ids, opt.freeze_GB_encoder)
 
         if self.isTrain:  # define discriminators
