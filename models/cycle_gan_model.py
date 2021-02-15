@@ -220,11 +220,12 @@ class CycleGANModel(BaseModel):
         lambda_C_2 = self.opt.lambda_C_2
         lambda_C_3 = self.opt.lambda_C_3
 
-
+        '''
         self.netG_AB.to("cpu")
         self.netG_BA.to("cpu")
         self.netD_AB.to(self.device)
         self.netD_BA.to(self.device)
+        '''
         self.loss_G_AB = self.netD_AB(self.fake_B, 1).loss
 
         self.loss_G_AB = self.loss_G_AB * lambda_G
@@ -235,11 +236,12 @@ class CycleGANModel(BaseModel):
         self.loss_G_BA = self.loss_G_BA * lambda_G
         #self.loss_G_BA = (self.loss_G_BA + ((self.loss_G_BA_1 + self.loss_G_BA_2) * 0.5)) * 0.5 * lambda_G
 
-
+        '''
         self.netD_AB.to("cpu")
         self.netD_BA.to("cpu")
         self.netG_AB.to(self.device)
         self.netG_BA.to(self.device)
+        '''
         # Forward cycle loss || G_B(G_A(A)) - A||
         size_vector = torch.ones(
             self.netG_AB.module.batch_encode_plus(self.real_A, verbose=False)["input_ids"].size()).to(self.device)
@@ -323,12 +325,14 @@ class CycleGANModel(BaseModel):
         self.netG_BA.train()
         self.netD_AB.train()
         self.netD_BA.train()
-
+        
+        '''
         self.netG_AB.to(self.device)
         self.netG_BA.to(self.device)
         self.netD_AB.to("cpu")
         self.netD_BA.to("cpu")
-
+        '''
+        
         self.forward()  # compute fake images and reconstruction images.
         gc.collect()
 
@@ -348,18 +352,21 @@ class CycleGANModel(BaseModel):
 
         
         # D_A and D_B
-
+        '''
         self.netG_AB.to("cpu")
         self.netG_BA.to("cpu")
         self.netD_AB.to(self.device)
         self.netD_BA.to("cpu")
+        '''
         self.set_requires_grad([self.netD_AB], True)
 
         self.optimizer_D.zero_grad()  # set D_A and D_B's gradients to zero
 
         self.backward_D_AB()  # calculate gradients for D_A
+        '''
         self.netD_AB.to("cpu")
         self.netD_BA.to(self.device)
+        '''
         self.set_requires_grad([self.netD_BA], True)
         self.backward_D_BA()  # calculate graidents for D_B
         self.optimizer_D.step()  # update D_A and D_B's weights
@@ -385,12 +392,14 @@ class CycleGANModel(BaseModel):
         self.netG_BA.module.eval()
         self.netD_AB.module.eval()
         self.netD_BA.module.eval()
-
+        
+        '''
         self.netG_AB.to(self.device)
         self.netG_BA.to(self.device)
         self.netD_AB.to("cpu")
         self.netD_BA.to("cpu")
-
+        '''
+        
         with torch.no_grad():
             self.forward()  # calculate loss functions, get gradients, update network weights
         gc.collect()
