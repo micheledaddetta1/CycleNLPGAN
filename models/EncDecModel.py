@@ -52,7 +52,7 @@ class EncDecModel(nn.Module):
                 decoder_input_ids = self.tokenizer(target_sentences, padding='max_length', max_length=self.max_seq_length, truncation=True, return_tensors='pt').input_ids.to(self.model.device)  # Batch size 1
                 outputs = self.model(**embeddings, labels=decoder_input_ids, return_dict=True)
             else:
-                outputs = self.model(**embeddings.input_ids,return_dict=True)
+                outputs = self.model(**embeddings, return_dict=True)
             if generate_sentences:
                 output_sentences = self.model.generate(**embeddings)
                 output_sentences = self.decode(output_sentences)
