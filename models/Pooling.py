@@ -33,9 +33,9 @@ class Pooling(nn.Module):
         self.pooling_output_dimension = (pooling_mode_multiplier * word_embedding_dimension)
 
     def forward(self, features: Dict[str, Tensor]):
-        token_embeddings = features#['token_embeddings']
+        token_embeddings = features['token_embeddings']
         #cls_token = features['cls_token_embeddings']
-        attention_mask = torch.ones(features.size()[0])
+        attention_mask = features["attention_mask"]
 
         ## Pooling strategy
         output_vectors = []
