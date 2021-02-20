@@ -9,6 +9,7 @@ We have used it in our paper (https://arxiv.org/pdf/2004.09813.pdf) in Section 4
 This script requires that you have FAISS installed:
 https://github.com/facebookresearch/faiss
 """
+import argparse
 
 from models import EncDecModel
 from collections import defaultdict
@@ -16,20 +17,34 @@ import os
 import pickle
 from sklearn.decomposition import PCA
 import torch
-#from bitext_mining_utils import *
+from bitext_mining_utils import *
 import numpy as np
 
+
+
+parser = argparse.ArgumentParser(description='')
+parser.add_argument('--language', required=True, help='Language compared to English')
+parser.add_argument('--models_dir', type=str, default='../../checkpoints/translation',
+                    help='Root directory of saved models')
+parser.add_argument('--models_prefix', type=str, default='latest',
+                    help='Prefix in model name')
+
+args = parser.parse_args()
+
+
 #Model we want to use for bitext mining. LaBSE achieves state-of-the-art performance
-modelA_name = 'latest_net_G_AB'
-modelB_name = 'latest_net_G_BA'
-model_dir = "../../checkpoints/translation"
+prefix = args.models_prefix
+model_dir = args.models_dir
+modelA_name = prefix+'_net_G_AB'
+modelB_name = prefix+'_net_G_BA'
 modelA = EncDecModel(os.path.join(model_dir, modelA_name))
 modelB = EncDecModel(os.path.join(model_dir, modelB_name))
 
+language = args.language
 #Intput files for BUCC2018 shared task
-source_file = "bucc2018/de-en/de-en.training.de"
-target_file = "bucc2018/de-en/de-en.training.en"
-labels_file = "bucc2018/de-en/de-en.training.gold"
+source_file = "bucc2018/"+language+"-en/"+language+"-en.training."+language
+target_file = "bucc2018/"+language+"-en/"+language+"-en.training.en"
+labels_file = "bucc2018/"+language+"-en/"+language+"-en.training.gold"
 
 
 
