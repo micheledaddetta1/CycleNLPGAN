@@ -37,13 +37,13 @@ reference_file = "wmt14/" + language + "_en/newstest2014.ref.en"
 
 # metric = load_metric("sacrebleu")
 
-print("Read source file")
+print("Read "+language+" source file")
 source_data = []
 with open(source_file, encoding='utf8') as fIn:
     for line in fIn:
         source_data.append(line)
 
-print("Read reference file")
+print("Read en reference file")
 reference_data = []
 with open(reference_file, encoding='utf8') as fIn:
     for line in fIn:
@@ -55,24 +55,51 @@ source_dataloader = DataLoader(
     shuffle=False,
     num_workers=1)
 
-reference_dataloader = DataLoader(
-    reference_data,
+print("Translate source data")
+translated_source_data = []
+for i, source_batch in tqdm(enumerate(source_dataloader), total=len(source_dataloader)):
+    model_prediction = modelA(source_batch)
+    translated_source_data.extend(model_prediction)
+
+bleu = sacrebleu.raw_corpus_bleu(translated_source_data, [reference_data]).score
+
+
+print(language+"-en BLEU score: " + str(bleu))
+
+
+
+
+
+
+source_file = "wmt14/" + language + "_en/newstest2014.src.en"
+reference_file = "wmt14/" + language + "_en/newstest2014.ref."+language
+
+# metric = load_metric("sacrebleu")
+
+print("Read en source file")
+source_data = []
+with open(source_file, encoding='utf8') as fIn:
+    for line in fIn:
+        source_data.append(line)
+
+print("Read "+language+" reference file")
+reference_data = []
+with open(reference_file, encoding='utf8') as fIn:
+    for line in fIn:
+        reference_data.append(line)
+
+source_dataloader = DataLoader(
+    source_data,
     batch_size=batch_size,
     shuffle=False,
     num_workers=1)
 
 print("Translate source data")
 translated_source_data = []
-
 for i, source_batch in tqdm(enumerate(source_dataloader), total=len(source_dataloader)):
-    # print(source_batch)
-
-    model_prediction = modelA(source_batch)
-    # print(model_prediction)
+    model_prediction = modelB(source_batch)
     translated_source_data.extend(model_prediction)
 
-print(translated_source_data[:10])
-print(reference_data[:10])
 bleu = sacrebleu.raw_corpus_bleu(translated_source_data, [reference_data]).score
 
-print("BLEU score: " + str(bleu))
+print("en-"+language+" BLEU score: " + str(bleu))
