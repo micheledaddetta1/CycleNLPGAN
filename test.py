@@ -27,51 +27,36 @@ See training and test tips at: https://github.com/junyanz/pytorch-CycleGAN-and-p
 See frequently asked questions at: https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/blob/master/docs/qa.md
 """
 import logging
+import time
 import os
 
-import torch
+from tqdm import tqdm
 
 from options.test_options import TestOptions
 from data import create_dataset
 from models import create_model
-from options.train_options import TrainOptions
-from util import html
 from util.visualizer import Visualizer
+import torch
 
 if __name__ == '__main__':
-    opt = TestOptions().parse()  # get test options
-    # hard-code some parameters for test
-    opt.num_threads = 0   # test code only supports num_threads = 1
-    opt.batch_size = 1    # test code only supports batch_size = 1
-    opt.serial_batches = True  # disable data shuffling; comment this line if results on randomly chosen images are needed.
-    opt.no_flip = True    # no flip; comment this line if results on flipped images are needed.
-    opt.display_id = -1   # no visdom display; the test code saves the results to a HTML file.
-    dataset = create_dataset(opt)  # create a dataset given opt.dataset_mode and other options
-    model = create_model(opt)      # create a model given opt.model and other options
-    model.setup(opt)               # regular setup: load and print networks; create schedulers
-    # create a website
-
     logging.getLogger().setLevel(logging.INFO)
-    opt = TrainOptions().parse()  # get training options
+    logging.basicConfig(format='%(asctime)s: %(message)s')
+    opt = TestOptions().parse()   # get training options
 
     torch.cuda.empty_cache()
     model = create_model(opt)  # create a model given opt.model and other options
     model.setup(opt)  # regular setup: load and print networks; create schedulers
 
-    train_dataset, eval_dataset, test_dataset = create_dataset(opt,
-                                                               model)  # create a dataset given opt.dataset_mode and other options
-    dataset_size = len(train_dataset)  # get the number of images in the dataset.
-    logging.info('The number of training sentences = %d' % dataset_size)
-    logging.info('The number of evaluation sentences = %d' % len(eval_dataset))
-    logging.info('The number of test sentences = %d' % len(test_dataset))
 
-    visualizer = Visualizer(opt)  # create a visualizer that display/save images and plots
-    total_iters = opt.iter_count  # the total number of training iterations
+    #train_dataset, eval_dataset, test_dataset = create_dataset(opt, model)  # create a dataset given opt.dataset_mode and other options
+    #dataset_size = len(train_dataset)    # get the number of images in the dataset.
+    #logging.info('The number of training sentences = %d' % dataset_size)
+    #logging.info('The number of evaluation sentences = %d' % len(eval_dataset))
+    #logging.info('The number of test sentences = %d' % len(test_dataset))
 
-    if opt.eval:
-        model.eval()
-    for i, data in enumerate(dataset):
-        if i >= opt.num_test:  # only apply our model to opt.num_test images.
-            break
-        model.set_input(data)  # unpack data from data loader
-        model.eval()           # run inference
+    dataset_A = ["The pen is on the table", "I have teethache"]
+    dataset_B = ["La penna è sul tavolo", "Ho mal di denti"]
+
+    #G_A = torch.load("CycleNLPGAN/checkpoints/translation/latest_net_G_A.pth")
+    model.set_input({"A" : dataset_A, "B" : dataset_B})  # unpack data from data loader
+    model.evaluate()           # run inference

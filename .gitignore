@@ -55,3 +55,12 @@ examples/output
 sentence_transformers.egg-info
 dist/
 nr_*/
+
+*.csv
+*.tsv
+*.bkp
+*.gz
+*.zip
+examples/evaluation/bucc2018/*
+*.txt
+*.tar.*
