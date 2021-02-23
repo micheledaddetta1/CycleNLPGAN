@@ -57,7 +57,7 @@ min_threshold = 1
 #Do we want to use exact search of approximate nearest neighbor search (ANN)
 #Exact search: Slower, but we don't miss any parallel sentences
 #ANN: Faster, but the recall will be lower
-use_ann_search = True
+use_ann_search = False
 
 #Number of clusters for ANN. Optimal number depends on dataset size
 ann_num_clusters = 32768
