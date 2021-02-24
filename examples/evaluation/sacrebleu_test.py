@@ -27,8 +27,11 @@ prefix = args.models_prefix
 model_dir = args.models_dir
 modelA_name = prefix + '_net_G_AB'
 modelB_name = prefix + '_net_G_BA'
-modelA = EncDecModel(modelA_name).to("cuda:0")
-modelB = EncDecModel(modelB_name).to("cuda:0")
+modelA_path = os.path.join(model_dir, modelA_name)
+modelB_path = os.path.join(model_dir, modelB_name)
+
+modelA = EncDecModel(modelA_path).to("cuda:0")
+modelB = EncDecModel(modelB_path).to("cuda:0")
 
 language = args.language
 # Intput files for BUCC2018 shared task

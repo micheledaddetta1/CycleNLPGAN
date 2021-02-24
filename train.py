@@ -62,60 +62,64 @@ if __name__ == '__main__':
 
     if not opt.continue_train:
 
-        fw = open("0_0_distance.txt", "w")
+        fw = open(os.path.join(opt.checkpoints_dir, opt.name, "0_0_distance.txt"), "w")
         fw.close()
-        fw = open("0_0_sentence.txt", "w")
+        fw = open(os.path.join(opt.checkpoints_dir, opt.name, "0_0_sentence.txt"), "w")
         fw.close()
-        fw = open("0_0_top_k.txt", "w")
+        fw = open(os.path.join(opt.checkpoints_dir, opt.name, "0_0_top_k.txt"), "w")
         fw.close()
-        fw = open("0_0_mutual_distance.txt", "w")
+        fw = open(os.path.join(opt.checkpoints_dir, opt.name, "0_0_mutual_distance.txt"), "w")
         fw.close()
-        fw = open("0_0_mutual_distance_A.txt", "w")
+        fw = open(os.path.join(opt.checkpoints_dir, opt.name, "0_0_mutual_distance_A.txt"), "w")
         fw.close()
-        fw = open("0_0_mutual_distance_B.txt", "w")
+        fw = open(os.path.join(opt.checkpoints_dir, opt.name, "0_0_mutual_distance_B.txt"), "w")
         fw.close()
 
         for j, eval_data in enumerate(eval_dataset.dataloader):  # inner loop within one epoch
             if j > 20:
                 break
             model.set_input(eval_data)  # unpack data from dataset and apply preprocessing
-            model.evaluate(sentences_file="0_0_sentence.txt", distance_file="0_0_distance.txt", mutual_avg_file="0_0_mutual_distance.txt", mutual_avg_file_A="0_0_mutual_distance_A.txt", mutual_avg_file_B="0_0_mutual_distance_B.txt",
-                           top_k_file="0_0_top_k.txt")
+            model.evaluate(sentences_file=os.path.join(opt.checkpoints_dir, opt.name, "0_0_sentence.txt"),
+                           distance_file=os.path.join(opt.checkpoints_dir, opt.name, "0_0_distance.txt"),
+                           mutual_avg_file=os.path.join(opt.checkpoints_dir, opt.name, "0_0_mutual_distance.txt"),
+                           mutual_avg_file_A=os.path.join(opt.checkpoints_dir, opt.name, "0_0_mutual_distance_A.txt"),
+                           mutual_avg_file_B=os.path.join(opt.checkpoints_dir, opt.name, "0_0_mutual_distance_B.txt"),
+                           top_k_file=os.path.join(opt.checkpoints_dir, opt.name, "0_0_top_k.txt"))
             gc.collect()
 
-        with open("0_0_mutual_distance.txt", "r") as mutual_file:
+        with open(os.path.join(opt.checkpoints_dir, opt.name, "0_0_mutual_distance.txt"), "r") as mutual_file:
             avg = mutual_file.read().split("\n")
             avg = [float(e) for e in avg if e != ""]
             avg = sum(avg) / len(avg)
         logging.info("Average mutual distance:" + str(avg))
-        fw = open("average_mutual_distance.tsv", "a")
+        fw = open(os.path.join(opt.checkpoints_dir, opt.name, "average_mutual_distance.tsv"), "a")
         fw.write("0\t0\t" + str(avg) + "\n")
         fw.close()
 
-        with open("0_0_mutual_distance_A.txt", "r") as mutual_file:
+        with open(os.path.join(opt.checkpoints_dir, opt.name, "0_0_mutual_distance_A.txt"), "r") as mutual_file:
             avg = mutual_file.read().split("\n")
             avg = [float(e) for e in avg if e != ""]
             avg = sum(avg) / len(avg)
         logging.info("Average mutual distance A:" + str(avg))
-        fw = open("average_mutual_distance_A.tsv", "a")
+        fw = open(os.path.join(opt.checkpoints_dir, opt.name, "average_mutual_distance_A.tsv"), "a")
         fw.write("0\t0\t" + str(avg) + "\n")
         fw.close()
 
-        with open("0_0_mutual_distance_B.txt", "r") as mutual_file:
+        with open(os.path.join(opt.checkpoints_dir, opt.name, "0_0_mutual_distance_B.txt"), "r") as mutual_file:
             avg = mutual_file.read().split("\n")
             avg = [float(e) for e in avg if e != ""]
             avg = sum(avg) / len(avg)
         logging.info("Average mutual distance B:" + str(avg))
-        fw = open("average_mutual_distance_B.tsv", "a")
+        fw = open(os.path.join(opt.checkpoints_dir, opt.name, "average_mutual_distance_B.tsv"), "a")
         fw.write("0\t0\t" + str(avg) + "\n")
         fw.close()
 
-        with open("0_0_distance.txt", "r") as distance_file:
+        with open(os.path.join(opt.checkpoints_dir, opt.name, "0_0_distance.txt"), "r") as distance_file:
             avg = distance_file.read().split("\n")
             avg = [float(e) for e in avg if e != ""]
             avg = sum(avg)/len(avg)
         logging.info("Average distance:" + str(avg))
-        fw = open("average_distance.tsv", "a")
+        fw = open(os.path.join(opt.checkpoints_dir, opt.name, "average_distance.tsv"), "a")
         fw.write("0\t0\t" + str(avg) + "\n")
         fw.close()
 
@@ -166,6 +170,13 @@ if __name__ == '__main__':
                 mutual_filename_A = str(epoch)+"_"+str(total_iters)+"_mutual_distances_A.txt"
                 mutual_filename_B = str(epoch)+"_"+str(total_iters)+"_mutual_distances_B.txt"
 
+                sentences_filename = os.path.join(opt.checkpoints_dir, opt.name, sentences_filename)
+                distance_filename = os.path.join(opt.checkpoints_dir, opt.name, distance_filename)
+                top_k_filename = os.path.join(opt.checkpoints_dir, opt.name, top_k_filename)
+                mutual_filename = os.path.join(opt.checkpoints_dir, opt.name, mutual_filename)
+                mutual_filename_A = os.path.join(opt.checkpoints_dir, opt.name, mutual_filename_A)
+                mutual_filename_B = os.path.join(opt.checkpoints_dir, opt.name, mutual_filename_B)
+
                 fw = open(distance_filename, "w")
                 fw.close()
                 fw = open(sentences_filename, "w")
@@ -190,7 +201,7 @@ if __name__ == '__main__':
                     avg = [float(e) for e in avg if e != ""]
                     avg = sum(avg) / len(avg)
                 logging.info("Average mutual distance:" + str(avg))
-                fw = open("average_mutual_distance.tsv", "a")
+                fw = open(os.path.join(opt.checkpoints_dir, opt.name, "average_mutual_distance.tsv"), "a")
                 fw.write(str(epoch) + "\t" + str(total_iters) + "\t" + str(avg) + "\n")
                 fw.close()
 
@@ -199,7 +210,7 @@ if __name__ == '__main__':
                     avg = [float(e) for e in avg if e != ""]
                     avg = sum(avg) / len(avg)
                 logging.info("Average mutual distance A:" + str(avg))
-                fw = open("average_mutual_distance_A.tsv", "a")
+                fw = open(os.path.join(opt.checkpoints_dir, opt.name, "average_mutual_distance_A.tsv"), "a")
                 fw.write(str(epoch) + "\t" + str(total_iters) + "\t" + str(avg) + "\n")
                 fw.close()
 
@@ -208,7 +219,7 @@ if __name__ == '__main__':
                     avg = [float(e) for e in avg if e != ""]
                     avg = sum(avg) / len(avg)
                 logging.info("Average mutual distance B:" + str(avg))
-                fw = open("average_mutual_distance_B.tsv", "a")
+                fw = open(os.path.join(opt.checkpoints_dir, opt.name, "average_mutual_distance_B.tsv"), "a")
                 fw.write(str(epoch)+"\t"+str(total_iters)+"\t" + str(avg) + "\n")
                 fw.close()
 
@@ -218,7 +229,7 @@ if __name__ == '__main__':
                     avg = [float(e) for e in avg if e != ""]
                     avg = sum(avg) / len(avg)
                 logging.info("Average distance:" + str(avg))
-                fw = open("average_distance.tsv", "a")
+                fw = open(os.path.join(opt.checkpoints_dir, opt.name, "average_distance.tsv"), "a")
                 fw.write(str(epoch)+"\t"+str(total_iters)+"\t" + str(avg) + "\n")
                 fw.close()
 
@@ -227,12 +238,12 @@ if __name__ == '__main__':
         model.save_networks('latest')
         model.save_networks(epoch)
 
-        sentences_filename = "eval_sentences.txt"
-        distance_filename = "distances.txt"
-        top_k_filename = "top_k.txt"
-        mutual_filename = "mutual_distances.txt"
-        mutual_filename_A = "mutual_distances_A.txt"
-        mutual_filename_B = "mutual_distances_B.txt"
+        sentences_filename = os.path.join(opt.checkpoints_dir, opt.name, "eval_sentences.txt")
+        distance_filename = os.path.join(opt.checkpoints_dir, opt.name, "distances.txt")
+        top_k_filename = os.path.join(opt.checkpoints_dir, opt.name, "top_k.txt")
+        mutual_filename = os.path.join(opt.checkpoints_dir, opt.name, "mutual_distances.txt")
+        mutual_filename_A = os.path.join(opt.checkpoints_dir, opt.name, "mutual_distances_A.txt")
+        mutual_filename_B = os.path.join(opt.checkpoints_dir, opt.name, "mutual_distances_B.txt")
         with open(distance_filename, "a") as distance_file:
             distance_file.write("NEW EPOCH:\n")
         with open(top_k_filename, "a") as top_file:
