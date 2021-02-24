@@ -15,8 +15,8 @@ import gzip
 # For language codes, see: https://en.wikipedia.org/wiki/List_of_ISO_639-2_codes
 source_languages = set(['eng'])
 source_languages_out = set(['en'])
-target_languages = set(['deu', 'spa', 'ita', 'fra'])
-target_languages_out = set(['de', 'es', 'it', 'fr'])
+target_languages = set(['deu', 'spa', 'ita', 'fra','rus','chi'])
+target_languages_out = set(['de', 'es', 'it', 'fr','ru','zh'])
 
 num_dev_sentences = 1000     #Number of sentences that are used to create a development set
 

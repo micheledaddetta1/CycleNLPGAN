@@ -163,6 +163,10 @@ def define_language(language):
         ret_val = "German"
     elif language == "fr":
         ret_val = "French"
+    elif language == "zh":
+        ret_val = "Chinese"
+    elif language == "ru":
+        ret_val = "Russian"
     else:
         raise NotImplementedError("Language not supported")
 

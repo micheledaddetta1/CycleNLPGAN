@@ -21,7 +21,7 @@ from tqdm.autonotebook import tqdm
 
 
 source_languages = set(['en'])                                  #Languages our (monolingual) teacher model understands
-target_languages = set(['de', 'es', 'it', 'fr',])    #New languages we want to extend to
+target_languages = set(['de', 'es', 'it', 'fr', 'ru', 'zh'])    #New languages we want to extend to
 
 
 eval_sentences = 1000         #Number of sentences we want to use for evalelopment

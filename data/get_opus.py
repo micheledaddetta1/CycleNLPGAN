@@ -34,7 +34,7 @@ import os
 
 corpora = ['JW300']  #Corpora you want to use
 source_languages = ['en']            #Source language, our teacher model is able to understand
-target_languages = ['de', 'es', 'it', 'fr']    #Target languages, out student model should learn
+target_languages = ['de', 'es', 'it', 'fr','zh','ru']    #Target languages, out student model should learn
 
 output_folder = './'
 opus_download_folder = 'opus'
