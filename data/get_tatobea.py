@@ -87,8 +87,9 @@ with open(links_file, encoding='utf8') as fIn:
                 translations[src_lang][trg_lang][src_sent].append(trg_sent)
 
 
-target_languages = list(['deu', 'spa', 'ita', 'fra'])
-target_languages_out = list(['de', 'es', 'it', 'fr'])
+
+target_languages = set(['deu', 'spa', 'ita', 'fra','rus','chi'])
+target_languages_out = set(['de', 'es', 'it', 'fr','ru','zh'])
 #Write everything to the output folder
 print("Write output files")
 for src_lang, src_lang_out in zip(source_languages, source_languages_out):
