@@ -19,6 +19,7 @@ See training and test tips at: https://github.com/junyanz/pytorch-CycleGAN-and-p
 See frequently asked questions at: https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/blob/master/docs/qa.md
 """
 import logging
+from util.visualizer import Visualizer
 import time
 import os
 import gc
@@ -27,7 +28,6 @@ from tqdm import tqdm
 from options.train_options import TrainOptions
 from data import create_dataset
 from models import create_model
-from util.visualizer import Visualizer
 import torch
 
 if __name__ == '__main__':
@@ -38,7 +38,6 @@ if __name__ == '__main__':
     torch.cuda.empty_cache()
     model = create_model(opt)  # create a model given opt.model and other options
     model.setup(opt)  # regular setup: load and print networks; create schedulers
-
 
     #train_dataset, eval_dataset, test_dataset = create_dataset(opt, model)  # create a dataset given opt.dataset_mode and other options
     train_dataset, eval_dataset = create_dataset(opt, model)
@@ -85,7 +84,7 @@ if __name__ == '__main__':
                            mutual_avg_file_A=os.path.join(opt.checkpoints_dir, opt.name, "0_0_mutual_distance_A.txt"),
                            mutual_avg_file_B=os.path.join(opt.checkpoints_dir, opt.name, "0_0_mutual_distance_B.txt"),
                            top_k_file=os.path.join(opt.checkpoints_dir, opt.name, "0_0_top_k.txt"),
-                           sacre_file=os.path.join(opt.checkpoints_dir, opt.name, "0_0_sacre.tsv")
+                           sacre_file=os.path.join(opt.checkpoints_dir, opt.name, "0_0_sacre.tsv"),
                            )
             gc.collect()
 

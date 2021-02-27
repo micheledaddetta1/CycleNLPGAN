@@ -5,7 +5,7 @@ import os
 import sys
 import ntpath
 import time
-from . import util, html
+from . import util
 from subprocess import Popen, PIPE
 
 
@@ -28,7 +28,6 @@ class Visualizer():
         """
         self.opt = opt  # cache the option
         self.name = opt.name
-        self.port = opt.display_port
         self.saved = False
 
         # create a logging file to store training losses

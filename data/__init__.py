@@ -12,18 +12,11 @@ See our template dataset class 'template_dataset.py' for more details.
 """
 import importlib
 import os
-import joblib
-from copy import deepcopy
 
 import torch.utils.data
-#from data.base_dataset import BaseDataset
 
 from .BaseDataset import BaseDataset
-from .InputExample import InputExample
 from .ParallelSentencesDataset import ParallelSentencesDataset
-from .ParallelEmbeddingsDataset import ParallelEmbeddingsDataset
-#from .SentenceLabelDataset import SentenceLabelDataset
-from .SentencesDataset import SentencesDataset
 
 
 def find_dataset_using_name(dataset_type):

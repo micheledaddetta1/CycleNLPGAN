@@ -8,12 +8,9 @@ import itertools
 import sacrebleu
 
 from losses import CosineSimilarityLoss
-from losses import MSELoss
-from util.image_pool import ImagePool
 from .base_model import BaseModel
 from . import networks
 import numpy as np
-import time
 import gc
 
 class CycleGANModel(BaseModel):
@@ -98,19 +95,15 @@ class CycleGANModel(BaseModel):
         # The naming is different from those used in the paper.
         # Code (vs. paper): G_A (G), G_B (F), D_A (D_Y), D_B (D_X)
 
-        self.netG_AB, self.netG_BA = networks.define_Gs(opt.task, opt.network_type, opt.language, 'en', opt.norm,
-                                                      not opt.no_dropout, opt.init_type, opt.init_gain, self.gpu_ids, opt.freeze_GB_encoder)
+        self.netG_AB, self.netG_BA = networks.define_Gs(opt.task, opt.network_type, opt.language, 'en', self.gpu_ids, opt.freeze_GB_encoder)
 
         if self.isTrain:  # define discriminators
-            in_dim = self.netG_AB.module.get_word_embedding_dimension()
 
             netDAB_name = networks.define_name(opt.netD, 'en')
             netDBA_name = networks.define_name(opt.netD, opt.language)
 
-            self.netD_AB = networks.define_D(in_dim, netDAB_name,
-                                            opt.n_layers_D, opt.norm, opt.init_type, opt.init_gain, self.gpu_ids)
-            self.netD_BA = networks.define_D(in_dim, netDBA_name,
-                                            opt.n_layers_D, opt.norm, opt.init_type, opt.init_gain, self.gpu_ids)
+            self.netD_AB = networks.define_D(opt.netD, netDAB_name, self.gpu_ids)
+            self.netD_BA = networks.define_D(opt.netD, netDBA_name, self.gpu_ids)
 
         if self.isTrain:
             # define loss functions
@@ -129,8 +122,6 @@ class CycleGANModel(BaseModel):
                                                 lr=opt.lr, betas=(opt.beta1, 0.999))
             self.optimizers.append(self.optimizer_G)
             self.optimizers.append(self.optimizer_D)
-        self.tempo_medio = 0
-        self.n_iter = 0
 
         self.loss_G_AB = 0
         self.loss_G_BA = 0
@@ -139,6 +130,7 @@ class CycleGANModel(BaseModel):
         self.loss_cycle_ABA = 0
         self.loss_cycle_BAB = 0
         self.loss_G = 0
+
 
     def set_input(self, input):
         """Unpack input data from the dataloader and perform necessary pre-processing steps.
@@ -149,17 +141,12 @@ class CycleGANModel(BaseModel):
         The option 'direction' can be used to swap domain A and domain B.
         """
         # torch.cuda.empty_cache()
-        AtoB = self.opt.direction == 'AtoB'
         if self.opt.dataset_mode == "ParallelSentences":
-            self.real_A = input['A' if AtoB else 'B']
-            self.real_B = input['B' if AtoB else 'A']
+            self.real_A = input['A']
+            self.real_B = input['B']
         else:
-            self.real_A = {'input_ids': input['A' if AtoB else 'B'].to(self.device),
-                           'attention_mask': (input['A' if AtoB else 'B'] > 0).to(self.device)}
-            self.real_B = {'input_ids': input['B' if AtoB else 'A'].to(self.device),
-                           'attention_mask': (input['B' if AtoB else 'A'] > 0).to(self.device)}
+            raise NotImplementedError("Dataset not implemented")
 
-        #self.sentence_paths = input['A_paths' if AtoB else 'B_paths']
 
     def forward(self):
 
@@ -182,10 +169,6 @@ class CycleGANModel(BaseModel):
         Return the discriminator loss.
         We also call loss_D.backward() to calculate the gradients.
         """
-        #real = netD.module.batch_encode_plus(real_sent, verbose=False).to(self.device)
-
-        #fake = netD.module.batch_encode_plus(fake_sent, verbose=False).to(self.device)
-
         # Real
         #pred_real = netD(real)
         loss_D_real = netD(real_sent, 1).loss
@@ -193,7 +176,7 @@ class CycleGANModel(BaseModel):
         loss_D_fake = netD(fake_sent, 0).loss
         # Combined loss and calculate gradients
         loss_D = (loss_D_real + loss_D_fake) * 0.5 * self.opt.lambda_D
-        #print(loss_D)
+
         loss_D.backward()
 
 
@@ -215,19 +198,13 @@ class CycleGANModel(BaseModel):
         """Calculate the loss for generators G_A and G_B"""
 
         lambda_G = self.opt.lambda_G
-        lambda_idt = self.opt.lambda_identity
+        #lambda_idt = self.opt.lambda_identity
         lambda_A = self.opt.lambda_A
         lambda_B = self.opt.lambda_B
         lambda_C_1 = self.opt.lambda_C_1
         lambda_C_2 = self.opt.lambda_C_2
         lambda_C_3 = self.opt.lambda_C_3
 
-        '''
-        self.netG_AB.to("cpu")
-        self.netG_BA.to("cpu")
-        self.netD_AB.to(self.device)
-        self.netD_BA.to(self.device)
-        '''
         self.loss_G_AB = self.netD_AB(self.fake_B, 1).loss
 
         #self.loss_G_AB = self.loss_G_AB * lambda_G
@@ -238,12 +215,6 @@ class CycleGANModel(BaseModel):
         #self.loss_G_BA = self.loss_G_BA * lambda_G
         self.loss_G_BA = (self.loss_G_BA + ((self.loss_G_BA_1 + self.loss_G_BA_2) * 0.5)) * 0.5 * lambda_G
 
-        '''
-        self.netD_AB.to("cpu")
-        self.netD_BA.to("cpu")
-        self.netG_AB.to(self.device)
-        self.netG_BA.to(self.device)
-        '''
         # Forward cycle loss || G_B(G_A(A)) - A||
         size_vector = torch.ones(
             self.netG_AB.module.batch_encode_plus(self.real_A, verbose=False)["input_ids"].size()).to(self.device)
@@ -268,7 +239,6 @@ class CycleGANModel(BaseModel):
         size_vector = torch.ones(self.fake_A_embeddings.size()).to(self.device)
 
         # Backward cycle loss || G_B(B) - G_A(A)||
-
         loss_cycle_C_1 = self.criterionCycle(self.fake_A_embeddings,
                                              self.fake_B_embeddings,
                                              size_vector) * lambda_C_1
@@ -300,20 +270,12 @@ class CycleGANModel(BaseModel):
 
         self.loss_G.backward()
 
-        #self.loss_G_AB = self.loss_G_AB.item()
-        #self.loss_G_BA = self.loss_G_BA.item()
-        #self.loss_cycle_ABA = self.loss_cycle_ABA.item()
-        #self.loss_cycle_BAB = self.loss_cycle_BAB.item()
-
         del real_A_tokens
         del rec_A_tokens
         del real_B_tokens
         del rec_B_tokens
         del size_vector
 
-
-
-        #del self.loss_G
         torch.cuda.empty_cache()
         gc.collect()
 
@@ -321,20 +283,13 @@ class CycleGANModel(BaseModel):
 
     def optimize_parameters(self):
         """Calculate losses, gradients, and update network weights; called in every training iteration"""
-        # forward
 
         self.netG_AB.train()
         self.netG_BA.train()
         self.netD_AB.train()
         self.netD_BA.train()
-        
-        '''
-        self.netG_AB.to(self.device)
-        self.netG_BA.to(self.device)
-        self.netD_AB.to("cpu")
-        self.netD_BA.to("cpu")
-        '''
-        
+
+        # forward
         self.forward()  # compute fake images and reconstruction images.
         gc.collect()
 
@@ -354,21 +309,10 @@ class CycleGANModel(BaseModel):
 
         
         # D_A and D_B
-        '''
-        self.netG_AB.to("cpu")
-        self.netG_BA.to("cpu")
-        self.netD_AB.to(self.device)
-        self.netD_BA.to("cpu")
-        '''
         self.set_requires_grad([self.netD_AB], True)
-
         self.optimizer_D.zero_grad()  # set D_A and D_B's gradients to zero
-
         self.backward_D_AB()  # calculate gradients for D_A
-        '''
-        self.netD_AB.to("cpu")
-        self.netD_BA.to(self.device)
-        '''
+
         self.set_requires_grad([self.netD_BA], True)
         self.backward_D_BA()  # calculate graidents for D_B
         self.optimizer_D.step()  # update D_A and D_B's weights
@@ -394,13 +338,6 @@ class CycleGANModel(BaseModel):
         self.netG_BA.module.eval()
         self.netD_AB.module.eval()
         self.netD_BA.module.eval()
-        
-        '''
-        self.netG_AB.to(self.device)
-        self.netG_BA.to(self.device)
-        self.netD_AB.to("cpu")
-        self.netD_BA.to("cpu")
-        '''
         
         with torch.no_grad():
             self.forward()  # calculate loss functions, get gradients, update network weights

@@ -42,12 +42,6 @@ test/data/legacy_serialized.pt
 .idea
 
 
-
-
-
-
-
-
 .idea
 *.pyc
 examples/datasets/*/
@@ -55,6 +49,7 @@ examples/output
 sentence_transformers.egg-info
 dist/
 nr_*/
+
 
 *.csv
 *.tsv

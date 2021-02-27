@@ -9,7 +9,7 @@ setup(
     name="CycleNLPGAN",
     version="1.0",
     author="Michele D'Addetta, Moreno La Quatra",
-    author_email="michele.daddetta@studenti.polito.it",
+    author_email="s257801@studenti.polito.it",
     description="CycleNLPGAN",
     long_description=readme,
     long_description_content_type="text/markdown",
@@ -24,7 +24,13 @@ setup(
         'numpy',
         'scikit-learn',
         'scipy',
-        'nltk'
+        'nltk',
+        'torchvision>=0.2.1',
+        'dominate>=2.3.1',
+        'visdom>=0.1.8.3',
+        'faiss-gpu',
+        'opustools',
+        'sacrebleu'
     ],
     classifiers=[
         "Development Status :: 4 - Beta",

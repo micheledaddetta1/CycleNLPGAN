@@ -59,7 +59,7 @@ class EncDecModel(nn.Module):
             else:
                 outputs = self.model.base_model.encoder(**embeddings, output_attentions=True, return_dict=True)
             if generate_sentences:
-                output_sentences = self.model.generate(**embeddings, )
+                output_sentences = self.model.generate(**embeddings)
                 output_sentences = self.decode(output_sentences)
             else:
                 output_sentences = []
@@ -100,25 +100,6 @@ class EncDecModel(nn.Module):
     def get_sentence_embedding_dimension(self) -> int:
         return self.config.hidden_size
 
-    def tokenize(self, text: str) -> List[int]:
-        """
-        Tokenizes a text and maps tokens to token-ids
-        """
-        return self.tokenizer.convert_tokens_to_ids(self.tokenizer.tokenize(text))
-
-    def get_sentence_features(self, tokens: List[int], pad_seq_length: int):
-        """
-        Convert tokenized sentence in its embedding ids, segment ids and mask
-
-        :param tokens:
-            a tokenized sentence
-        :param pad_seq_length:
-            the maximal length of the sequence. Cannot be greater than self.sentence_transformer_config.max_seq_length
-        :return: embedding ids, segment ids and mask for the sentence
-        """
-        pad_seq_length = min(pad_seq_length, self.max_seq_length) + 3 #Add space for special tokens
-        return self.tokenizer.prepare_for_model(tokens, max_length=pad_seq_length, padding=True, return_tensors='pt')
-
     def get_config_dict(self):
         return {key: self.__dict__[key] for key in self.config_keys}
 
@@ -136,16 +117,6 @@ class EncDecModel(nn.Module):
         #    config = json.load(fIn)
 
         return EncDecModel(model_name_or_path=input_path, task=task, freeze_encoder=freeze_encoder) #, **config)
-
-
-    def encodeSentence(self, sentence):
-        logging.info("Trainer - encoding sentence")
-        train_input_ids = []
-        input_ids = self.tokenizer.encode(
-                sentence,
-                return_tensors='pt'
-            )
-        return input_ids[0, :]
 
 
     def generate(self, text):

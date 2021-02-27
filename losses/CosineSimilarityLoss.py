@@ -1,7 +1,5 @@
 import torch
-from torch import nn, Tensor
-from typing import Union, Tuple, List, Iterable, Dict
-from models import Transformer
+from torch import nn
 
 
 class CosineSimilarityLoss(nn.Module):

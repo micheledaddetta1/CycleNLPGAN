@@ -8,9 +8,7 @@ import os
 import numpy as np
 import logging
 
-from models import T5
 from models.Pooling import Pooling
-from transformers.tokenization_utils import BatchEncoding
 
 
 

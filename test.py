@@ -33,9 +33,7 @@ import os
 from tqdm import tqdm
 
 from options.test_options import TestOptions
-from data import create_dataset
 from models import create_model
-from util.visualizer import Visualizer
 import torch
 
 if __name__ == '__main__':
