@@ -12,3 +12,4 @@ visdom>=0.1.8.3
 
 faiss-gpu
 opustools
+sacrebleu
