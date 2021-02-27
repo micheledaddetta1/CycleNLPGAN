@@ -262,5 +262,5 @@ class BaseModel(ABC):
                 for param in net.parameters():
                     param.requires_grad = requires_grad
 
-    def evaluate(self, sentences_file="eval_sentences.txt", distance_file="distances.txt", mutual_avg_file="mutual_distances.txt", mutual_avg_file_A="mutual_distances_A.txt", mutual_avg_file_B="mutual_distances_B.txt", top_k_file="top_k.txt"):
+    def evaluate(self, sentences_file="eval_sentences.txt", distance_file="distances.txt", mutual_avg_file="mutual_distances.txt", mutual_avg_file_A="mutual_distances_A.txt", mutual_avg_file_B="mutual_distances_B.txt", top_k_file="top_k.txt", sacre_file="sacre_bleu.tsv"):
         pass

@@ -5,7 +5,7 @@ import sklearn
 import torch
 import itertools
 
-from sacrebleu import sacrebleu
+import sacrebleu
 
 from losses import CosineSimilarityLoss
 from losses import MSELoss
@@ -387,7 +387,7 @@ class CycleGANModel(BaseModel):
         gc.collect()
 
 
-    def evaluate(self, sentences_file="eval_sentences.txt", distance_file="distances.txt", mutual_avg_file="mutual_distances.txt", mutual_avg_file_A="mutual_distances_A.txt", mutual_avg_file_B="mutual_distances_B.txt", top_k_file="top_k.txt", sacre_file="sacre_bleu.tsv", epoch=None, iters=None):
+    def evaluate(self, sentences_file="eval_sentences.txt", distance_file="distances.txt", mutual_avg_file="mutual_distances.txt", mutual_avg_file_A="mutual_distances_A.txt", mutual_avg_file_B="mutual_distances_B.txt", top_k_file="top_k.txt", sacre_file="sacre_bleu.tsv"):
         #logging.info("\n\nEvaluating...")
 
         self.netG_AB.module.eval()

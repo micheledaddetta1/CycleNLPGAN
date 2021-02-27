@@ -219,7 +219,7 @@ if __name__ == '__main__':
                         break
                     model.set_input(eval_data)  # unpack data from dataset and apply preprocessing
                     model.evaluate(sentences_file=sentences_filename, distance_file=distance_filename, mutual_avg_file=mutual_filename, mutual_avg_file_A=mutual_filename_A, mutual_avg_file_B=mutual_filename_B,
-                                   top_k_file=top_k_filename, sacre_filename=sacre_filename, epoch=epoch, iters=total_iters)
+                                   top_k_file=top_k_filename, sacre_file=sacre_filename)
 
                 with open(mutual_filename, "r") as mutual_file:
                     avg = mutual_file.read().split("\n")
