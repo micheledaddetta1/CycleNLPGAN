@@ -34,7 +34,7 @@ import os
 
 corpora = ['JW300']  #Corpora you want to use
 source_languages = ['en']            #Source language, our teacher model is able to understand
-target_languages = ['de', 'es', 'it', 'fr','zh','ru']    #Target languages, out student model should learn
+target_languages = ['de', 'es', 'it', 'fr', 'zh', 'ru']    #Target languages, out student model should learn
 
 output_folder = './'
 opus_download_folder = 'opus'
@@ -52,4 +52,6 @@ for corpus in corpora:
                     read = OpusRead(directory=corpus, source=src_lang, target=trg_lang, write=[output_filename], download_dir=opus_download_folder, preprocess='raw', write_mode='moses', suppress_prompts=True)
                     read.printPairs()
                 except:
-                    print("An error occured during the creation of", output_filename)
+                    with open(output_filename, encoding='utf8') as fInOut:
+                        pass
+                print("An error occured during the creation of", output_filename)

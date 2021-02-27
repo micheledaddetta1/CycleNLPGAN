@@ -5,6 +5,8 @@ import sklearn
 import torch
 import itertools
 
+from sacrebleu import sacrebleu
+
 from losses import CosineSimilarityLoss
 from losses import MSELoss
 from util.image_pool import ImagePool
@@ -385,7 +387,7 @@ class CycleGANModel(BaseModel):
         gc.collect()
 
 
-    def evaluate(self, sentences_file="eval_sentences.txt", distance_file="distances.txt", mutual_avg_file="mutual_distances.txt", mutual_avg_file_A="mutual_distances_A.txt", mutual_avg_file_B="mutual_distances_B.txt", top_k_file="top_k.txt", epoch=None, iters=None):
+    def evaluate(self, sentences_file="eval_sentences.txt", distance_file="distances.txt", mutual_avg_file="mutual_distances.txt", mutual_avg_file_A="mutual_distances_A.txt", mutual_avg_file_B="mutual_distances_B.txt", top_k_file="top_k.txt", sacre_file="sacre_bleu.tsv", epoch=None, iters=None):
         #logging.info("\n\nEvaluating...")
 
         self.netG_AB.module.eval()
@@ -471,6 +473,14 @@ class CycleGANModel(BaseModel):
         # per vedere quanti hanno l'embedding reale nella top 1, top 2 e cosi via (cumulativo)
         # salvo info in un file, per ogni epoca
 
+        bleu_fake_A = sacrebleu.raw_corpus_bleu(self.fake_A, [self.real_A]).score
+        bleu_rec_A = sacrebleu.raw_corpus_bleu(self.rec_A, [self.real_A]).score
+        bleu_fake_B = sacrebleu.raw_corpus_bleu(self.fake_B, [self.real_B]).score
+        bleu_rec_B = sacrebleu.raw_corpus_bleu(self.rec_B, [self.real_B]).score
+
+        with open(sacre_file, "a") as sacre_file:
+            for i in range(dim):
+                sacre_file.write(str(bleu_fake_A) + '\t' + str(bleu_rec_A) + '\t' +str(bleu_fake_B) + '\t' +str(bleu_rec_B) + '\n')
 
         self.netG_AB.module.train()
         self.netG_BA.module.train()

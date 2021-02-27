@@ -13,10 +13,10 @@ import gzip
 # while other datasets like OPUS / TED2020 use 2 letter language codes (ISO-639-1)
 # For training of sentence transformers, which type of language code is used doesn't matter.
 # For language codes, see: https://en.wikipedia.org/wiki/List_of_ISO_639-2_codes
-source_languages = set(['eng'])
-source_languages_out = set(['en'])
-target_languages = set(['deu', 'spa', 'ita', 'fra','rus','chi'])
-target_languages_out = set(['de', 'es', 'it', 'fr','ru','zh'])
+source_languages = list(['eng'])
+source_languages_out = list(['en'])
+target_languages = list(['deu', 'spa', 'ita', 'fra', 'rus', 'chi'])
+target_languages_out = list(['de', 'es', 'it', 'fr', 'ru', 'zh'])
 
 num_dev_sentences = 1000     #Number of sentences that are used to create a development set
 
@@ -62,8 +62,8 @@ if not os.path.exists(links_file):
 
 #Read sentences
 sentences = {}
-all_langs = target_languages.union(source_languages)
 print("Read sentences.csv file")
+all_langs = source_languages + target_languages
 with open(sentences_file, encoding='utf8') as fIn:
     for line in fIn:
         id, lang, sentence = line.strip().split('\t')
@@ -88,8 +88,8 @@ with open(links_file, encoding='utf8') as fIn:
 
 
 
-target_languages = set(['deu', 'spa', 'ita', 'fra','rus','chi'])
-target_languages_out = set(['de', 'es', 'it', 'fr','ru','zh'])
+#target_languages = set(['deu', 'spa', 'ita', 'fra','rus','chi'])
+#target_languages_out = set(['de', 'es', 'it', 'fr','ru','zh'])
 #Write everything to the output folder
 print("Write output files")
 for src_lang, src_lang_out in zip(source_languages, source_languages_out):
@@ -99,13 +99,13 @@ for src_lang, src_lang_out in zip(source_languages, source_languages_out):
         dev_sentences = source_sentences[0:num_dev_sentences]
 
         print("{}-{} has {} sentences".format(src_lang_out, trg_lang_out, len(source_sentences)))
-        if len(dev_sentences) > 0:
+        if len(dev_sentences) >= 0:
             with gzip.open(os.path.join(output_folder, 'Tatoeba-{}-{}-eval.tsv.gz'.format(src_lang_out, trg_lang_out)), 'wt', encoding='utf8') as fOut:
                 for sent in dev_sentences:
                     fOut.write("\t".join([sent]+translations[src_lang][trg_lang][sent]))
                     fOut.write("\n")
 
-        if len(train_sentences) > 0:
+        if len(train_sentences) >= 0:
             with gzip.open(os.path.join(output_folder, 'Tatoeba-{}-{}-train.tsv.gz'.format(src_lang_out, trg_lang_out)), 'wt', encoding='utf8') as fOut:
                 for sent in train_sentences:
                     fOut.write("\t".join([sent]+translations[src_lang][trg_lang][sent]))
