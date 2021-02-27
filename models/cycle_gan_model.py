@@ -2,6 +2,7 @@ import logging
 from copy import deepcopy
 
 import sklearn
+from sklearn.metrics import pairwise_distances
 import torch
 import itertools
 
