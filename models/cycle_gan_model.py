@@ -8,7 +8,7 @@ import itertools
 
 import sacrebleu
 
-from losses import CosineSimilarityLoss
+from losses import CosineSimilarityLoss, MSELoss
 from .base_model import BaseModel
 from . import networks
 import numpy as np
@@ -54,6 +54,8 @@ class CycleGANModel(BaseModel):
 
         parser.set_defaults(no_dropout=True)  # default CycleGAN did not use dropout
         if is_train:
+            parser.add_argument('--loss-type', type=str, default="mse", help='Loss used in cycle [mse|cosine]')
+
             parser.add_argument('--lambda_G', type=float, default=10.0, help='scaling factor for generator loss')
             parser.add_argument('--lambda_D', type=float, default=10.0, help='scaling factor for discriminator loss')
             parser.add_argument('--lambda_A', type=float, default=10.0, help='weight for cycle loss (A -> B -> A)')
@@ -109,7 +111,14 @@ class CycleGANModel(BaseModel):
         if self.isTrain:
             # define loss functions
             self.criterionGAN = networks.GANLoss(opt.gan_mode).to(self.device)  # define GAN loss.
-            self.criterionCycle = CosineSimilarityLoss().to(self.device)
+
+            if opt.loss_type == 'cosine':
+                self.criterionCycle = CosineSimilarityLoss().to(self.device)
+            elif opt.loss_type == 'mse':
+                self.criterionCycle = MSELoss().to(self.device)
+            else:
+                raise NotImplementedError(opt.loss_type + " not implemented")
+
             self.criterionIdt = torch.nn.CosineEmbeddingLoss()  # CosineSimilarityLoss()
             # initialize optimizers; schedulers will be automatically created by function <BaseModel.setup>.
             if opt.freeze_GB_encoder is False:
@@ -223,9 +232,13 @@ class CycleGANModel(BaseModel):
                                                                                                          dtype=torch.float32)
         rec_A_tokens = self.netG_AB.module.batch_encode_plus(self.rec_A, verbose=False)["input_ids"].to(self.device,
                                                                                                        dtype=torch.float32)
-        self.loss_cycle_ABA = self.criterionCycle(real_A_tokens,
+
+        if lambda_A != 0.0:
+            self.loss_cycle_ABA = self.criterionCycle(real_A_tokens,
                                                 rec_A_tokens,
                                                 size_vector) * lambda_A
+        else:
+            self.loss_cycle_ABA = torch.tensor([0.0]).to(self.device)
 
         # Backward cycle loss || G_A(G_B(B)) - B||
         real_B_tokens = self.netG_BA.module.batch_encode_plus(self.real_B, verbose=False)["input_ids"].to(self.device,
@@ -233,10 +246,12 @@ class CycleGANModel(BaseModel):
         rec_B_tokens = self.netG_BA.module.batch_encode_plus(self.rec_B, verbose=False)["input_ids"].to(self.device,
                                                                                                        dtype=torch.float32)
 
-        self.loss_cycle_BAB = self.criterionCycle(real_B_tokens,
-                                                rec_B_tokens,
-                                                size_vector) * lambda_B
-
+        if lambda_B != 0:
+            self.loss_cycle_BAB = self.criterionCycle(real_B_tokens,
+                                                    rec_B_tokens,
+                                                    size_vector) * lambda_B
+        else:
+            self.loss_cycle_BAB = torch.tensor([0.0]).to(self.device)
         size_vector = torch.ones(self.fake_A_embeddings.size()).to(self.device)
 
         # Backward cycle loss || G_B(B) - G_A(A)||

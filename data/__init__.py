@@ -60,15 +60,15 @@ def create_dataset(opt, model):
     assert opt.train_percentage+opt.eval_percentage+opt.test_percentage == 1.0
 
     cachedfiles = ["data_"]  # , "STS2017.en-de.txt.gz", "xnli-en-de.txt.gz"]
-    cached_filepath_train = os.path.join(opt.dataroot, opt.language, cachedfiles[0] + 'train.bkp')
-    cached_filepath_eval = os.path.join(opt.dataroot, opt.language, cachedfiles[0] + 'eval.bkp')
+    cached_filepath_train = os.path.join(opt.dataroot, opt.name, cachedfiles[0] + 'train.bkp')
+    cached_filepath_eval = os.path.join(opt.dataroot, opt.name, cachedfiles[0] + 'eval.bkp')
     #cached_filepath_test = os.path.join(opt.dataroot, cachedfiles[0] + 'test.bkp')
 
     if os.path.exists(cached_filepath_train):
         train_data_loader = torch.load(cached_filepath_train)
     else:
         train_data_loader = CustomDatasetDataLoader(opt, dataloader=None, dataset_type='train')
-        os.mkdir(os.path.join(opt.dataroot, opt.language))
+        os.mkdir(os.path.join(opt.dataroot, opt.name))
         torch.save(train_data_loader, cached_filepath_train)
 
 
