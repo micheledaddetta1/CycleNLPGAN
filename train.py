@@ -61,17 +61,17 @@ if __name__ == '__main__':
 
     if not opt.continue_train:
 
-        fw = open(os.path.join(opt.checkpoints_dir, opt.name, "0_0_distance.txt"), "w")
+        fw = open(os.path.join(opt.checkpoints_dir, opt.name, "0_0_distance.txt"), "w", encoding='utf8')
         fw.close()
-        fw = open(os.path.join(opt.checkpoints_dir, opt.name, "0_0_sentence.txt"), "w")
+        fw = open(os.path.join(opt.checkpoints_dir, opt.name, "0_0_sentence.txt"), "w", encoding='utf8')
         fw.close()
-        fw = open(os.path.join(opt.checkpoints_dir, opt.name, "0_0_top_k.txt"), "w")
+        fw = open(os.path.join(opt.checkpoints_dir, opt.name, "0_0_top_k.txt"), "w", encoding='utf8')
         fw.close()
-        fw = open(os.path.join(opt.checkpoints_dir, opt.name, "0_0_mutual_distance.txt"), "w")
+        fw = open(os.path.join(opt.checkpoints_dir, opt.name, "0_0_mutual_distance.txt"), "w", encoding='utf8')
         fw.close()
-        fw = open(os.path.join(opt.checkpoints_dir, opt.name, "0_0_mutual_distance_A.txt"), "w")
+        fw = open(os.path.join(opt.checkpoints_dir, opt.name, "0_0_mutual_distance_A.txt"), "w", encoding='utf8')
         fw.close()
-        fw = open(os.path.join(opt.checkpoints_dir, opt.name, "0_0_mutual_distance_B.txt"), "w")
+        fw = open(os.path.join(opt.checkpoints_dir, opt.name, "0_0_mutual_distance_B.txt"), "w", encoding='utf8')
         fw.close()
 
         for j, eval_data in enumerate(eval_dataset.dataloader):  # inner loop within one epoch
@@ -88,43 +88,43 @@ if __name__ == '__main__':
                            )
             gc.collect()
 
-        with open(os.path.join(opt.checkpoints_dir, opt.name, "0_0_mutual_distance.txt"), "r") as mutual_file:
+        with open(os.path.join(opt.checkpoints_dir, opt.name, "0_0_mutual_distance.txt"), "r", encoding='utf8') as mutual_file:
             avg = mutual_file.read().split("\n")
             avg = [float(e) for e in avg if e != ""]
             avg = sum(avg) / len(avg)
-        logging.info("Average mutual distance:" + str(avg))
-        fw = open(os.path.join(opt.checkpoints_dir, opt.name, "average_mutual_distance.tsv"), "a")
+        logging.info("Average mutual distance:" + str(avg), encoding='utf8')
+        fw = open(os.path.join(opt.checkpoints_dir, opt.name, "average_mutual_distance.tsv"), "a", encoding='utf8')
         fw.write("0\t0\t" + str(avg) + "\n")
         fw.close()
 
-        with open(os.path.join(opt.checkpoints_dir, opt.name, "0_0_mutual_distance_A.txt"), "r") as mutual_file:
+        with open(os.path.join(opt.checkpoints_dir, opt.name, "0_0_mutual_distance_A.txt"), "r", encoding='utf8') as mutual_file:
             avg = mutual_file.read().split("\n")
             avg = [float(e) for e in avg if e != ""]
             avg = sum(avg) / len(avg)
         logging.info("Average mutual distance A:" + str(avg))
-        fw = open(os.path.join(opt.checkpoints_dir, opt.name, "average_mutual_distance_A.tsv"), "a")
+        fw = open(os.path.join(opt.checkpoints_dir, opt.name, "average_mutual_distance_A.tsv"), "a", encoding='utf8')
         fw.write("0\t0\t" + str(avg) + "\n")
         fw.close()
 
-        with open(os.path.join(opt.checkpoints_dir, opt.name, "0_0_mutual_distance_B.txt"), "r") as mutual_file:
+        with open(os.path.join(opt.checkpoints_dir, opt.name, "0_0_mutual_distance_B.txt"), "r", encoding='utf8') as mutual_file:
             avg = mutual_file.read().split("\n")
             avg = [float(e) for e in avg if e != ""]
             avg = sum(avg) / len(avg)
         logging.info("Average mutual distance B:" + str(avg))
-        fw = open(os.path.join(opt.checkpoints_dir, opt.name, "average_mutual_distance_B.tsv"), "a")
+        fw = open(os.path.join(opt.checkpoints_dir, opt.name, "average_mutual_distance_B.tsv"), "a", encoding='utf8')
         fw.write("0\t0\t" + str(avg) + "\n")
         fw.close()
 
-        with open(os.path.join(opt.checkpoints_dir, opt.name, "0_0_distance.txt"), "r") as distance_file:
+        with open(os.path.join(opt.checkpoints_dir, opt.name, "0_0_distance.txt"), "r", encoding='utf8') as distance_file:
             avg = distance_file.read().split("\n")
             avg = [float(e) for e in avg if e != ""]
             avg = sum(avg)/len(avg)
         logging.info("Average distance:" + str(avg))
-        fw = open(os.path.join(opt.checkpoints_dir, opt.name, "average_distance.tsv"), "a")
+        fw = open(os.path.join(opt.checkpoints_dir, opt.name, "average_distance.tsv"), "a", encoding='utf8')
         fw.write("0\t0\t" + str(avg) + "\n")
         fw.close()
 
-        with open(os.path.join(opt.checkpoints_dir, opt.name, "0_0_sacre.tsv"), "r") as sacre_file:
+        with open(os.path.join(opt.checkpoints_dir, opt.name, "0_0_sacre.tsv"), "r", encoding='utf8') as sacre_file:
             lines = sacre_file.read().split("\n")
             avg_fake_A = [float(e.split("\t")[0]) for e in lines if e != ""]
             avg_rec_A = [float(e.split("\t")[1]) for e in lines if e != ""]
@@ -138,7 +138,7 @@ if __name__ == '__main__':
         logging.info("BLEU distance real-rec A:" + str(avg_rec_A))
         logging.info("BLEU distance real-fake B:" + str(avg_fake_B))
         logging.info("BLEU distance real-rec B:" + str(avg_rec_B))
-        fw = open(os.path.join(opt.checkpoints_dir, opt.name, "average_sacre.tsv"), "a")
+        fw = open(os.path.join(opt.checkpoints_dir, opt.name, "average_sacre.tsv"), "a", encoding='utf8')
         fw.write("0\t0\t" + str(avg_fake_A) + "\t" + str(avg_rec_A) + "\t" + str(avg_fake_B) + "\t" + str(avg_rec_B) + "\n")
         fw.close()
 
@@ -198,19 +198,19 @@ if __name__ == '__main__':
                 mutual_filename_B = os.path.join(opt.checkpoints_dir, opt.name, mutual_filename_B)
                 sacre_filename = os.path.join(opt.checkpoints_dir, opt.name, sacre_filename)
 
-                fw = open(distance_filename, "w")
+                fw = open(distance_filename, "w", encoding='utf8')
                 fw.close()
-                fw = open(sentences_filename, "w")
+                fw = open(sentences_filename, "w", encoding='utf8')
                 fw.close()
-                fw = open(top_k_filename, "w")
+                fw = open(top_k_filename, "w", encoding='utf8')
                 fw.close()
-                fw = open(mutual_filename, "w")
+                fw = open(mutual_filename, "w", encoding='utf8')
                 fw.close()
-                fw = open(mutual_filename_A, "w")
+                fw = open(mutual_filename_A, "w", encoding='utf8')
                 fw.close()
-                fw = open(mutual_filename_B, "w")
+                fw = open(mutual_filename_B, "w", encoding='utf8')
                 fw.close()
-                fw = open(sacre_filename, "w")
+                fw = open(sacre_filename, "w", encoding='utf8')
                 fw.close()
 
                 for j, eval_data in enumerate(eval_dataset.dataloader):  # inner loop within one epoch
@@ -220,44 +220,44 @@ if __name__ == '__main__':
                     model.evaluate(sentences_file=sentences_filename, distance_file=distance_filename, mutual_avg_file=mutual_filename, mutual_avg_file_A=mutual_filename_A, mutual_avg_file_B=mutual_filename_B,
                                    top_k_file=top_k_filename, sacre_file=sacre_filename)
 
-                with open(mutual_filename, "r") as mutual_file:
+                with open(mutual_filename, "r", encoding='utf8') as mutual_file:
                     avg = mutual_file.read().split("\n")
                     avg = [float(e) for e in avg if e != ""]
                     avg = sum(avg) / len(avg)
                 logging.info("Average mutual distance:" + str(avg))
-                fw = open(os.path.join(opt.checkpoints_dir, opt.name, "average_mutual_distance.tsv"), "a")
+                fw = open(os.path.join(opt.checkpoints_dir, opt.name, "average_mutual_distance.tsv"), "a", encoding='utf8')
                 fw.write(str(epoch) + "\t" + str(total_iters) + "\t" + str(avg) + "\n")
                 fw.close()
 
-                with open(mutual_filename_A, "r") as mutual_file:
+                with open(mutual_filename_A, "r", encoding='utf8') as mutual_file:
                     avg = mutual_file.read().split("\n")
                     avg = [float(e) for e in avg if e != ""]
                     avg = sum(avg) / len(avg)
                 logging.info("Average mutual distance A:" + str(avg))
-                fw = open(os.path.join(opt.checkpoints_dir, opt.name, "average_mutual_distance_A.tsv"), "a")
+                fw = open(os.path.join(opt.checkpoints_dir, opt.name, "average_mutual_distance_A.tsv"), "a", encoding='utf8')
                 fw.write(str(epoch) + "\t" + str(total_iters) + "\t" + str(avg) + "\n")
                 fw.close()
 
-                with open(mutual_filename_B, "r") as mutual_file:
+                with open(mutual_filename_B, "r", encoding='utf8') as mutual_file:
                     avg = mutual_file.read().split("\n")
                     avg = [float(e) for e in avg if e != ""]
                     avg = sum(avg) / len(avg)
                 logging.info("Average mutual distance B:" + str(avg))
-                fw = open(os.path.join(opt.checkpoints_dir, opt.name, "average_mutual_distance_B.tsv"), "a")
+                fw = open(os.path.join(opt.checkpoints_dir, opt.name, "average_mutual_distance_B.tsv"), "a", encoding='utf8')
                 fw.write(str(epoch)+"\t"+str(total_iters)+"\t" + str(avg) + "\n")
                 fw.close()
 
 
-                with open(distance_filename, "r") as distance_file:
+                with open(distance_filename, "r", encoding='utf8') as distance_file:
                     avg = distance_file.read().split("\n")
                     avg = [float(e) for e in avg if e != ""]
                     avg = sum(avg) / len(avg)
                 logging.info("Average distance:" + str(avg))
-                fw = open(os.path.join(opt.checkpoints_dir, opt.name, "average_distance.tsv"), "a")
+                fw = open(os.path.join(opt.checkpoints_dir, opt.name, "average_distance.tsv"), "a", encoding='utf8')
                 fw.write(str(epoch)+"\t"+str(total_iters)+"\t" + str(avg) + "\n")
                 fw.close()
 
-                with open(sacre_filename, "r") as sacre_file:
+                with open(sacre_filename, "r", encoding='utf8') as sacre_file:
                     lines = sacre_file.read().split("\n")
                     avg_fake_A = [float(e.split("\t")[0]) for e in lines if e != ""]
                     avg_rec_A = [float(e.split("\t")[1]) for e in lines if e != ""]
@@ -271,7 +271,7 @@ if __name__ == '__main__':
                 logging.info("BLEU distance real-rec A:" + str(avg_rec_A))
                 logging.info("BLEU distance real-fake B:" + str(avg_fake_B))
                 logging.info("BLEU distance real-rec B:" + str(avg_rec_B))
-                fw = open(os.path.join(opt.checkpoints_dir, opt.name, "average_sacre.tsv"), "a")
+                fw = open(os.path.join(opt.checkpoints_dir, opt.name, "average_sacre.tsv"), "a", encoding='utf8')
                 fw.write(str(epoch)+"\t"+str(total_iters)+"\t" + str(avg_fake_A) + "\t" + str(avg_rec_A) + "\t" + str(avg_fake_B) + "\t" + str(avg_rec_B) + "\n")
                 fw.close()
 
@@ -288,38 +288,38 @@ if __name__ == '__main__':
         mutual_filename_B = os.path.join(opt.checkpoints_dir, opt.name, "mutual_distances_B.txt")
         sacre_filename = os.path.join(opt.checkpoints_dir, opt.name, "sacre.tsv")
 
-        with open(distance_filename, "a") as distance_file:
+        with open(distance_filename, "a", encoding='utf8') as distance_file:
             distance_file.write("NEW EPOCH:\n")
-        with open(top_k_filename, "a") as top_file:
+        with open(top_k_filename, "a", encoding='utf8') as top_file:
             top_file.write("NEW EPOCH:\n")
-        with open(sentences_filename, "a") as sentences_file:
+        with open(sentences_filename, "a", encoding='utf8') as sentences_file:
             sentences_file.write("NEW EPOCH:\n")
-        with open(mutual_filename, "a") as mutual_file:
+        with open(mutual_filename, "a", encoding='utf8') as mutual_file:
             mutual_file.write("NEW EPOCH:\n")
-        with open(mutual_filename_A, "a") as mutual_file:
+        with open(mutual_filename_A, "a", encoding='utf8') as mutual_file:
             mutual_file.write("NEW EPOCH:\n")
-        with open(mutual_filename_B, "a") as mutual_file:
+        with open(mutual_filename_B, "a", encoding='utf8') as mutual_file:
             mutual_file.write("NEW EPOCH:\n")
-        with open(sacre_filename, "a") as sacre_file:
+        with open(sacre_filename, "a", encoding='utf8') as sacre_file:
             sacre_file.write("NEW EPOCH:\n")
 
         for j, eval_data in enumerate(eval_dataset.dataloader):  # inner loop within one epoch
             model.set_input(eval_data)  # unpack data from dataset and apply preprocessing
             model.evaluate(sentences_file=sentences_filename, distance_file=distance_filename, mutual_avg_file=mutual_filename,  mutual_avg_file_A=mutual_filename_A, mutual_avg_file_B=mutual_filename_B, top_k_file=top_k_filename,sacre_file=sacre_filename)
 
-        with open(distance_filename, "a") as distance_file:
+        with open(distance_filename, "a", encoding='utf8') as distance_file:
             distance_file.write("\n\n\n\n")
-        with open(top_k_filename, "a") as top_file:
+        with open(top_k_filename, "a", encoding='utf8') as top_file:
             top_file.write("\n\n\n\n")
-        with open(sentences_filename, "a") as sentences_file:
+        with open(sentences_filename, "a", encoding='utf8') as sentences_file:
             sentences_file.write("\n\n\n\n")
-        with open(mutual_filename, "a") as mutual_file:
+        with open(mutual_filename, "a", encoding='utf8') as mutual_file:
             sentences_file.write("\n\n\n\n")
-        with open(mutual_filename_A, "a") as mutual_file:
+        with open(mutual_filename_A, "a", encoding='utf8') as mutual_file:
             sentences_file.write("\n\n\n\n")
-        with open(mutual_filename_B, "a") as mutual_file:
+        with open(mutual_filename_B, "a", encoding='utf8') as mutual_file:
             sentences_file.write("\n\n\n\n")
-        with open(sacre_filename, "a") as sacre_file:
+        with open(sacre_filename, "a", encoding='utf8') as sacre_file:
             sacre_file.write("\n\n\n\n")
 
         logging.info('End of epoch %d / %d \t Time Taken: %d sec' % (epoch, opt.n_epochs + opt.n_epochs_decay, time.time() - epoch_start_time))

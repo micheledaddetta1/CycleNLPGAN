@@ -158,65 +158,9 @@ class ParallelSentencesDataset(BaseDataset):
         self.num_sentences += len(data)
         #self.num_sentences += sum([len(sentences_map[sent]) for sent in sentences_map])
 
-
-
         #dataset_id = len(self.datasets)
         self.datasets.extend(data)
-        #self.datasets.append(data)#list(sentences_map.items()))
-        #self.dataset_indices.extend([dataset_id] * weight)
-        '''
-        reader = csv.DictReader(fIn, delimiter='\t', quoting=csv.QUOTE_NONE)
-            #print(line['en']+" -> "+line['it'])
 
-        count = 0
-        for line in reader:
-
-            sentence_lengths = [len(sent) for sent in line.values()]
-            if max(sentence_lengths) > max_sentence_length:
-                continue
-
-            eng_sentence = line[0]
-
-            #eng_sentence = eng_sentence.replace("(Mock sob)", "...")
-            #eng_sentence = eng_sentence.replace("(Laughter)", "")
-            #eng_sentence = eng_sentence.replace("(Applause)", "")
-
-            if eng_sentence not in sentences_map:
-                if line[self.opt.language] != "":
-                    sentences_map[eng_sentence] = line[1]
-                    data.append([line[1], eng_sentence])
-
-            count += 1
-            if max_sentences is not None and count >= max_sentences:
-                break
-        '''
-
-        #eng_sentences = list(sentences_map.keys())
-        '''
-        random.seed(seed)
-        random.shuffle(eng_sentences)
-
-        n_train = int(self.train_perc*len(eng_sentences))
-        n_eval = int(self.eval_perc*len(eng_sentences))
-        n_test = int(self.test_perc*len(eng_sentences))
-
-        if dataset_type == 'train':
-            data = eng_sentences[:n_train]
-        elif dataset_type == 'eval':
-            data = eng_sentences[n_train:n_train+n_eval]
-        elif dataset_type == 'test':
-            data = eng_sentences[n_train+n_eval:]
-        else:
-            data = []
-
-        data = [[sentences_map[sentence], sentence] for sentence in data]
-
-        self.dir_AB = os.path.join(self.opt.dataroot, self.opt.phase)  # get the sentences directory
-
-        dataset_id = len(self.datasets)
-        self.datasets.append(data)
-        self.dataset_indices.extend([dataset_id] * weight)
-        '''
 
 
     def __len__(self):

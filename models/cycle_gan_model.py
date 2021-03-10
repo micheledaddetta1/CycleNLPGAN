@@ -227,32 +227,27 @@ class CycleGANModel(BaseModel):
 
         # Forward cycle loss || G_B(G_A(A)) - A||
         size_vector = torch.ones(
-            self.netG_AB.module.batch_encode_plus(self.real_A, verbose=False)["input_ids"].size()).to(self.device)
-        real_A_tokens = self.netG_AB.module.batch_encode_plus(self.real_A, verbose=False)["input_ids"].to(self.device,
-                                                                                                         dtype=torch.float32)
-        rec_A_tokens = self.netG_AB.module.batch_encode_plus(self.rec_A, verbose=False)["input_ids"].to(self.device,
-                                                                                                       dtype=torch.float32)
+            self.netG_AB.module.get_sentence_embedding_dimension()).to(self.device)
 
         if lambda_A != 0.0:
-            self.loss_cycle_ABA = self.criterionCycle(real_A_tokens,
-                                                rec_A_tokens,
+
+            self.loss_cycle_ABA = self.criterionCycle(self.netG_AB.forward(self.real_A, target_sentences=None, partial_value=True, generate_sentences=False)[1],
+                                                self.netG_AB.module.forward(self.rec_A, target_sentences=None, partial_value=True, generate_sentences=False)[1],
                                                 size_vector) * lambda_A
         else:
             self.loss_cycle_ABA = torch.tensor([0.0]).to(self.device)
 
         # Backward cycle loss || G_A(G_B(B)) - B||
-        real_B_tokens = self.netG_BA.module.batch_encode_plus(self.real_B, verbose=False)["input_ids"].to(self.device,
-                                                                                                         dtype=torch.float32)
-        rec_B_tokens = self.netG_BA.module.batch_encode_plus(self.rec_B, verbose=False)["input_ids"].to(self.device,
-                                                                                                       dtype=torch.float32)
 
         if lambda_B != 0:
-            self.loss_cycle_BAB = self.criterionCycle(real_B_tokens,
-                                                    rec_B_tokens,
-                                                    size_vector) * lambda_B
+            self.loss_cycle_BAB = self.criterionCycle(
+                self.netG_BA.module.forward(self.real_B, target_sentences=None, partial_value=True,
+                                            generate_sentences=False)[1],
+                self.netG_BA.module.forward(self.rec_B, target_sentences=None, partial_value=True,
+                                            generate_sentences=False)[1],
+                size_vector) * lambda_B
         else:
             self.loss_cycle_BAB = torch.tensor([0.0]).to(self.device)
-        size_vector = torch.ones(self.fake_A_embeddings.size()).to(self.device)
 
         # Backward cycle loss || G_B(B) - G_A(A)||
         loss_cycle_C_1 = self.criterionCycle(self.fake_A_embeddings,
@@ -286,10 +281,6 @@ class CycleGANModel(BaseModel):
 
         self.loss_G.backward()
 
-        del real_A_tokens
-        del rec_A_tokens
-        del real_B_tokens
-        del rec_B_tokens
         del size_vector
 
         torch.cuda.empty_cache()
