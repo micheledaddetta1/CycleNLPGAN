@@ -229,9 +229,8 @@ class CycleGANModel(BaseModel):
         size_vector = torch.ones(
             self.netG_AB.module.get_sentence_embedding_dimension()).to(self.device)
 
-        if lambda_A != 0.0:
-
-            self.loss_cycle_ABA = self.criterionCycle(self.netG_AB.forward(self.real_A, target_sentences=None, partial_value=True, generate_sentences=False)[1],
+        if lambda_A > 0.0:
+            self.loss_cycle_ABA = self.criterionCycle(self.fake_B_embeddings,
                                                 self.netG_AB.module.forward(self.rec_A, target_sentences=None, partial_value=True, generate_sentences=False)[1],
                                                 size_vector) * lambda_A
         else:
@@ -239,36 +238,46 @@ class CycleGANModel(BaseModel):
 
         # Backward cycle loss || G_A(G_B(B)) - B||
 
-        if lambda_B != 0:
-            self.loss_cycle_BAB = self.criterionCycle(
-                self.netG_BA.module.forward(self.real_B, target_sentences=None, partial_value=True,
-                                            generate_sentences=False)[1],
-                self.netG_BA.module.forward(self.rec_B, target_sentences=None, partial_value=True,
-                                            generate_sentences=False)[1],
-                size_vector) * lambda_B
+        if lambda_B > 0.0:
+            self.loss_cycle_BAB = self.criterionCycle(self.fake_A_embeddings,
+                    self.netG_BA.module.forward(self.rec_B, target_sentences=None, partial_value=True, generate_sentences=False)[1],
+                    size_vector) * lambda_B
         else:
             self.loss_cycle_BAB = torch.tensor([0.0]).to(self.device)
 
-        # Backward cycle loss || G_B(B) - G_A(A)||
-        loss_cycle_C_1 = self.criterionCycle(self.fake_A_embeddings,
-                                             self.fake_B_embeddings,
-                                             size_vector) * lambda_C_1
+
+        if lambda_C_1 > 0.0:
+            # Backward cycle loss || G_B(B) - G_A(A)||
+            loss_cycle_C_1 = self.criterionCycle(self.fake_A_embeddings,
+                                                 self.fake_B_embeddings,
+                                                 size_vector) * lambda_C_1
+        else:
+            loss_cycle_C_1 = torch.tensor([0.0]).to(self.device)
 
 
-        # Backward cycle loss || G_B(B) - G_A(A)||
-        loss_cycle_C_2_1 = self.criterionCycle(self.fake_A_embeddings,
-                                               self.rec_B_embeddings,
-                                               size_vector) * lambda_C_2
+        if lambda_C_2 != 0:
+            # Backward cycle loss || G_B(B) - G_A(A)||
+            loss_cycle_C_2_1 = self.criterionCycle(self.fake_A_embeddings,
+                                                   self.rec_B_embeddings,
+                                                   size_vector) * lambda_C_2
 
-        # Backward cycle loss || G_B(B) - G_A(A)||
-        loss_cycle_C_2_2 = self.criterionCycle(self.fake_B_embeddings,
-                                               self.rec_A_embeddings,
-                                               size_vector) * lambda_C_2
+            # Backward cycle loss || G_B(B) - G_A(A)||
+            loss_cycle_C_2_2 = self.criterionCycle(self.fake_B_embeddings,
+                                                   self.rec_A_embeddings,
+                                                   size_vector) * lambda_C_2
+        else:
+            loss_cycle_C_2_1 = torch.tensor([0.0]).to(self.device)
+            loss_cycle_C_2_2 = torch.tensor([0.0]).to(self.device)
 
-        # Backward cycle loss || G_B(B) - G_A(A)||
-        loss_cycle_C_3 = self.criterionCycle(self.rec_A_embeddings,
-                                             self.rec_B_embeddings,
-                                             size_vector) * lambda_C_3
+
+        if lambda_C_3 > 0.0:
+            # Backward cycle loss || G_B(B) - G_A(A)||
+            loss_cycle_C_3 = self.criterionCycle(self.rec_A_embeddings,
+                                                 self.rec_B_embeddings,
+                                                 size_vector) * lambda_C_3
+        else:
+            loss_cycle_C_3 = torch.tensor([0.0]).to(self.device)
+
 
         # 'weight for embedding loss (fakeA -> recB, fakeB -> recA)')  # mixed loss
         # 'weight for embedding loss (recA -> recB)')  # mixed loss (dubbio translation)
