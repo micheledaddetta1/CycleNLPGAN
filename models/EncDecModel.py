@@ -129,8 +129,10 @@ class EncDecModel(nn.Module):
         return self.model.get_encoder()
 
 
-    def decode(self, tokens):
-        return self.tokenizer.batch_decode(tokens, skip_special_tokens=True)
+    def decode(self, tokens): 
+        list_sentences = self.tokenizer.batch_decode(tokens, skip_special_tokens=True)
+        list_sentences = [''.join(l).replace('▁', ' ') for l in list_sentences]
+        return list_sentences
         #return self.dest_tokenizer.batch_decode(tokens, skip_special_tokens=True)
 
 
