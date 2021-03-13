@@ -76,14 +76,10 @@ for wmt in wmt_list:
 
 
     print(language+"-en BLEU score WMT"+str(wmt)+": " + str(bleu))
-    
 
+    source_file = "wmt" + wmt + "/" + language + "_en/newstest20" + wmt + ".src.en"
+    reference_file = "wmt" + wmt + "/" + language + "_en/newstest20" + wmt + ".ref."+language
 
-
-
-
-    source_file = "wmt14/" + language + "_en/newstest2014.src.en"
-    reference_file = "wmt14/" + language + "_en/newstest2014.ref."+language
 
     # metric = load_metric("sacrebleu")
 
