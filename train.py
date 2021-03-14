@@ -92,7 +92,7 @@ if __name__ == '__main__':
             avg = mutual_file.read().split("\n")
             avg = [float(e) for e in avg if e != ""]
             avg = sum(avg) / len(avg)
-        logging.info("Average mutual distance:" + str(avg), encoding='utf8')
+        logging.info("Average mutual distance:" + str(avg))
         fw = open(os.path.join(opt.checkpoints_dir, opt.name, "average_mutual_distance.tsv"), "a", encoding='utf8')
         fw.write("0\t0\t" + str(avg) + "\n")
         fw.close()
