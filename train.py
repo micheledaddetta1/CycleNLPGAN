@@ -149,6 +149,7 @@ if __name__ == '__main__':
         epoch_iter = 0                  # the number of training iterations in current epoch, reset to 0 every epoch
         visualizer.reset()              # reset the visualizer: make sure it saves the results to HTML at least once every epoch
 
+        visualizer.print_current_lr(epoch, model.get_learning_rate())
         for i, data in enumerate(train_dataset.dataloader):  # inner loop within one epoch
             epoch_iter += opt.batch_size
 

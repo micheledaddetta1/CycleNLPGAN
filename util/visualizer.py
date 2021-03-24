@@ -44,6 +44,20 @@ class Visualizer():
         self.saved = False
 
 
+    # learning rate
+    def print_current_lr(self, epoch, lr):
+        """print current learning rate on console
+        Parameters:
+            epoch (int) -- current epoch
+            lr (float) -- learning rate value
+        """
+        message = 'Learning rate at epoch %d : %.7f) ' % (epoch, lr)
+
+        logging.info(message)  # print the message
+        for log_name in self.log_names:
+            with open(log_name, "a") as log_file:
+                log_file.write('%s\n' % message)  # save the message
+
     # losses: same format as |losses| of plot_current_losses
     def print_current_losses(self, epoch, iters, losses, t_comp, t_data):
         """print current losses on console; also save the losses to the disk
