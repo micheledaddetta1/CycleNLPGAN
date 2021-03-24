@@ -315,11 +315,11 @@ if __name__ == '__main__':
         with open(sentences_filename, "a", encoding='utf8') as sentences_file:
             sentences_file.write("\n\n\n\n")
         with open(mutual_filename, "a", encoding='utf8') as mutual_file:
-            sentences_file.write("\n\n\n\n")
+            mutual_file.write("\n\n\n\n")
         with open(mutual_filename_A, "a", encoding='utf8') as mutual_file:
-            sentences_file.write("\n\n\n\n")
+            mutual_file.write("\n\n\n\n")
         with open(mutual_filename_B, "a", encoding='utf8') as mutual_file:
-            sentences_file.write("\n\n\n\n")
+            mutual_file.write("\n\n\n\n")
         with open(sacre_filename, "a", encoding='utf8') as sacre_file:
             sacre_file.write("\n\n\n\n")
 
