@@ -150,6 +150,7 @@ if __name__ == '__main__':
         visualizer.reset()              # reset the visualizer: make sure it saves the results to HTML at least once every epoch
 
         visualizer.print_current_lr(epoch, model.get_learning_rate())
+
         for i, data in enumerate(train_dataset.dataloader):  # inner loop within one epoch
             epoch_iter += opt.batch_size
 
@@ -322,6 +323,6 @@ if __name__ == '__main__':
             mutual_file.write("\n\n\n\n")
         with open(sacre_filename, "a", encoding='utf8') as sacre_file:
             sacre_file.write("\n\n\n\n")
-
+        
         logging.info('End of epoch %d / %d \t Time Taken: %d sec' % (epoch, opt.n_epochs + opt.n_epochs_decay, time.time() - epoch_start_time))
         model.update_learning_rate()                     # update learning rates at the end of every epoch.
