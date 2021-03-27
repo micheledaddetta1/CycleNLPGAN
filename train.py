@@ -159,13 +159,15 @@ if __name__ == '__main__':
                     n -= 1
                     continue
             iter_start_time = time.time()  # timer for computation per iteration
-            if total_iters % opt.print_freq == 0:
-                t_data = iter_start_time - iter_data_time
 
-            total_iters += opt.batch_size
             model.set_input(data)         # unpack data from dataset and apply preprocessing
 
             model.optimize_parameters()   # calculate loss functions, get gradients, update network weights
+
+            total_iters += opt.batch_size
+
+            if total_iters % opt.print_freq == 0:
+                t_data = iter_start_time - iter_data_time
 
             if total_iters % opt.print_freq == 0:    # print training losses and save logging information to the disk
                 losses = model.get_current_losses()
@@ -278,6 +280,7 @@ if __name__ == '__main__':
                 fw.close()
 
             iter_data_time = time.time()
+
         logging.info('saving the model at the end of epoch %d, iters %d' % (epoch, total_iters))
         model.save_networks('latest')
         model.save_networks(epoch)
@@ -323,6 +326,6 @@ if __name__ == '__main__':
             mutual_file.write("\n\n\n\n")
         with open(sacre_filename, "a", encoding='utf8') as sacre_file:
             sacre_file.write("\n\n\n\n")
-        
+
         logging.info('End of epoch %d / %d \t Time Taken: %d sec' % (epoch, opt.n_epochs + opt.n_epochs_decay, time.time() - epoch_start_time))
         model.update_learning_rate()                     # update learning rates at the end of every epoch.
