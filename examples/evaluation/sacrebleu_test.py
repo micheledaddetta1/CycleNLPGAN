@@ -72,8 +72,7 @@ for wmt in wmt_list:
         model_prediction = modelA(source_batch)
         translated_source_data.extend(model_prediction)
 
-    bleu = sacrebleu.raw_corpus_bleu(translated_source_data, [reference_data]).score
-
+    bleu = sacrebleu.BLEU.corpus_score(translated_source_data, [reference_data]).score
 
     print(language+"-en BLEU score WMT"+str(wmt)+": " + str(bleu))
 
@@ -107,6 +106,5 @@ for wmt in wmt_list:
         model_prediction = modelB(source_batch)
         translated_source_data.extend(model_prediction)
 
-    bleu = sacrebleu.raw_corpus_bleu(translated_source_data, [reference_data]).score
-
+    bleu = sacrebleu.BLEU.corpus_score(translated_source_data, [reference_data]).score
     print("en-"+language+" BLEU score: " + str(bleu))
